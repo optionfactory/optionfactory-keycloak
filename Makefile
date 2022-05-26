@@ -1,5 +1,10 @@
 
-
+build:
+	mvn clean package
+bump:
+	mvn versions:set -DgenerateBackupPoms=false
+deploy-ossrh:
+	JAVA_HOME=/usr/java/jdk-11.0.11+9/ mvn clean deploy -Possrh
 
 local-network: 
 	-@docker network create -o "com.docker.network.bridge.name"="keycloak" --subnet 172.18.26.0/24 -d bridge keycloak
