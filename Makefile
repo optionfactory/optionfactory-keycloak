@@ -16,9 +16,11 @@ local-keycloak: local-network
 		-p 172.18.26.1:8081:8080 \
 		-e KEYCLOAK_ADMIN=admin \
 		-e KEYCLOAK_ADMIN_PASSWORD=admin \
-		-v${PWD}/keycloak-email-sender/target/keycloak-email-sender-1.0-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-email-sender-1.0-SNAPSHOT.jar \
+		-v${PWD}/optionfactory-keycloak-email-sender/target/optionfactory-keycloak-email-sender-1.1-SNAPSHOT.jar:/opt/keycloak/providers/optionfactory-keycloak-email-sender.jar \
+		-v${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-1.1-SNAPSHOT.jar:/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		-v${PWD}/local/keycloak.conf:/opt/keycloak/conf/keycloak.conf \
-		optionfactory/ubuntu22-jdk17-quarkus-keycloak1 --spi-email-sender-provider=cid-embedding
+		optionfactory/ubuntu22-jdk17-quarkus-keycloak1
+
 
 local-db: local-network
 	docker run -d -ti --rm \

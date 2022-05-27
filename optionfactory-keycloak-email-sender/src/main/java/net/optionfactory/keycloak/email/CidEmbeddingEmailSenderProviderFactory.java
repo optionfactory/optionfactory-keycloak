@@ -27,7 +27,7 @@ public class CidEmbeddingEmailSenderProviderFactory implements EmailSenderProvid
 
     @Override
     public String getId() {
-        return "cid-embedding";
+        return "opfa-cid-embedding";
     }
 
 }

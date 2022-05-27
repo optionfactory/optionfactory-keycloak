@@ -42,7 +42,8 @@
         </repository>
     </distributionManagement>
     <modules>
-        <module>optionfactory-keycloak-email-sender</module>
+	    <module>optionfactory-keycloak-email-sender</module>
+	    <module>optionfactory-keycloak-login-stats</module>
     </modules>
 
     <properties>
