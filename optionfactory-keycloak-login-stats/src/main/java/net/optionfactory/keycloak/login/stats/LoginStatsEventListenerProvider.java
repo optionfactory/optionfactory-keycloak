@@ -1,7 +1,6 @@
 package net.optionfactory.keycloak.login.stats;
 
 import java.util.List;
-import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;

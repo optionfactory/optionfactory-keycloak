@@ -8,7 +8,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
 /**
- * Must be configured on Event -> Config -> Event Listeners
+ * Must be configured on {@code Event -> Config -> Event Listeners}
  * 
  */
 public class LoginStatsEventListenerProviderFactory implements EventListenerProviderFactory {
