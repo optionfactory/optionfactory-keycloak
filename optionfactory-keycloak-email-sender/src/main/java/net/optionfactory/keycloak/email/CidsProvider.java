@@ -18,10 +18,12 @@ public class CidsProvider {
     private static final Map<String, Map<String, CidSource>> THEME_ID_TO_ALLOWED_CIDS_CACHE = new ConcurrentHashMap<>();
     static final Pattern CID_PATTERN = Pattern.compile("([\"'])CID:([A-Z0-9-_.]+)\\1", Pattern.CASE_INSENSITIVE);
     private static final Logger logger = Logger.getLogger(CidsProvider.class);
+    private final String themeName;
     private final Map<String, CidSource> allowedCids;
 
     public CidsProvider(Theme theme) {
-        this.allowedCids = THEME_ID_TO_ALLOWED_CIDS_CACHE.computeIfAbsent(theme.getName(), (name) -> {
+        this.themeName = theme.getName();
+        this.allowedCids = THEME_ID_TO_ALLOWED_CIDS_CACHE.computeIfAbsent(this.themeName, (name) -> {
             final ObjectMapper mapper = new ObjectMapper();
             try (final var is = theme.getResourceAsStream("allowed_cids.json")) {
                 return is == null ? Map.of() : mapper.readValue(is, CID_SOURCE_LIST)
@@ -42,10 +44,11 @@ public class CidsProvider {
         while (matcher.find()) {
             final var cid = matcher.group(2);
             final var found = allowedCids.get(cid);
-            if (found != null) {
-                logger.infof("found a cid referenced in the email but not in allow_cids.json: %s", cid);
-                matches.add(found);
+            if (found == null) {
+                logger.infof("in email theme '%s' cid '%s' is referenced in the email but not allowed in allow_cids.json (%s entries)", themeName, cid, allowedCids.size());
+                continue;
             }
+            matches.add(found);
         }
         return matches;
     }
