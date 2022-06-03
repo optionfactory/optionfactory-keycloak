@@ -32,7 +32,7 @@ public class HibernateRequestValidatorProviderFactory implements RequestValidato
 
     @Override
     public String getId() {
-        return "request-validator-provider";
+        return "opfa-hibernate-request-validator";
     }
 
 }

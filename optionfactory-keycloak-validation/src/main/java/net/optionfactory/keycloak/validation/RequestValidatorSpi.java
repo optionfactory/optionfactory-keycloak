@@ -13,7 +13,7 @@ public class RequestValidatorSpi implements Spi {
 
     @Override
     public String getName() {
-        return "request-validator";
+        return "opfa-request-validator";
     }
 
     @Override

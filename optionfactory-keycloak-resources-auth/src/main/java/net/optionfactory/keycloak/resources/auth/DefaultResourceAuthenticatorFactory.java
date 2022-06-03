@@ -28,7 +28,7 @@ public class DefaultResourceAuthenticatorFactory implements ResourceAuthenticato
 
     @Override
     public String getId() {
-        return "default-resource-authenticator";
+        return "opfa-default-resource-authenticator";
     }
 
 }

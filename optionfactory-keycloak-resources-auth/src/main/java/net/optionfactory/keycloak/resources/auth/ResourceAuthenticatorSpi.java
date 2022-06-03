@@ -13,7 +13,7 @@ public class ResourceAuthenticatorSpi implements Spi {
 
     @Override
     public String getName() {
-        return "resource-auth";
+        return "opfa-resource-authenticator";
     }
 
     @Override
