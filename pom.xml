@@ -47,6 +47,7 @@
 	    <module>optionfactory-keycloak-email-sender</module>
 	    <module>optionfactory-keycloak-login-stats</module>
 	    <module>optionfactory-keycloak-provisioning-api</module>
+	    <module>optionfactory-keycloak-welcome</module>
     </modules>
 
     <properties>

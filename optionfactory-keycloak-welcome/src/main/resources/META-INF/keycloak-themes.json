@@ -1,0 +1,6 @@
+{
+    "themes": [{
+        "name": "opfablank",
+        "types": ["welcome"]
+    }]
+}

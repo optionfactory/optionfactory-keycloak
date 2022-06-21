@@ -24,6 +24,7 @@ local-keycloak: local-network
 		-v${PWD}/optionfactory-keycloak-email-sender/target/optionfactory-keycloak-email-sender-${CURRENT_VERSION}.jar:/opt/keycloak/providers/optionfactory-keycloak-email-sender.jar \
 		-v${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-${CURRENT_VERSION}.jar:/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		-v${PWD}/optionfactory-keycloak-provisioning-api/target/optionfactory-keycloak-provisioning-api-${CURRENT_VERSION}.jar:/opt/keycloak/providers/optionfactory-keycloak-provisioning-api.jar \
+		-v${PWD}/optionfactory-keycloak-welcome/target/optionfactory-keycloak-welcome-${CURRENT_VERSION}.jar:/opt/keycloak/providers/optionfactory-keycloak-welcome.jar \
 		-v${PWD}/local/keycloak.conf:/opt/keycloak/conf/keycloak.conf \
 		optionfactory/ubuntu22-jdk17-quarkus-keycloak1
 
