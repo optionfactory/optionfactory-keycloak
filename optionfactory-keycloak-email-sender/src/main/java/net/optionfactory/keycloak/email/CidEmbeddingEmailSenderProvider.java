@@ -20,7 +20,6 @@ import org.jboss.logging.Logger;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailSenderProvider;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.theme.Theme;
 import org.keycloak.truststore.HostnameVerificationPolicy;
@@ -40,10 +39,8 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
     }
 
     @Override
-    public void send(Map<String, String> config, UserModel user, String subject, String textBody, String htmlBody) throws EmailException {
+    public void send(Map<String, String> config, String address, String subject, String textBody, String htmlBody) throws EmailException {
         try {
-            String address = retrieveEmailAddress(user);
-
             Properties props = new Properties();
 
             if (config.containsKey("host")) {
@@ -164,10 +161,6 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             return new InternetAddress(email);
         }
         return new InternetAddress(email, displayName, "utf-8");
-    }
-
-    protected String retrieveEmailAddress(UserModel user) {
-        return user.getEmail();
     }
 
     private void setupTruststore(Properties props) {
