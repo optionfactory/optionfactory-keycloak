@@ -1,0 +1,6 @@
+{
+    "themes": [{
+        "name": "bootstrap",
+        "types": ["login"]
+    }]
+}
