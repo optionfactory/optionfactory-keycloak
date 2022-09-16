@@ -17,22 +17,30 @@
     <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
 
 <#-- modification start -->
+
+<#if properties.googleFonts?has_content>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?${properties.googleFonts}" rel="stylesheet">
+</#if>
+
+
 <#if properties.useCdn == 'true'>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" integrity="sha256-8M+b2Hj+vy/2J5tZ9pYDHeuPD59KsaEZn1XXj3xVhjg=" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>        
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/gh/optionfactory/ftl@0.4/dist/ftl.iife.min.js" referrerpolicy="no-referrer" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/gh/optionfactory/ful@0.3/dist/ful.iife.min.js" referrerpolicy="no-referrer" crossorigin="anonymous"></script>
 <#else>
     <link rel="stylesheet" href="${url.resourcesPath}/css/bootstrap.min.css">
     <link rel="stylesheet" href="${url.resourcesPath}/css/bootstrap-icons.css">
     <script src="${url.resourcesPath}/js/bootstrap.bundle.min.js"></script>        
     <script src="${url.resourcesPath}/js/jquery.min.js"></script>
-    <script src="${url.resourcesPath}/js/ftl.iife.min.js"></script>
-    <script src="${url.resourcesPath}/js/ful.iife.min.js"></script>
 </#if>
 <link rel="stylesheet" href="${url.resourcesPath}/css/keycloak.css">
+
+<#if properties.customHeaderTags?has_content>
+    ${properties.customHeaderTags?no_esc}
+</#if>
 
 <#-- modification end -->
 

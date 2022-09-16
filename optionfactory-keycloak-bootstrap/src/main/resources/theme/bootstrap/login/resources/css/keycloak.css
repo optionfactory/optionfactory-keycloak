@@ -8,6 +8,7 @@
     --keycloak-alerg-border-color: #f5c2c7;
     
     --keycloak-header-color: #ededed;
+    --keycloak-heading-color: #b3b3b3;
     --keycloak-sign-up-background-color : #f0f0f0;
 
     --keycloak-card-background-color: white;
@@ -80,7 +81,6 @@ label {
 }
 
 .keycloak-form-header h1 {
-    color: #b3b3b3;
     text-transform: uppercase;
     letter-spacing: 2.5px;
     line-height: 1.2em;
@@ -89,10 +89,8 @@ label {
     margin-bottom: 15px;
 }
 
-h2, h3, h4 {
-    color: #b3b3b3;
-    text-transform: uppercase;
-    margin-bottom: 15px;
+h1, h2, h3, h4 {
+    color: var(--keycloak-heading-color);
 }
 
 .keycloak-card {
@@ -103,6 +101,7 @@ h2, h3, h4 {
     max-width: 500px;
     border-top: 4px solid;
     border-color: var(--keycloak-card-border-color);    
+    width: 100%;    
 }
 
 @media (min-width: 576px) {
