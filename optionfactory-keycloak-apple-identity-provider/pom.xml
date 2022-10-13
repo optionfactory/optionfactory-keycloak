@@ -4,28 +4,26 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>1.10-SNAPSHOT</version>
+        <version>1.9</version>
     </parent>
-    <artifactId>optionfactory-keycloak-login-stats</artifactId>
-    <description>optionfactory-keycloak login stats</description>
+    <artifactId>optionfactory-keycloak-apple-identity-provider</artifactId>
+    <description>optionfactory-keycloak Apple Identity Provider</description>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
-    <dependencies>      
+    <dependencies>  
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
-            <scope>provided</scope>
-        </dependency>        
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-services</artifactId>
-            <scope>provided</scope>
-        </dependency>        
+        </dependency>
+        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
