@@ -6,13 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -21,7 +25,11 @@ import net.optionfactory.keycloak.provisioning.api.UsersRequest.FilterOp;
 import net.optionfactory.keycloak.provisioning.api.UsersRequest.ValueFilter;
 import net.optionfactory.keycloak.validation.RequestValidator;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
+import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.UserProvider;
 import org.keycloak.services.ServicesLogger;
 
 /**
@@ -39,6 +47,55 @@ public class ProvisioningEndpoints {
         this.om = om;
         this.validator = validator;
         this.session = session;
+    }
+
+    @PUT
+    @Path("/users")
+    @Consumes(MediaType.APPLICATION_JSON)
+    // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
+    public void provide(UserProvisioningRequest req) {
+        validator.enforce(req, BadRequestException::new);
+
+        final RealmModel realm = session.getContext().getRealm();
+        final UserProvider users = session.users();
+
+        final UserModel user = Optional.ofNullable(users.getUserById(realm, req.id))
+                .orElseGet(() -> users.addUser(realm, req.id, req.username, true, true));
+
+        user.setFirstName(req.firstName);
+        user.setLastName(req.lastName);
+        user.setEnabled(req.enabled);
+        user.setEmail(req.username);
+        user.setEmailVerified(req.emailVerified);
+        for (Map.Entry<String, List<String>> entry : req.attributes.entrySet()) {
+            user.setAttribute(entry.getKey(), entry.getValue()); 
+       }
+        for (String groupName : req.groups) {
+            final GroupModel group = session.groups()
+                    .getGroupsStream(realm)
+                    .filter(g -> g.getName().equals(groupName))
+                    .findFirst()
+                    .orElseGet(() -> session.groups().createGroup(realm, groupName));
+            user.joinGroup(group);
+        }
+    }
+
+    public static class UserProvisioningRequest {
+
+        @NotEmpty
+        public String id;
+        @NotEmpty
+        public String username;
+        @NotEmpty
+        public String firstName;
+        @NotEmpty
+        public String lastName;
+        @NotNull
+        public Map<String, List<String>> attributes;
+        @NotNull
+        public List<String> groups;
+        public boolean enabled;
+        public boolean emailVerified;
     }
 
     @POST
