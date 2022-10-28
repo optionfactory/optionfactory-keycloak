@@ -14,6 +14,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -49,6 +50,22 @@ public class ProvisioningEndpoints {
         this.session = session;
     }
 
+    @DELETE
+    @Path("/users")
+    @Consumes(MediaType.APPLICATION_JSON)
+    // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
+    public void wipe(List<String> ids) {
+        validator.enforce(ids, BadRequestException::new);
+        final RealmModel realm = session.getContext().getRealm();
+        final UserProvider users = session.users();
+        for (String id : ids) {
+            final UserModel user = users.getUserById(realm, id);
+            if (user != null) {
+                users.removeUser(realm, user);
+            }
+        }
+    }
+
     @PUT
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -68,8 +85,11 @@ public class ProvisioningEndpoints {
         user.setEmail(req.username);
         user.setEmailVerified(req.emailVerified);
         for (Map.Entry<String, List<String>> entry : req.attributes.entrySet()) {
-            user.setAttribute(entry.getKey(), entry.getValue()); 
-       }
+            user.setAttribute(entry.getKey(), entry.getValue());
+        }
+        for (String reduiredAction : req.reduiredActions) {
+            user.addRequiredAction(reduiredAction);
+        }
         for (String groupName : req.groups) {
             final GroupModel group = session.groups()
                     .getGroupsStream(realm)
@@ -94,6 +114,8 @@ public class ProvisioningEndpoints {
         public Map<String, List<String>> attributes;
         @NotNull
         public List<String> groups;
+        @NotNull
+        public List<String> reduiredActions;
         public boolean enabled;
         public boolean emailVerified;
     }
