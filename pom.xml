@@ -56,7 +56,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <kc.version>19.0.3</kc.version>        
+        <kc.version>20.0.0</kc.version>        
         <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
