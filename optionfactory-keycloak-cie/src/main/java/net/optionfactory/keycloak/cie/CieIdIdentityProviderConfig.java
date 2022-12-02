@@ -132,7 +132,6 @@ public class CieIdIdentityProviderConfig extends IdentityProviderModel {
 
     /**
      * @deprecated Prefer {@link #getSigningCertificates()}}
-     * @param signingCertificate
      */
     public String getSigningCertificate() {
         return getConfig().get(SIGNING_CERTIFICATE_KEY);
@@ -140,7 +139,6 @@ public class CieIdIdentityProviderConfig extends IdentityProviderModel {
 
     /**
      * @deprecated Prefer {@link #addSigningCertificate(String)}}
-     * @param signingCertificate
      */
     public void setSigningCertificate(String signingCertificate) {
         getConfig().put(SIGNING_CERTIFICATE_KEY, signingCertificate);
