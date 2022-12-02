@@ -50,13 +50,15 @@
         <module>optionfactory-keycloak-welcome</module>
         <module>optionfactory-keycloak-bootstrap</module>
         <module>optionfactory-keycloak-apple-identity-provider</module>
+        <module>optionfactory-keycloak-spid</module>
+        <module>optionfactory-keycloak-cie</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <kc.version>20.0.0</kc.version>        
+        <kc.version>20.0.1</kc.version>        
         <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
@@ -82,10 +84,40 @@
             </dependency>
             <dependency>
                 <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-saml-core</artifactId>
+                <version>${kc.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-saml-adapter-api-public</artifactId>
+                <version>${kc.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-model-jpa</artifactId>
                 <version>${kc.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>6.2.5.Final</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.jboss.logging</groupId>
+                        <artifactId>jboss-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>        
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>jakarta.el</artifactId>
+                <version>3.0.4</version>
+            </dependency>
+                    
+            
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
