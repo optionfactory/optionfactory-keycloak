@@ -74,6 +74,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.keycloak.broker.provider.IdentityProviderMapper;
+import org.keycloak.dom.saml.v2.metadata.KeyDescriptorType;
+import org.keycloak.dom.saml.v2.metadata.KeyTypes;
 
 public class SpidSpMetadataResourceProvider implements RealmResourceProvider {
 
@@ -137,8 +139,10 @@ public class SpidSpMetadataResourceProvider implements RealmResourceProvider {
             String attributeConsumingServiceName = firstSpidProvider.getConfig().getAttributeConsumingServiceName();
             String[] attributeConsumingServiceNames = attributeConsumingServiceName != null ? attributeConsumingServiceName.split(",") : null;
 
-            List<Element> signingKeys = new LinkedList<>();
-            List<Element> encryptionKeys = new LinkedList<>();
+
+            List<KeyDescriptorType> signingKeys = new LinkedList<>();
+            List<KeyDescriptorType> encryptionKeys = new LinkedList<>();
+
 
             session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
                     .filter(Objects::nonNull)
@@ -148,18 +152,20 @@ public class SpidSpMetadataResourceProvider implements RealmResourceProvider {
                         try {
                             Element element = SPMetadataDescriptor
                                     .buildKeyInfoElement(key.getKid(), PemUtils.encodeCertificate(key.getCertificate()));
-                            signingKeys.add(element);
+                            
+                            signingKeys.add(SPMetadataDescriptor.buildKeyDescriptorType(element, KeyTypes.SIGNING, Algorithm.RS256));
 
                             if (key.getStatus() == KeyStatus.ACTIVE) {
-                                encryptionKeys.add(element);
+                                encryptionKeys.add(SPMetadataDescriptor.buildKeyDescriptorType(element, KeyTypes.ENCRYPTION, Algorithm.RS256));
                             }
+
                         } catch (ParserConfigurationException e) {
                             logger.warn("Failed to export SAML SP Metadata!", e);
                             throw new RuntimeException(e);
                         }
                     });
 
-            EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPdescriptor(
+            EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(
                     authnBinding, authnBinding, endpoint, endpoint,
                     wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
                     entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);

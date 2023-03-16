@@ -1,0 +1,2 @@
+net.optionfactory.keycloak.sms.client.SmsClientSpi
+net.optionfactory.keycloak.sms.otp.SmsOtpSpi

@@ -1,6 +1,5 @@
 :root {
     --keycloak-primary-color: #0066CC;
-    --keycloak-box-shadow: 0 0.5rem 1rem 0 rgba(3, 3, 3, 0.16), 0 0 0.375rem 0 rgba(3, 3, 3, 0.08);
     --keycloak-gradient: linear-gradient(90deg,#409ed2 0,#4bba77);
     
     --keycloak-alert-color: #842029;
@@ -8,15 +7,20 @@
     --keycloak-alerg-border-color: #f5c2c7;
     
     --keycloak-header-color: #ededed;
+    --keycloak-header-background-image: none;
     --keycloak-heading-color: #b3b3b3;
-    --keycloak-sign-up-background-color : #f0f0f0;
 
-    --keycloak-card-background-color: white;
-    --keycloak-card-box-shadow: var(--keycloak-box-shadow);
+    --keycloak-card-background-color: transparent;
+    --keycloak-card-box-shadow: none;
     --keycloak-card-border-color: var(--keycloak-primary-color);
     --keycloak-form-control-invalid-border-color: #dc3545;
     
     --bs-body-font-family: "Open Sans", Helvetica, Arial, sans-serif;
+
+    --button-primary-color: #eb6f14;
+    --button-primary-focus-color: #ff8c1f;
+
+    --keycloak-social-providers-box-shadow: 0 10px 18px -5px #7090b033;
 }
 
 
@@ -38,11 +42,6 @@ label {
     --bs-alert-border-color: var(--keycloak-alerg-border-color);
 }
 
-.form-group, 
-#kc-form-options {
-    margin-bottom: 10px;
-}
-
 
 .keycloak-container {
     --bs-gutter-x: 1.5rem;
@@ -58,12 +57,10 @@ label {
 @media (min-width: 576px) {
     .keycloak-container {
         max-width: 540px;
-        
     }
 }
 
 .keycloak-header {
-    padding: 20px 10px 10px;    
     font-size: 29px;
     font-weight: 400;
     text-transform: uppercase;
@@ -71,7 +68,14 @@ label {
     line-height: 1.2em;
     color: var(--keycloak-header-color);
     text-align: center;
-    margin: 0;    
+    
+    width: 300px;
+    margin: 0 auto;
+    padding: 40px 0;
+    
+    background-image: var(--keycloak-header-background-image);    
+    background-repeat: no-repeat;
+    background-position: center;    
 }
 
 @media (min-width: 576px) {
@@ -94,7 +98,7 @@ h1, h2, h3, h4 {
 }
 
 .keycloak-card {
-    padding: 40px 10px;
+    padding: 20px;
     margin: 0 auto;
     background-color: var(--keycloak-card-background-color);
     box-shadow: var(--keycloak-card-box-shadow);
@@ -110,20 +114,10 @@ h1, h2, h3, h4 {
     }
 }
 
-
 .keycloak-sign-up {
-    margin: 20px -10px -40px -10px;
-    padding: 14px 40px;
-    background-color: var(--keycloak-sign-up-background-color);
-    text-align: center;
-    font-size: 13px;    
-}
-
-
-@media (min-width: 576px) {
-    .keycloak-sign-up {
-        margin: 20px -40px -40px -40px;
-    }
+    margin: 0;
+    background: none;
+    font-size: 15px;
 }
 
 .form-control[aria-invalid=true] {
@@ -137,4 +131,116 @@ h1, h2, h3, h4 {
 
 [aria-invalid=true]~.invalid-feedback, [aria-invalid=true]~.invalid-tooltip {
     display: block;
+}
+
+.btn-primary {
+    --bs-btn-bg: #ff8c1f;
+    --bs-btn-border-color: var(--button-primary-color);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--button-primary-focus-color);
+    --bs-btn-hover-border-color: var(--button-primary-focus-color);
+    --bs-btn-focus-shadow-rgb: 49, 132, 253;
+
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--button-primary-focus-color);
+    --bs-btn-active-border-color: var(--button-primary-focus-color);
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #0d6efd;
+    --bs-btn-disabled-border-color: #0d6efd;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--button-primary-color);
+    --bs-btn-border-color: var(--button-primary-color);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--button-primary-color);
+    --bs-btn-hover-border-color: var(--button-primary-color);
+    --bs-btn-focus-shadow-rgb: 13, 110, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--button-primary-color);
+    --bs-btn-active-border-color: var(--button-primary-color);
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: var(--button-primary-color);
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: var(--button-primary-color);
+    --bs-gradient: none;
+}
+
+.btn-icon {
+    padding: 0;
+    border: 0 !important;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    user-select: none;
+}
+
+.btn-icon:hover {
+    box-shadow: 0px 0px 10px 0px #000000;
+}
+
+
+input.form-control {
+    border-color: transparent;
+    padding: 8px 12px;
+}
+
+input.form-control:focus {
+    box-shadow: none;
+    border-color: gray;
+}
+
+input.form-control:hover,
+input.form-control:focus-visible {
+    outline: none;
+    border: 1px solid lightgray;
+}
+
+
+.form.group {
+    margin-bottom: 10px;
+}
+
+#kc-form-options {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#kc-form-buttons {
+    margin-top: 24px;
+}
+
+#kc-social-providers > hr {
+    display: none;
+}
+
+#kc-social-providers > h4 {
+    text-align: center;
+    color: black;
+    margin: 22px auto;
+    font-weight: 400;
+}
+
+#kc-social-providers > ul {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#kc-social-providers ul a[id^="social-"] {
+    background: white;
+    border: none !important;
+    border-radius: 7px !important;
+    box-shadow: var(--keycloak-social-providers-box-shadow);
+    margin-bottom: 12px !important;
+    padding: 9px 13px;
+    text-align: left;
+    font-size: 18px;
+}
+
+#kc-social-providers ul a[id^="social-"] i {
+    margin-right: 30px;
+    font-size: 23px;
 }

@@ -443,7 +443,7 @@ public class CieIdSAMLEndpoint {
 
                 if (assertionIsEncrypted) {
                     // This methods writes the parsed and decrypted assertion back on the responseType parameter:
-                    assertionElement = AssertionUtil.decryptAssertion(holder, responseType, keys.getPrivateKey());
+                    assertionElement = AssertionUtil.decryptAssertion(responseType, keys.getPrivateKey());
                 } else {
                     /* We verify the assertion using original document to handle cases where the IdP
                     includes whitespace and/or newlines inside tags. */
@@ -485,7 +485,7 @@ public class CieIdSAMLEndpoint {
 
                 if(AssertionUtil.isIdEncrypted(responseType)) {
                     // This methods writes the parsed and decrypted id back on the responseType parameter:
-                    AssertionUtil.decryptId(responseType, keys.getPrivateKey());
+                    AssertionUtil.decryptId(responseType, encryptedData -> Collections.singletonList(keys.getPrivateKey()));
                 }
                 AssertionType assertion = responseType.getAssertions().get(0).getAssertion();
                 NameIDType subjectNameID = getSubjectNameID(assertion);
@@ -577,7 +577,7 @@ public class CieIdSAMLEndpoint {
          */
         private AuthenticationSessionModel samlIdpInitiatedSSO(final String clientUrlName) {
             event.event(EventType.LOGIN);
-            CacheControlUtil.noBackButtonCacheControlHeader();
+            CacheControlUtil.noBackButtonCacheControlHeader(session);
             Optional<ClientModel> oClient = CieIdSAMLEndpoint.this.session.clients()
               .searchClientsByAttributes(realm, Collections.singletonMap(SamlProtocol.SAML_IDP_INITIATED_SSO_URL_NAME, clientUrlName), 0, 1)
               .findFirst();
@@ -589,7 +589,7 @@ public class CieIdSAMLEndpoint {
             }
 
             LoginProtocolFactory factory = (LoginProtocolFactory) session.getKeycloakSessionFactory().getProviderFactory(LoginProtocol.class, SamlProtocol.LOGIN_PROTOCOL);
-            SamlService samlService = (SamlService) factory.createProtocolEndpoint(CieIdSAMLEndpoint.this.realm, event);
+            SamlService samlService = (SamlService) factory.createProtocolEndpoint(session, event);
             ResteasyProviderFactory.getInstance().injectProperties(samlService);
             AuthenticationSessionModel authSession = samlService.getOrCreateLoginSessionForIdpInitiatedSso(session, CieIdSAMLEndpoint.this.realm, oClient.get(), null);
             if (authSession == null) {

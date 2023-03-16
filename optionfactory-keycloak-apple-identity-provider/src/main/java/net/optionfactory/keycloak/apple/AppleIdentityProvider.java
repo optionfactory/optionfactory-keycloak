@@ -110,7 +110,7 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         private final AtomicReference<String> userJson;
 
         public AppleOidcEndpoint(IdentityProvider.AuthenticationCallback callback, RealmModel realm, EventBuilder event, AtomicReference<String> userJson, final AppleIdentityProvider outer) {
-            super(callback, realm, event);
+            super(callback, realm, event, outer);
             this.userJson = userJson;
         }
 

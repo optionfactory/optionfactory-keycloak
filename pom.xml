@@ -52,13 +52,15 @@
         <module>optionfactory-keycloak-apple-identity-provider</module>
         <module>optionfactory-keycloak-spid</module>
         <module>optionfactory-keycloak-cie</module>
+        <module>optionfactory-keycloak-sms</module>
+        <module>optionfactory-keycloak-authenticators</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <kc.version>20.0.1</kc.version>        
+        <kc.version>21.0.1</kc.version>        
         <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 

@@ -38,9 +38,11 @@
 </#if>
 <link rel="stylesheet" href="${url.resourcesPath}/css/keycloak.css">
 
-<#if properties.customHeaderTags?has_content>
-    ${properties.customHeaderTags?no_esc}
-</#if>
+<#list 0..20 as index>
+    <#if properties['customHeaders.' + index]?has_content>
+        ${properties['customHeaders.' + index]?no_esc}
+    </#if>
+</#list>
 
 <#-- modification end -->
 

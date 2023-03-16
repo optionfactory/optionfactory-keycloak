@@ -96,6 +96,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import org.keycloak.dom.saml.v2.metadata.KeyDescriptorType;
+import org.keycloak.dom.saml.v2.metadata.KeyTypes;
 
 /**
  * @author Pedro Igor
@@ -390,8 +392,8 @@ public class SpidIdentityProvider extends AbstractIdentityProvider<SpidIdentityP
             String entityId = getEntityId(uriInfo, realm);
             String nameIDPolicyFormat = getConfig().getNameIDPolicyFormat();
 
-            List<Element> signingKeys = new LinkedList<>();
-            List<Element> encryptionKeys = new LinkedList<>();
+            List<KeyDescriptorType> signingKeys = new LinkedList<>();
+            List<KeyDescriptorType> encryptionKeys = new LinkedList<>();
 
             session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
                     .filter(Objects::nonNull)
@@ -401,10 +403,11 @@ public class SpidIdentityProvider extends AbstractIdentityProvider<SpidIdentityP
                         try {
                             Element element = SPMetadataDescriptor
                                     .buildKeyInfoElement(key.getKid(), PemUtils.encodeCertificate(key.getCertificate()));
-                            signingKeys.add(element);
+                            
+                            signingKeys.add(SPMetadataDescriptor.buildKeyDescriptorType(element, KeyTypes.SIGNING, Algorithm.RS256));
 
                             if (key.getStatus() == KeyStatus.ACTIVE) {
-                                encryptionKeys.add(element);
+                                encryptionKeys.add(SPMetadataDescriptor.buildKeyDescriptorType(element, KeyTypes.ENCRYPTION, Algorithm.RS256));
                             }
                         } catch (ParserConfigurationException e) {
                             logger.warn("Failed to export SAML SP Metadata!", e);
@@ -417,7 +420,7 @@ public class SpidIdentityProvider extends AbstractIdentityProvider<SpidIdentityP
             XMLStreamWriter writer = StaxUtil.getXMLStreamWriter(sw);
             SAMLMetadataWriter metadataWriter = new SAMLMetadataWriter(writer);
 
-            EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPdescriptor(
+            EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(
                     authnBinding, authnBinding, endpoint, endpoint,
                     wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
                     entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
