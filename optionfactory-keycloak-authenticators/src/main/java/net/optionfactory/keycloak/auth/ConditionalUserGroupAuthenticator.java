@@ -7,7 +7,6 @@ import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.authentication.authenticators.conditional.ConditionalAuthenticator;
 import org.keycloak.authentication.authenticators.conditional.ConditionalAuthenticatorFactory;
-import org.keycloak.authentication.authenticators.conditional.ConditionalUserAttributeValueFactory;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticationExecutionModel.Requirement;
 import org.keycloak.models.KeycloakSession;
@@ -53,7 +52,7 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
 
     }
 
-    public class Factory implements ConditionalAuthenticatorFactory {
+    public static class Factory implements ConditionalAuthenticatorFactory {
 
         @Override
         public void init(Scope config) {

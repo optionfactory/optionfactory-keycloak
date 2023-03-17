@@ -47,7 +47,7 @@ public class ConditionalAuthNoteAuthenticator implements ConditionalAuthenticato
 
     }
 
-    public class Factory implements ConditionalAuthenticatorFactory {
+    public static class Factory implements ConditionalAuthenticatorFactory {
 
         @Override
         public void init(Scope config) {
