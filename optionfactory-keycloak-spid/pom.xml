@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>2.5-SNAPSHOT</version>
+        <version>2.5</version>
     </parent>
     <artifactId>optionfactory-keycloak-spid</artifactId>
     <description>optionfactory-keycloak SPID</description>
