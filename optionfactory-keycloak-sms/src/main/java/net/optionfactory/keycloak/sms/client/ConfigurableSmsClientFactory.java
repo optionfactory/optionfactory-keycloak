@@ -32,6 +32,7 @@ public class ConfigurableSmsClientFactory implements SmsClientFactory {
         if("placebo".equals(type)){
             logger.infof("configured a PlaceboSmsClient");
             clientRef.set(new PlaceboSmsClient());
+            return;
         }
 
         final var clientId = config.get("clientId");
