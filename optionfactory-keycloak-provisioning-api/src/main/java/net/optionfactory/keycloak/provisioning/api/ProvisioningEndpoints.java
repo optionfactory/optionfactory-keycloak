@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
@@ -49,13 +51,17 @@ public class ProvisioningEndpoints {
         this.validator = validator;
         this.session = session;
     }
+    
+    private static <T> RuntimeException badRequest(Set<ConstraintViolation<T>> violations) {
+        return new BadRequestException(String.format("violations: %s", violations));
+    }
 
     @DELETE
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
-        validator.enforce(ids, BadRequestException::new);
+        validator.enforce(ids, ProvisioningEndpoints::badRequest);
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
         for (String id : ids) {
@@ -71,7 +77,7 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
-        validator.enforce(req, BadRequestException::new);
+        validator.enforce(req, ProvisioningEndpoints::badRequest);
 
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -131,7 +137,7 @@ public class ProvisioningEndpoints {
             @DefaultValue("0") @QueryParam("limit") int limit,
             UsersRequest request
     ) {
-        validator.enforce(request, BadRequestException::new);
+        validator.enforce(request, ProvisioningEndpoints::badRequest);
 
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
 
