@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.sms.client;
+package net.optionfactory.keycloak.authenticators.sms;
 
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderFactory;

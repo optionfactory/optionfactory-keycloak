@@ -1,10 +1,8 @@
-package net.optionfactory.keycloak.auth;
+package net.optionfactory.keycloak.authenticators;
 
 import java.util.List;
 import org.keycloak.Config.Scope;
 import org.keycloak.authentication.AuthenticationFlowContext;
-import org.keycloak.authentication.AuthenticationFlowError;
-import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.authentication.authenticators.conditional.ConditionalAuthenticator;
 import org.keycloak.authentication.authenticators.conditional.ConditionalAuthenticatorFactory;
 import org.keycloak.models.AuthenticationExecutionModel;
@@ -15,20 +13,17 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.provider.ProviderConfigProperty;
 
-public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticator {
+public class ConditionalAuthNoteAuthenticator implements ConditionalAuthenticator {
 
-    public static ConditionalUserGroupAuthenticator SINGLETON = new ConditionalUserGroupAuthenticator();
+    public static ConditionalAuthNoteAuthenticator SINGLETON = new ConditionalAuthNoteAuthenticator();
 
     @Override
     public boolean matchCondition(AuthenticationFlowContext context) {
-
-        final var user = context.getUser();
-        if (user == null) {
-            throw new AuthenticationFlowException("Cannot find user for obtaining particular user attributes. Authenticator: ", AuthenticationFlowError.UNKNOWN_USER);
-        }
+        final var authSession = context.getAuthenticationSession();
         final var authConfig = context.getAuthenticatorConfig().getConfig();
-        final var expectedGroup = authConfig.get("group");
-        final var match = user.getGroupsStream().anyMatch(g -> g.getName().equals(expectedGroup));
+        final var authNoteKey = authConfig.get("key");
+        final var expectedAuthNoteValue = authConfig.get("value");
+        final var match = expectedAuthNoteValue.equals(authSession.getAuthNote(authNoteKey));
         final var negate = Boolean.parseBoolean(authConfig.get("negate"));
         return negate ? !match : match;
     }
@@ -40,7 +35,7 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
 
     @Override
     public boolean requiresUser() {
-        return true;
+        return false;
     }
 
     @Override
@@ -68,12 +63,12 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
 
         @Override
         public String getId() {
-            return "conditional-user-group";
+            return "conditional-auth-note";
         }
 
         @Override
         public String getDisplayType() {
-            return "Condition - User Group";
+            return "Condition - Authentication note";
         }
 
         @Override
@@ -96,17 +91,23 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
 
         @Override
         public String getHelpText() {
-            return "Flow is executed only if user is in the given group.";
+            return "Flow is executed only if session has the given auth note.";
         }
 
         @Override
         public List<ProviderConfigProperty> getConfigProperties() {
 
-            final var groupProp = new ProviderConfigProperty();
-            groupProp.setType(ProviderConfigProperty.GROUP_TYPE);
-            groupProp.setName("group");
-            groupProp.setLabel("Group");
-            groupProp.setHelpText("Group");
+            final var authNoteKeyProp = new ProviderConfigProperty();
+            authNoteKeyProp.setType(ProviderConfigProperty.STRING_TYPE);
+            authNoteKeyProp.setName("key");
+            authNoteKeyProp.setLabel("Key");
+            authNoteKeyProp.setHelpText("Auth note key");
+
+            final var authNoteValueProp = new ProviderConfigProperty();
+            authNoteValueProp.setType(ProviderConfigProperty.STRING_TYPE);
+            authNoteValueProp.setName("value");
+            authNoteValueProp.setLabel("Expected value");
+            authNoteValueProp.setHelpText("Auth note value");
 
             final var negateProp = new ProviderConfigProperty();
             negateProp.setType(ProviderConfigProperty.BOOLEAN_TYPE);
@@ -114,12 +115,12 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
             negateProp.setLabel("Negate output");
             negateProp.setHelpText("Apply a NOT to the check result.");
 
-            return List.of(groupProp, negateProp);
+            return List.of(authNoteKeyProp, authNoteValueProp, negateProp);
         }
 
         @Override
         public ConditionalAuthenticator getSingleton() {
-            return ConditionalUserGroupAuthenticator.SINGLETON;
+            return ConditionalAuthNoteAuthenticator.SINGLETON;
         }
     }
 

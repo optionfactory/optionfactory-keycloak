@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.sms.client;
+package net.optionfactory.keycloak.authenticators.sms;
 
 import java.util.UUID;
 import org.slf4j.Logger;

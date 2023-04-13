@@ -23,7 +23,7 @@ public class RequestValidatorSpi implements Spi {
 
     @Override
     public Class<? extends ProviderFactory> getProviderFactoryClass() {
-        return RequestValidatorProviderFactory.class;
+        return RequestValidatorFactory.class;
     }
 
 }

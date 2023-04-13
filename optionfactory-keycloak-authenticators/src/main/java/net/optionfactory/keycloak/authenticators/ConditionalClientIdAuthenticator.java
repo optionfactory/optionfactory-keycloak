@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.auth;
+package net.optionfactory.keycloak.authenticators;
 
 import java.util.List;
 import org.keycloak.Config.Scope;

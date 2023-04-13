@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.sms.client;
+package net.optionfactory.keycloak.authenticators.sms;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

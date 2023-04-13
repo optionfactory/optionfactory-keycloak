@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>2.6</version>
+        <version>2.7-SNAPSHOT</version>
     </parent>
     <artifactId>optionfactory-keycloak-validation</artifactId>
     <description>optionfactory-keycloak validation</description>
@@ -18,10 +18,18 @@
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-server-spi-private</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
             <scope>provided</scope>
         </dependency>
-                
+        <dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+        </dependency>                   
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
@@ -65,6 +73,10 @@
                                     <pattern>javax.validation</pattern>
                                     <shadedPattern>net.optionfactory.keycloak.validation.shade.javax.validation</shadedPattern>
                                 </relocation>-->
+                                <relocation>
+                                    <pattern>com.google.i18n.phonenumbers</pattern>
+                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.com.google.i18n.phonenumbers</shadedPattern>
+                                </relocation>
                                 <relocation>
                                     <pattern>com.fasterxml.classmate</pattern>
                                     <shadedPattern>net.optionfactory.keycloak.validation.shade.fasterxml.classmate</shadedPattern>
