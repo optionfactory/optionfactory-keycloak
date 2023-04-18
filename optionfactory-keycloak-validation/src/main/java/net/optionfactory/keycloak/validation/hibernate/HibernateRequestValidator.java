@@ -11,6 +11,7 @@ import javax.ws.rs.BadRequestException;
 import net.optionfactory.keycloak.validation.RequestValidator;
 import net.optionfactory.keycloak.validation.RequestValidatorFactory;
 import org.hibernate.validator.HibernateValidator;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -23,6 +24,7 @@ public class HibernateRequestValidator implements RequestValidator {
         this.validator = Validation
                 .byProvider(HibernateValidator.class)
                 .configure()
+                .messageInterpolator(new ParameterMessageInterpolator())
                 .buildValidatorFactory()
                 .getValidator();
     }
