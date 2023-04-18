@@ -25,9 +25,8 @@ public class TaxCodeValidator implements ConstraintValidator<TaxCode, String> {
         }
         return taxcode.trim().toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
-
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext constraintContext) {
+    
+    public static boolean isValid(String value, TaxCode.Mode mode){
         if (value == null) {
             return true;
         }
@@ -45,10 +44,15 @@ public class TaxCodeValidator implements ConstraintValidator<TaxCode, String> {
             final Optional<Character> maybeControlCode = controlCodeCodiceFiscale(clean);
             return !maybeControlCode.isPresent() ? false : ((char) maybeControlCode.get()) == lastCharacter;
         }
-        return false;
+        return false;    
     }
 
-    public Optional<Character> controlCodePartitaIva(String possiblePartitaIva) {
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext constraintContext) {
+        return isValid(value, mode);
+    }
+
+    public static Optional<Character> controlCodePartitaIva(String possiblePartitaIva) {
 
         var x = IntStream.of(0, 2, 4, 6, 8)
                 .map(possiblePartitaIva::charAt)
@@ -66,7 +70,7 @@ public class TaxCodeValidator implements ConstraintValidator<TaxCode, String> {
         return Optional.of(Character.forDigit((int) c, 10));
     }
 
-    private Optional<Character> controlCodeCodiceFiscale(String fiscalCode) {
+    public static Optional<Character> controlCodeCodiceFiscale(String fiscalCode) {
 
         final boolean oddsAreValid = IntStream.of(0, 2, 4, 6, 8, 10, 12, 14)
                 .mapToObj(fiscalCode::charAt)

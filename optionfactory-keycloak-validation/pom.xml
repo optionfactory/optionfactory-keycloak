@@ -29,21 +29,13 @@
         <dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
+            <scope>provided</scope>
         </dependency>                   
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jboss.logging</groupId>
-                    <artifactId>jboss-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <scope>provided</scope>
         </dependency>        
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-        </dependency>
         
         <dependency>
             <groupId>junit</groupId>
@@ -51,49 +43,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <relocations>
-<!--                                <relocation>
-                                    <pattern>org.hibernate.validator</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.hibernate.validator</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>javax.validation</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.javax.validation</shadedPattern>
-                                </relocation>-->
-                                <relocation>
-                                    <pattern>com.google.i18n.phonenumbers</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.com.google.i18n.phonenumbers</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.fasterxml.classmate</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.fasterxml.classmate</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.sun.el</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.com.sun.el</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>javax.el</pattern>
-                                    <shadedPattern>net.optionfactory.keycloak.validation.shade.javax.el</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>    
-    </build>        
 </project>
