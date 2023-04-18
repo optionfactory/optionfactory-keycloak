@@ -4,7 +4,7 @@
     
     --keycloak-alert-color: #842029;
     --keycloak-alert-bg: #f8d7da;
-    --keycloak-alerg-border-color: #f5c2c7;
+    --keycloak-alert-border-color: #f5c2c7;
     
     --keycloak-header-color: #ededed;
     --keycloak-header-background-image: none;
@@ -31,15 +31,10 @@ body {
     background-size: cover;
 }
 
-label {
-    width: 100%;
-    font-size: 14px;
-}
-
 .alert-error {
     --bs-alert-color: var(--keycloak-alert-color);
     --bs-alert-bg: var(--keycloak-alert-bg);
-    --bs-alert-border-color: var(--keycloak-alerg-border-color);
+    --bs-alert-border-color: var(--keycloak-alert-border-color);
 }
 
 
@@ -133,53 +128,6 @@ h1, h2, h3, h4 {
     display: block;
 }
 
-.btn-primary {
-    --bs-btn-bg: #ff8c1f;
-    --bs-btn-border-color: var(--button-primary-color);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: var(--button-primary-focus-color);
-    --bs-btn-hover-border-color: var(--button-primary-focus-color);
-    --bs-btn-focus-shadow-rgb: 49, 132, 253;
-
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: var(--button-primary-focus-color);
-    --bs-btn-active-border-color: var(--button-primary-focus-color);
-    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-    --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #0d6efd;
-    --bs-btn-disabled-border-color: #0d6efd;
-}
-
-.btn-outline-primary {
-    --bs-btn-color: var(--button-primary-color);
-    --bs-btn-border-color: var(--button-primary-color);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: var(--button-primary-color);
-    --bs-btn-hover-border-color: var(--button-primary-color);
-    --bs-btn-focus-shadow-rgb: 13, 110, 253;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: var(--button-primary-color);
-    --bs-btn-active-border-color: var(--button-primary-color);
-    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-    --bs-btn-disabled-color: var(--button-primary-color);
-    --bs-btn-disabled-bg: transparent;
-    --bs-btn-disabled-border-color: var(--button-primary-color);
-    --bs-gradient: none;
-}
-
-.btn-icon {
-    padding: 0;
-    border: 0 !important;
-    width: 60px;
-    height: 60px;
-    border-radius: 18px;
-    user-select: none;
-}
-
-.btn-icon:hover {
-    box-shadow: 0px 0px 10px 0px #000000;
-}
-
 
 input.form-control {
     border-color: transparent;
@@ -198,8 +146,8 @@ input.form-control:focus-visible {
 }
 
 
-.form.group {
-    margin-bottom: 10px;
+.form-group {
+    margin-bottom: 0.5rem;
 }
 
 #kc-form-options {
@@ -208,7 +156,7 @@ input.form-control:focus-visible {
 }
 
 #kc-form-buttons {
-    margin-top: 24px;
+    margin-top: 2rem;
 }
 
 #kc-social-providers > hr {

@@ -5,7 +5,9 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <#-- opfa:modification start -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <#-- opfa:modification end -->
     <meta name="robots" content="noindex, nofollow">
 
     <#if properties.meta?has_content>
@@ -16,7 +18,7 @@
     <title>${msg("loginTitle",(realm.displayName!''))}</title>
     <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
 
-<#-- modification start -->
+<#-- opfa:modification start -->
 
 <#if properties.googleFonts?has_content>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,7 +46,7 @@
     </#if>
 </#list>
 
-<#-- modification end -->
+<#-- opfa:modification end -->
 
     <#if properties.stylesCommon?has_content>
         <#list properties.stylesCommon?split(' ') as style>
@@ -115,7 +117,7 @@
                         <#nested "show-username">
                         <div id="kc-username" class="${properties.kcFormGroupClass!}">
                             <label id="kc-attempted-username">${auth.attemptedUsername}</label>
-                            <a id="reset-login" href="${url.loginRestartFlowUrl}">
+                            <a id="reset-login" href="${url.loginRestartFlowUrl}" aria-label="${msg("restartLoginTooltip")}">
                                 <div class="kc-login-tooltip">
                                     <i class="${properties.kcResetFlowIcon!}"></i>
                                     <span class="kc-tooltip-text">${msg("restartLoginTooltip")}</span>
@@ -128,7 +130,7 @@
                 <#nested "show-username">
                 <div id="kc-username" class="${properties.kcFormGroupClass!}">
                     <label id="kc-attempted-username">${auth.attemptedUsername}</label>
-                    <a id="reset-login" href="${url.loginRestartFlowUrl}">
+                    <a id="reset-login" href="${url.loginRestartFlowUrl}" aria-label="${msg("restartLoginTooltip")}">
                         <div class="kc-login-tooltip">
                             <i class="${properties.kcResetFlowIcon!}"></i>
                             <span class="kc-tooltip-text">${msg("restartLoginTooltip")}</span>
