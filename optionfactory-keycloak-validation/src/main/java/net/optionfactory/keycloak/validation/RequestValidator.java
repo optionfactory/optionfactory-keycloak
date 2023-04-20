@@ -16,6 +16,8 @@ public interface RequestValidator extends Provider {
 
     public <T> void enforce(T o, Method m, Object[] parameterValues, Function<Set<ConstraintViolation<T>>, RuntimeException> ex, Class<?>... groups);
 
+    public <T> T unwrap(Class<T> k);
+
     @Override
     default void close() {
 

@@ -1,17 +1,23 @@
 package net.optionfactory.keycloak.validation.hibernate;
 
 import java.lang.reflect.Method;
+import java.util.Locale;
+import java.util.Locale.LanguageRange;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.HttpHeaders;
 import net.optionfactory.keycloak.validation.RequestValidator;
 import net.optionfactory.keycloak.validation.RequestValidatorFactory;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+import org.hibernate.validator.spi.messageinterpolation.LocaleResolverContext;
+import org.jboss.resteasy.core.ResteasyContext;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -20,13 +26,34 @@ public class HibernateRequestValidator implements RequestValidator {
 
     private final Validator validator;
 
-    public HibernateRequestValidator() {
+    public HibernateRequestValidator(Locale defaultLocale, Set<Locale> supportedLocales) {
         this.validator = Validation
                 .byProvider(HibernateValidator.class)
                 .configure()
+                .locales(supportedLocales)
+                .defaultLocale(defaultLocale)
+                .localeResolver((LocaleResolverContext lrc) -> {
+                    final var headers = ResteasyContext.getContextData(HttpHeaders.class);
+                    if (headers == null) {
+                        return lrc.getDefaultLocale();
+                    }
+                    final var header = headers.getRequestHeaders().getFirst("Accept-Language");
+                    if (header == null) {
+                        return lrc.getDefaultLocale();
+                    }
+                    final var requested = LanguageRange.parse(header);
+                    final var supported = lrc.getSupportedLocales();
+                    final var filtered = Locale.filter(requested, supported);
+                    return filtered.isEmpty() ? lrc.getDefaultLocale() : filtered.get(0);
+                })
                 .messageInterpolator(new ParameterMessageInterpolator())
                 .buildValidatorFactory()
                 .getValidator();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> k) {
+        return (T) validator;
     }
 
     @Override
@@ -69,7 +96,13 @@ public class HibernateRequestValidator implements RequestValidator {
 
         @Override
         public void init(Config.Scope config) {
-            this.validator = new HibernateRequestValidator();
+            final var defaultLocale = Locale.forLanguageTag(config.get("defaultLocale", "it"));
+            final var supportedLocales = Stream.of(config.get("supportedLocales", "ar,ca,cs,da,de,en,es,fr,fi,hu,it,ja,lt,nl,no,pl,pt-BR,ru,sk,sv,tr,zh-CN").split(","))
+                    .map(String::trim)
+                    .filter(ls -> !ls.isEmpty())
+                    .map(Locale::forLanguageTag)
+                    .collect(Collectors.toSet());
+            this.validator = new HibernateRequestValidator(defaultLocale, supportedLocales);
         }
 
         @Override

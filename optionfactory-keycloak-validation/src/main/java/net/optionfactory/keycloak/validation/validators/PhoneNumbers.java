@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.validation.hibernate.phhonenumbers;
+package net.optionfactory.keycloak.validation.validators;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
