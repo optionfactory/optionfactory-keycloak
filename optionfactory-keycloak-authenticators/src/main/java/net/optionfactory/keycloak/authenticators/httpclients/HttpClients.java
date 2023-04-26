@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.authenticators;
+package net.optionfactory.keycloak.authenticators.httpclients;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class HttpClients {
         public static KeyMaterial fromJksFile(String path, Optional<String> keystorePassword, Optional<String> keyPassword) {
             try {
                 final var keystore = KeyStore.getInstance("JKS");
-                try ( var is = new FileInputStream(path)) {
+                try (var is = new FileInputStream(path)) {
                     keystore.load(is, keystorePassword.map(pwd -> pwd.toCharArray()).orElse(null));
                 }
                 final KeyMaterial km = new KeyMaterial();
