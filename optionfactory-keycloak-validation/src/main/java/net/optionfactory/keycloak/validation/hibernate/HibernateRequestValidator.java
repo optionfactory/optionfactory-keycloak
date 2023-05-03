@@ -32,23 +32,25 @@ public class HibernateRequestValidator implements RequestValidator {
                 .configure()
                 .locales(supportedLocales)
                 .defaultLocale(defaultLocale)
-                .localeResolver((LocaleResolverContext lrc) -> {
-                    final var headers = ResteasyContext.getContextData(HttpHeaders.class);
-                    if (headers == null) {
-                        return lrc.getDefaultLocale();
-                    }
-                    final var header = headers.getRequestHeaders().getFirst("Accept-Language");
-                    if (header == null) {
-                        return lrc.getDefaultLocale();
-                    }
-                    final var requested = LanguageRange.parse(header);
-                    final var supported = lrc.getSupportedLocales();
-                    final var filtered = Locale.filter(requested, supported);
-                    return filtered.isEmpty() ? lrc.getDefaultLocale() : filtered.get(0);
-                })
-                .messageInterpolator(new ParameterMessageInterpolator())
+                .localeResolver(HibernateRequestValidator::resolveLocaleUsingAcceptLanguageHeader)
+                .messageInterpolator(new ParameterMessageInterpolator(supportedLocales, defaultLocale, HibernateRequestValidator::resolveLocaleUsingAcceptLanguageHeader, true))
                 .buildValidatorFactory()
                 .getValidator();
+    }
+
+    public static Locale resolveLocaleUsingAcceptLanguageHeader(LocaleResolverContext lrc) {
+        final var headers = ResteasyContext.getContextData(HttpHeaders.class);
+        if (headers == null) {
+            return lrc.getDefaultLocale();
+        }
+        final var header = headers.getRequestHeaders().getFirst("Accept-Language");
+        if (header == null) {
+            return lrc.getDefaultLocale();
+        }
+        final var requested = LanguageRange.parse(header);
+        final var supported = lrc.getSupportedLocales();
+        final var filtered = Locale.filter(requested, supported);
+        return filtered.isEmpty() ? lrc.getDefaultLocale() : filtered.get(0);
     }
 
     @Override

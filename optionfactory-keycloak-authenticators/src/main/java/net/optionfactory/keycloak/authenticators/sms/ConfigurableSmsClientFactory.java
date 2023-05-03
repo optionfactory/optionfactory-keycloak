@@ -41,7 +41,7 @@ public class ConfigurableSmsClientFactory implements SmsClientFactory {
         SmsClient.ensure(clientSecret != null, "clientSecret must be configured");
         final var region = config.get("region", "eu-west-1");
         final var senderIdOrNull = config.get("senderId");
-        logger.infof("ConfigurableSmsClientFactory configured: clientId:%s, clientSecret:%s, region:%s, senderId:%s",
+        logger.infof("SnsSmsClient configured: clientId:%s, clientSecret:%s, region:%s, senderId:%s",
                 clientId,
                 "***hidden***",
                 region,
