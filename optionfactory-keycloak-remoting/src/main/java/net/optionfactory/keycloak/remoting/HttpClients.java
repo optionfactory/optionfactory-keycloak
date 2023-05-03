@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.authenticators.httpclients;
+package net.optionfactory.keycloak.remoting;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -50,8 +50,21 @@ public class HttpClients {
     public enum HostnameOptions {
         VERIFY, TRUST;
     }
+    public static class Timeouts {
+        public int connect;
+        public int socket;
 
-    public static CloseableHttpClient create(String name, Optional<KeyMaterial> keyMaterial, HostnameOptions hostnameOptions) {
+        public static Timeouts defaults() {
+            final var t = new Timeouts();
+            t.connect = 3_000;
+            t.socket = 30_000;
+            return t;
+        }
+        
+        
+    }
+
+    public static CloseableHttpClient create(String name, Optional<KeyMaterial> keyMaterial, HostnameOptions hostnameOptions, Timeouts timeouts) {
         final var sslcb = new SSLContextBuilder();
         try {
             sslcb.loadTrustMaterial(null, (chain, authType) -> true);
@@ -68,7 +81,10 @@ public class HttpClients {
             final var counter = new AtomicLong(0);
             return HttpClientBuilder.create()
                     .setSSLSocketFactory(socketFactory)
-                    .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(3_000).build())
+                    .setDefaultRequestConfig(RequestConfig.custom()
+                            .setConnectTimeout(timeouts.connect)
+                            .setSocketTimeout(timeouts.socket)
+                            .build())
                     .setDefaultSocketConfig(SocketConfig.custom().setSoKeepAlive(true).build())
                     .addInterceptorLast((HttpRequest hr, HttpContext hc) -> {
                         if (hc.getAttribute("log") == null) {

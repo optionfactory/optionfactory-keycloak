@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.authenticators.httpclients;
+package net.optionfactory.keycloak.remoting;
 
 import java.util.List;
 import java.util.Set;

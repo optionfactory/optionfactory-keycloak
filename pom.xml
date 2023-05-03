@@ -42,6 +42,7 @@
         </repository>
     </distributionManagement>
     <modules>
+        <module>optionfactory-keycloak-remoting</module>
         <module>optionfactory-keycloak-validation</module>
         <module>optionfactory-keycloak-resources-auth</module>
         <module>optionfactory-keycloak-email-sender</module>

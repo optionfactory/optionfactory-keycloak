@@ -1,24 +1,23 @@
 :root {
-    --keycloak-primary-color: #0066CC;
-    --keycloak-gradient: linear-gradient(90deg,#409ed2 0,#4bba77);
+    --keycloak-body-bg: linear-gradient(90deg, #ffffff 0, #ffffff) 0 0/cover;
     
     --keycloak-alert-color: #842029;
     --keycloak-alert-bg: #f8d7da;
     --keycloak-alert-border-color: #f5c2c7;
     
     --keycloak-header-color: #ededed;
-    --keycloak-header-background-image: none;
+    --keycloak-header-background: none;
+    
     --keycloak-heading-color: #b3b3b3;
 
     --keycloak-card-background-color: transparent;
     --keycloak-card-box-shadow: none;
-    --keycloak-card-border-color: var(--keycloak-primary-color);
-    --keycloak-form-control-invalid-border-color: #dc3545;
+    --keycloak-card-border-color: #0066CC;
     
-    --bs-body-font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    --keycloak-form-control-invalid-border-color: #dc3545;
 
-    --button-primary-color: #eb6f14;
-    --button-primary-focus-color: #ff8c1f;
+    --keycloak-checkbox-bg-color: #0d6efd;
+    --bs-body-font-family: "Open Sans", Helvetica, Arial, sans-serif;
 
     --keycloak-social-providers-box-shadow: 0 10px 18px -5px #7090b033;
 }
@@ -27,8 +26,7 @@
 body {
     height: 100%;
     width: 100%;
-    background-image: var(--keycloak-gradient);
-    background-size: cover;
+    background: var(--keycloak-body-bg);
 }
 
 .alert-error {
@@ -68,9 +66,8 @@ body {
     margin: 0 auto;
     padding: 40px 0;
     
-    background-image: var(--keycloak-header-background-image);    
-    background-repeat: no-repeat;
-    background-position: center;    
+    background: var(--keycloak-header-background);
+    
 }
 
 @media (min-width: 576px) {
@@ -145,6 +142,29 @@ input.form-control:focus-visible {
     border: 1px solid lightgray;
 }
 
+
+input[type=checkbox] {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.25em;
+    vertical-align: top;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid rgba(0,0,0,.25);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-print-color-adjust: exact;
+    border-radius: 0.25em;    
+}
+
+input[type=checkbox]:checked {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+    background-color: var(--keycloak-checkbox-bg-color);
+    border-color: var(--keycloak-checkbox-bg-color);
+}
 
 .form-group {
     margin-bottom: 0.5rem;
