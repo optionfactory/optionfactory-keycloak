@@ -1,7 +1,6 @@
 package net.optionfactory.keycloak.providers;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Set;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
@@ -21,7 +20,7 @@ public class Conf {
     public String anyOf(String key, String... values) {
         final var value = string(key);
         final var domain = Set.of(values);
-        ensure(domain.contains(key), "'%s' must be one of %s", key, domain);
+        ensure(domain.contains(value), "'%s' must be one of %s, got: '%s'", key, domain, value);
         return value;
     }
 
