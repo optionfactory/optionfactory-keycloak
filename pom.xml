@@ -51,8 +51,6 @@
         <module>optionfactory-keycloak-welcome</module>
         <module>optionfactory-keycloak-bootstrap</module>
         <module>optionfactory-keycloak-apple-identity-provider</module>
-        <module>optionfactory-keycloak-spid</module>
-        <module>optionfactory-keycloak-cie</module>
         <module>optionfactory-keycloak-authenticators</module>
     </modules>
 
