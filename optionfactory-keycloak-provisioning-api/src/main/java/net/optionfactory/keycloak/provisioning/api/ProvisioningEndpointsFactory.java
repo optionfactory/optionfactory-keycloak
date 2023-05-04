@@ -1,13 +1,13 @@
 package net.optionfactory.keycloak.provisioning.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.optionfactory.keycloak.providers.ResourceAuthenticator;
 import net.optionfactory.keycloak.validation.RequestValidator;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
-import net.optionfactory.keycloak.resources.auth.ResourceAuthenticator;
 
 public class ProvisioningEndpointsFactory implements RealmResourceProviderFactory {
 
@@ -16,7 +16,7 @@ public class ProvisioningEndpointsFactory implements RealmResourceProviderFactor
 
     @Override
     public RealmResourceProvider create(KeycloakSession session) {
-        session.getProvider(ResourceAuthenticator.class).enforceScope(requiredScopeName);
+        ResourceAuthenticator.enforceScope(session, requiredScopeName);
         final var validator = session.getProvider(RequestValidator.class);
         return new RealmResourceProvider() {
             @Override

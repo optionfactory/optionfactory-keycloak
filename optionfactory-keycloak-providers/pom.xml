@@ -6,9 +6,9 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>3.0-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-resources-auth</artifactId>
+    <artifactId>optionfactory-keycloak-providers</artifactId>
     <description>optionfactory-keycloak realm resource authenticator</description>
-    <name>net.optionfactory.keycloak:optionfactory-keycloak-resources-auth</name>
+    <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
     <dependencies>  
         <dependency>
@@ -21,7 +21,6 @@
             <artifactId>keycloak-services</artifactId>
             <scope>provided</scope>
         </dependency>
-
         
         <dependency>
             <groupId>junit</groupId>

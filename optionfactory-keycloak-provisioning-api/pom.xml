@@ -19,7 +19,7 @@
         </dependency>        
         <dependency>
             <groupId>net.optionfactory.keycloak</groupId>
-            <artifactId>optionfactory-keycloak-resources-auth</artifactId>
+            <artifactId>optionfactory-keycloak-providers</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>        

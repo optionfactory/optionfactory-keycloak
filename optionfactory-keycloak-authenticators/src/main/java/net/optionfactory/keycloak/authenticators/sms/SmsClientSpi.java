@@ -7,6 +7,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import net.optionfactory.keycloak.providers.Conf;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -51,21 +52,20 @@ public class SmsClientSpi implements Spi {
         private final AtomicReference<SmsClient> clientRef = new AtomicReference<>();
 
         @Override
-        public void init(Config.Scope config) {
-            final var type = config.get("type", "placebo");
-            SmsClient.ensure(Set.of("placebo", "sns").contains(type), "type can only be placebo or sns: got %s", type);
+        public void init(Config.Scope scope) {
+            final var config = new Conf(getId(), scope);
+
+            final var type = config.anyOf("type", "placebo", "sns");
             if ("placebo".equals(type)) {
                 logger.infof("configured a PlaceboSmsClient");
                 clientRef.set(new PlaceboSmsClient());
                 return;
             }
 
-            final var clientId = config.get("clientId");
-            SmsClient.ensure(clientId != null, "clientId must be configured");
-            final var clientSecret = config.get("clientSecret");
-            SmsClient.ensure(clientSecret != null, "clientSecret must be configured");
-            final var region = config.get("region", "eu-west-1");
-            final var senderIdOrNull = config.get("senderId");
+            final var clientId = config.string("clientId");
+            final var clientSecret = config.string("clientSecret");
+            final var region = config.string("region", "eu-west-1");
+            final var senderIdOrNull = config.string("senderId", null);
             logger.infof("SnsSmsClient configured: clientId:%s, clientSecret:%s, region:%s, senderId:%s",
                     clientId,
                     "***hidden***",

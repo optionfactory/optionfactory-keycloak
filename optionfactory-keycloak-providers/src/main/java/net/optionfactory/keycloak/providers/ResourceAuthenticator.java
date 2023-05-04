@@ -1,4 +1,4 @@
-package net.optionfactory.keycloak.resources.auth;
+package net.optionfactory.keycloak.providers;
 
 import java.util.stream.Stream;
 import javax.ws.rs.ForbiddenException;

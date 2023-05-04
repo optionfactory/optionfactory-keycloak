@@ -37,10 +37,6 @@ public class SnsSmsClient implements SmsClient {
     private final HttpClient client;
 
     public SnsSmsClient(HttpClient client, String accessKey, String secretKey, String region, String senderIdOrNull) {
-        SmsClient.ensure(client != null, "httpClient must be configured");
-        SmsClient.ensure(accessKey != null, "accessKey must be configured");
-        SmsClient.ensure(secretKey != null, "secretKey must be configured");
-        SmsClient.ensure(region != null, "region must be configured");
         this.client = client;
         this.accessKey = accessKey;
         this.secretKey = secretKey;

@@ -12,6 +12,12 @@
     <packaging>jar</packaging>
     <dependencies>      
         <dependency>
+            <groupId>net.optionfactory.keycloak</groupId>
+            <artifactId>optionfactory-keycloak-providers</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
             <scope>provided</scope>
