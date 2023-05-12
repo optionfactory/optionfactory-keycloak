@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.UncheckedIOException;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
 public class AuthNote<T> {
@@ -27,6 +28,25 @@ public class AuthNote<T> {
 
     public Optional<T> load(AuthenticationSessionModel as) {
         return Optional.ofNullable(unmarshal(as.getAuthNote(key)));
+    }
+
+    public Optional<T> load(AuthenticationSessionModel as, T defaultValue) {
+        T v = unmarshal(as.getAuthNote(key));
+        if (v != null) {
+            Optional.of(v);
+        }
+        store(as, defaultValue);
+        return Optional.of(defaultValue);
+    }
+
+    public Optional<T> load(AuthenticationSessionModel as, Supplier<T> supplier) {
+        T v = unmarshal(as.getAuthNote(key));
+        if (v != null) {
+            Optional.of(v);
+        }
+        final T defaultValue = supplier.get();
+        store(as, defaultValue);
+        return Optional.of(defaultValue);
     }
 
     public boolean exists(AuthenticationSessionModel as) {

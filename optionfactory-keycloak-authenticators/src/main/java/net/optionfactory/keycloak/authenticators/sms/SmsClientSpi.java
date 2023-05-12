@@ -5,7 +5,6 @@ import java.io.UncheckedIOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import net.optionfactory.keycloak.providers.Conf;
 import org.apache.http.client.config.RequestConfig;

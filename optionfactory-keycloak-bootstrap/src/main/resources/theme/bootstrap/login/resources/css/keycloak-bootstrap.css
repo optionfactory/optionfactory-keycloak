@@ -179,6 +179,10 @@ input[type=checkbox]:checked {
     margin-top: 2rem;
 }
 
+#kc-content-wrapper .btn.w-100 ~ .btn.w-100 {
+    margin-top: 10px;
+}
+
 #kc-social-providers > hr {
     display: none;
 }
