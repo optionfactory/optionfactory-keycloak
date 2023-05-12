@@ -142,6 +142,13 @@ input.form-control:focus-visible {
     border: 1px solid lightgray;
 }
 
+/* kcFormCheckClass does not exist and .checkbox is always used */
+.form-check, .checkbox {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5em;
+    margin-bottom: 0.125rem;
+}
 
 input[type=checkbox] {
     width: 1em;
@@ -216,3 +223,4 @@ input[type=checkbox]:checked {
     margin-right: 30px;
     font-size: 23px;
 }
+
