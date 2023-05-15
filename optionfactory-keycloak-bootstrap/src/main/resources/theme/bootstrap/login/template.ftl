@@ -1,4 +1,5 @@
-<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false>
+<#-- opfa:imported from 21.1.1 -->
+<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showInfo=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}">
 
@@ -18,35 +19,26 @@
     <title>${msg("loginTitle",(realm.displayName!''))}</title>
     <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
 
-<#-- opfa:modification start -->
+    <#-- opfa:modification start (google fonts, baseHeaders, themeHeaders)-->
 
-<#if properties.googleFonts?has_content>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?${properties.googleFonts}" rel="stylesheet">
-</#if>
-
-
-<#if properties.useCdn == 'true'>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.min.css" integrity="sha256-BicZsQAhkGHIoR//IB2amPN5SrRb3fHB8tFsnqRAwnk=" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
-<#else>
-    <link rel="stylesheet" href="${url.resourcesPath}/css/bootstrap.min.css">
-    <link rel="stylesheet" href="${url.resourcesPath}/css/bootstrap-icons.css">
-    <script src="${url.resourcesPath}/js/bootstrap.bundle.min.js"></script>        
-    <script src="${url.resourcesPath}/js/jquery.min.js"></script>
-</#if>
-<link rel="stylesheet" href="${url.resourcesPath}/css/keycloak-bootstrap.css">
-
-<#list 0..20 as index>
-    <#if properties['customHeaders.' + index]?has_content>
-        ${properties['customHeaders.' + index]?no_esc}
+    <#if properties.googleFonts?has_content>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?${properties.googleFonts}" rel="stylesheet">
     </#if>
-</#list>
 
-<#-- opfa:modification end -->
+    <#list 0..10 as index>
+        <#if properties['baseHeaders.' + index]?has_content>
+            ${properties['baseHeaders.' + index]?replace("{resources}", "${url.resourcesPath}")?replace("{commonResources}", "${url.resourcesCommonPath}")?no_esc}
+        </#if>
+    </#list>
+    <#list 0..50 as index>
+        <#if properties['themeHeaders.' + index]?has_content>
+            ${properties['themeHeaders.' + index]?replace("{resources}", "${url.resourcesPath}")?replace("{commonResources}", "${url.resourcesCommonPath}")?no_esc}
+        </#if>
+    </#list>
+
+    <#-- opfa:modification end -->
 
     <#if properties.stylesCommon?has_content>
         <#list properties.stylesCommon?split(' ') as style>
@@ -71,7 +63,25 @@
 </head>
 
 <body class="${properties.kcBodyClass!}">
-<div class="${properties.kcLoginClass!}">
+    <#-- opfa:modification start -->
+    <#if (properties.cards!"false") == 'true'>
+        <div class="left">
+            <#if msg('leftCardTitle')?has_content || msg('leftCardText')?has_content>
+            <div class="card p-4">
+                <#if msg('leftCardTitle')?has_content>
+                    <h5>${msg("leftCardTitle")}</h5>
+                </#if>
+                <#if msg('leftCardText')?has_content>
+                    <p>${msg("leftCardText")}</p>
+                </#if>
+            </div>
+            </#if>
+        </div>
+
+        <div class="right">
+    </#if>
+    <#-- opfa:modification end -->
+    <div class="${properties.kcLoginClass!}">
     <div id="kc-header" class="${properties.kcHeaderClass!}">
         <div id="kc-header-wrapper"
              class="${properties.kcHeaderWrapperClass!}">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
@@ -97,15 +107,19 @@
         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
             <#if displayRequiredFields>
                 <div class="${properties.kcContentWrapperClass!}">
+                    <#-- opfa:modification start: added header2 -->
+                    <h1 id="kc-page-title"><#nested "header"></h1>
+                    <h2 id="kc-page-subtitle"><#nested "header2"></h2>
                     <div class="${properties.kcLabelWrapperClass!} subtitle">
                         <span class="subtitle"><span class="required">*</span> ${msg("requiredFields")}</span>
                     </div>
-                    <div class="col-md-10">
-                        <h1 id="kc-page-title"><#nested "header"></h1>
-                    </div>
+                    <#-- opfa:modification end -->
                 </div>
             <#else>
+                <#-- opfa:modification start: added header2 -->
                 <h1 id="kc-page-title"><#nested "header"></h1>
+                <h2 id="kc-page-subtitle"><#nested "header2"></h2>
+                <#-- opfa:modification end -->
             </#if>
         <#else>
             <#if displayRequiredFields>
@@ -142,6 +156,20 @@
       </header>
       <div id="kc-content">
         <div id="kc-content-wrapper">
+          <#-- opfa:modification start -->
+          <#if showInfo && msg("infoText")?has_content>
+            <div class="alert alert-info fade show" role="alert" style="font-size:14px">
+              <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
+              ${msg("infoText")}
+            </div>
+          </#if>
+          <#if showTabs>
+            <div class="d-flex mb-3">
+              <a class="btn btn-info flex-grow-1 m-2 disabled">${msg("doLogIn")}</a>
+              <a class="btn btn-info flex-grow-1 m-2" href="${url.registrationUrl}">${msg("doRegister")}</a>
+            </div>
+          </#if>
+          <#-- opfa:modification end -->
 
           <#-- App-initiated actions should not see warning messages about the need to complete the action -->
           <#-- during login.                                                                               -->
@@ -180,8 +208,13 @@
           </#if>
         </div>
       </div>
-
     </div>
+  <#-- opfa:modification start -->
+  <#if (properties.cards!"false") == 'true'>
+  </div>
+  </#if>
+  <#-- opfa:modification end -->
+
   </div>
 </body>
 </html>
