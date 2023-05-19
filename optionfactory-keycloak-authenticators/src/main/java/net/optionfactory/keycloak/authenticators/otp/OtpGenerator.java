@@ -13,7 +13,7 @@ public interface OtpGenerator {
 
     public static OtpGenerator of(Mode mode, String preset, int digits) {
         if (mode == Mode.PRESET) {
-            return new PresetOtpGenator(preset);
+            return new PresetOtpGenerator(preset);
         }
         return new RandomOtpGenerator(digits);
     }
@@ -34,11 +34,11 @@ public interface OtpGenerator {
 
     }
 
-    public static class PresetOtpGenator implements OtpGenerator {
+    public static class PresetOtpGenerator implements OtpGenerator {
 
         private final String preset;
 
-        public PresetOtpGenator(String preset) {
+        public PresetOtpGenerator(String preset) {
             this.preset = preset;
         }
 
