@@ -20,9 +20,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.jboss.logging.Logger;
@@ -34,9 +34,9 @@ public class SnsSmsClient implements SmsClient {
     private final String secretKey;
     private final String region;
     private final String senderIdOrNull;
-    private final HttpClient client;
+    private final CloseableHttpClient client;
 
-    public SnsSmsClient(HttpClient client, String accessKey, String secretKey, String region, String senderIdOrNull) {
+    public SnsSmsClient(CloseableHttpClient client, String accessKey, String secretKey, String region, String senderIdOrNull) {
         this.client = client;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
@@ -74,11 +74,12 @@ public class SnsSmsClient implements SmsClient {
         request.setEntity(entity);
         request.setHeaders(headers.toArray(l -> new BasicHeader[l]));
         try {
-            final var response = client.execute(request);
-            if (response.getStatusLine().getStatusCode() == 200) {
-                return uuid;
+            try (final var response = client.execute(request)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    return uuid;
+                }
+                throw new IllegalStateException(String.format("Error sending message: %s", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8)));
             }
-            throw new IllegalStateException(String.format("Error sending message: %s", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8)));
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
@@ -160,6 +161,5 @@ public class SnsSmsClient implements SmsClient {
             throw new UncheckedIOException(ex);
         }
     }
-
 
 }
