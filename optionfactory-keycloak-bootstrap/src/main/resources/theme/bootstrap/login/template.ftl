@@ -1,5 +1,5 @@
 <#-- opfa:imported from 21.1.1 -->
-<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showInfo=false>
+<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}">
 
@@ -157,12 +157,6 @@
       <div id="kc-content">
         <div id="kc-content-wrapper">
           <#-- opfa:modification start -->
-          <#if showInfo && msg("infoText")?has_content>
-            <div class="alert alert-info fade show" role="alert" style="font-size:14px">
-              <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
-              ${msg("infoText")}
-            </div>
-          </#if>
           <#if showTabs>
             <div class="d-flex mb-3">
               <a class="btn btn-info flex-grow-1 m-2 disabled">${msg("doLogIn")}</a>
@@ -211,6 +205,13 @@
     </div>
   <#-- opfa:modification start -->
   <#if (properties.cards!"false") == 'true'>
+        <#if showFooterCard>
+            <div class="footer-card">
+                <div class="card p-4">
+                    <#nested "footerCard">
+                </div>
+            </div>
+        </#if>
   </div>
   </#if>
   <#-- opfa:modification end -->
