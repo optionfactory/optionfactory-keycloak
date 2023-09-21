@@ -8,10 +8,10 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.Payload;
+import jakarta.validation.Constraint;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.Payload;
 import net.optionfactory.keycloak.validation.validators.Email.Validator;
 import org.keycloak.validate.validators.EmailValidator;
 

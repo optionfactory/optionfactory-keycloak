@@ -3,7 +3,7 @@ package net.optionfactory.keycloak.validation;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.function.Function;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 import org.keycloak.provider.Provider;
 
 public interface RequestValidator extends Provider {

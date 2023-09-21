@@ -1,8 +1,8 @@
 package net.optionfactory.keycloak.providers;
 
 import java.util.stream.Stream;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotAuthorizedException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.managers.AppAuthManager.BearerTokenAuthenticator;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
