@@ -1,7 +1,7 @@
-<#-- opfa:imported from 21.1.1 -->
+<#-- opfa:imported from 22.0.3 -->
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
-<html class="${properties.kcHtmlClass!}">
+<html class="${properties.kcHtmlClass!}"<#if realm.internationalizationEnabled> lang="${locale.currentLanguageTag}"</#if>>
 
 <head>
     <meta charset="utf-8">
