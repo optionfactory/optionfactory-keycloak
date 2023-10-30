@@ -59,8 +59,8 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.parameters>true</maven.compiler.parameters>
-        <kc.version>22.0.3</kc.version>      
-        <libphonenumber.version>8.13.10</libphonenumber.version>      
+        <kc.version>22.0.5</kc.version>      
+        <libphonenumber.version>8.13.23</libphonenumber.version>      
         <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>      
     </properties>
 
