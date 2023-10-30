@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>4.1-SNAPSHOT</version>
+        <version>4.1</version>
     </parent>
     <artifactId>optionfactory-keycloak-validation</artifactId>
     <description>optionfactory-keycloak validation</description>
