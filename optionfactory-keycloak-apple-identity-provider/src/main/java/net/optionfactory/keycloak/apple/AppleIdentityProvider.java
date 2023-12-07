@@ -105,7 +105,7 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         return "email name";
     }
 
-    public class AppleOidcEndpoint extends OIDCIdentityProvider.OIDCEndpoint {
+    public static class AppleOidcEndpoint extends OIDCIdentityProvider.OIDCEndpoint {
 
         private final AtomicReference<String> userJson;
 
