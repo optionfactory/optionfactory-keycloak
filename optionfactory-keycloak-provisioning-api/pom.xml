@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>4.4</version>
+        <version>4.5-SNAPSHOT</version>
     </parent>
     <artifactId>optionfactory-keycloak-provisioning-api</artifactId>
     <description>optionfactory-keycloak provisioning API</description>
