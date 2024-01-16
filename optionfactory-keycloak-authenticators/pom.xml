@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>4.5</version>
+        <version>4.6-SNAPSHOT</version>
     </parent>
     <artifactId>optionfactory-keycloak-authenticators</artifactId>
     <description>optionfactory-keycloak authenticators</description>
