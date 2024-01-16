@@ -1,4 +1,4 @@
-<#-- opfa:imported from 22.0.3 -->
+<#-- opfa:imported from 23.0.4 -->
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}"<#if realm.internationalizationEnabled> lang="${locale.currentLanguageTag}"</#if>>
@@ -59,6 +59,17 @@
         <#list scripts as script>
             <script src="${script}" type="text/javascript"></script>
         </#list>
+    </#if>
+    <#if authenticationSession??>
+        <script type="module">
+            import { checkCookiesAndSetTimer } from "${url.resourcesPath}/js/authChecker.js";
+
+            checkCookiesAndSetTimer(
+              "${authenticationSession.authSessionId}",
+              "${authenticationSession.tabId}",
+              "${url.ssoLoginInOtherTabsUrl}"
+            );
+        </script>
     </#if>
 </head>
 
