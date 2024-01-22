@@ -60,6 +60,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <kc.version>23.0.4</kc.version>
+        <resteasy.reactive.common.version>3.2.9.Final</resteasy.reactive.common.version>        
         <libphonenumber.version>8.13.28</libphonenumber.version>
         <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>
     </properties>
@@ -86,12 +87,6 @@
             </dependency>
             <dependency>
                 <groupId>org.keycloak</groupId>
-                <artifactId>keycloak-services</artifactId>
-                <version>${kc.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-saml-core</artifactId>
                 <version>${kc.version}</version>
                 <scope>provided</scope>
@@ -108,6 +103,13 @@
                 <version>${kc.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>io.quarkus.resteasy.reactive</groupId>
+                <artifactId>resteasy-reactive-common</artifactId>
+                <version>${resteasy.reactive.common.version}</version>    
+                <scope>provided</scope>
+            </dependency>
+            
             <dependency>
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>

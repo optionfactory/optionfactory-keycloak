@@ -10,12 +10,13 @@
     <description>optionfactory-keycloak validation</description>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
-    <dependencies>  
+    <dependencies>
         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>services</artifactId>
+            <groupId>io.quarkus.resteasy.reactive</groupId>
+            <artifactId>resteasy-reactive-common</artifactId>
             <scope>provided</scope>
-        </dependency>        
+        </dependency>
+            
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
@@ -30,7 +31,7 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
             <scope>provided</scope>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
@@ -41,7 +42,7 @@
             <artifactId>hibernate-validator</artifactId>
             <scope>provided</scope>
         </dependency>        
-        
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
