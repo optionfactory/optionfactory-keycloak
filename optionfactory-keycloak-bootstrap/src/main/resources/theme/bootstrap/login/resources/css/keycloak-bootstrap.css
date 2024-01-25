@@ -104,11 +104,16 @@ h1, h2, h3, h4 {
     background-size: calc(.75em + .375rem) calc(.75em + .375rem);
 }
 
+.form-group:has([aria-invalid=true]:not(:hover):not(:focus-visible)) .btn {
+    border-color: var(--keycloak-form-control-invalid-border-color);
+}
+    
+
 .input-group input,
 .input-group input:hover,
 .input-group input:focus-visible
 {
-    border-right: 0px;
+    border-right: 0px !important;
 }
 
 .input-group .btn {
@@ -118,9 +123,11 @@ h1, h2, h3, h4 {
     font-size: 22px;
 }
 
-.form-control:has([aria-invalid=true]) .btn {
-    border-color: var(--keycloak-form-control-invalid-border-color);
+.input-group .btn:active {
+    color: var(--bs-link-color);
+    border-color: var(--theme-border-color);
 }
+
 
 
 .form-group:has([aria-invalid=true]) .invalid-feedback,
