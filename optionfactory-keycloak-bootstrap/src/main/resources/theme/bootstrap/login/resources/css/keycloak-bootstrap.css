@@ -104,10 +104,29 @@ h1, h2, h3, h4 {
     background-size: calc(.75em + .375rem) calc(.75em + .375rem);
 }
 
-[aria-invalid=true]~.invalid-feedback, [aria-invalid=true]~.invalid-tooltip {
-    display: block;
+.input-group input,
+.input-group input:hover,
+.input-group input:focus-visible
+{
+    border-right: 0px;
 }
 
+.input-group .btn {
+    color: var(--bs-link-color);
+    border: 1px solid var(--theme-border-color);
+    border-left: 0px;
+    font-size: 22px;
+}
+
+.form-control:has([aria-invalid=true]) .btn {
+    border-color: var(--keycloak-form-control-invalid-border-color);
+}
+
+
+.form-group:has([aria-invalid=true]) .invalid-feedback,
+.form-group:has([aria-invalid=true]) .invalid-tooltip {
+    display: block;
+}
 
 input.form-control {
     border-color: transparent;
