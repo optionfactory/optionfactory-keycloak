@@ -14,6 +14,9 @@
     --keycloak-card-box-shadow: none;
     --keycloak-card-border-color: #0066CC;
     
+    
+    --keycloak-input-group-button-color: #0d6efd;
+        
     --keycloak-form-control-invalid-border-color: #dc3545;
 
     --keycloak-checkbox-bg-color: #0d6efd;
@@ -107,7 +110,12 @@ h1, h2, h3, h4 {
 .form-group:has([aria-invalid=true]:not(:hover):not(:focus-visible)) .btn {
     border-color: var(--keycloak-form-control-invalid-border-color);
 }
-    
+
+.form-group:has([aria-invalid=true]) .invalid-feedback,
+.form-group:has([aria-invalid=true]) .invalid-tooltip {
+    display: block;
+}
+
 
 .input-group input,
 .input-group input:hover,
@@ -117,23 +125,16 @@ h1, h2, h3, h4 {
 }
 
 .input-group .btn {
-    color: var(--bs-link-color);
+    color: var(--keycloak-input-group-button-color);
     border: 1px solid var(--theme-border-color);
     border-left: 0px;
-    font-size: 22px;
 }
 
 .input-group .btn:active {
-    color: var(--bs-link-color);
+    color: var(--keycloak-input-group-button-color);
     border-color: var(--theme-border-color);
 }
 
-
-
-.form-group:has([aria-invalid=true]) .invalid-feedback,
-.form-group:has([aria-invalid=true]) .invalid-tooltip {
-    display: block;
-}
 
 input.form-control {
     border-color: transparent;
