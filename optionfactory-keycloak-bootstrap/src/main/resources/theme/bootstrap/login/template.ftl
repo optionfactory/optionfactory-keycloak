@@ -6,8 +6,11 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
     <#-- opfa:modification start -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="email=no">
     <#-- opfa:modification end -->
     <meta name="robots" content="noindex, nofollow">
 
