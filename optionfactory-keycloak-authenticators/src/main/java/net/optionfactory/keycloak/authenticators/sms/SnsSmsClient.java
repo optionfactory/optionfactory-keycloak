@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -78,7 +77,9 @@ public class SnsSmsClient implements SmsClient {
                 if (response.getStatusLine().getStatusCode() == 200) {
                     return uuid;
                 }
-                throw new IllegalStateException(String.format("Error sending message: %s", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8)));
+                try (var is = response.getEntity().getContent()) {
+                    throw new IllegalStateException(String.format("Error sending message: %s", new String(is.readAllBytes(), StandardCharsets.UTF_8)));
+                }
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -156,7 +157,7 @@ public class SnsSmsClient implements SmsClient {
 
     private static byte[] formToBytes(UrlEncodedFormEntity entity) {
         try (final var is = entity.getContent()) {
-            return IOUtils.toByteArray(is);
+            return is.readAllBytes();
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

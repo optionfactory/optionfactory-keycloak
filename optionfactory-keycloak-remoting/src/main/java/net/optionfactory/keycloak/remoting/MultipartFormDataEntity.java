@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.BasicHeader;
@@ -75,7 +74,7 @@ public class MultipartFormDataEntity implements HttpEntity {
 
     @Override
     public void writeTo(OutputStream os) throws IOException {
-        IOUtils.copy(getContent(), os);
+        getContent().transferTo(os);
     }
 
 }

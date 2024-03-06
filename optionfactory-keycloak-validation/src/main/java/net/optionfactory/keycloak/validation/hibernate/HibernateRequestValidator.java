@@ -17,8 +17,8 @@ import net.optionfactory.keycloak.validation.RequestValidatorFactory;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.hibernate.validator.spi.messageinterpolation.LocaleResolverContext;
-import org.jboss.resteasy.core.ResteasyContext;
 import org.keycloak.Config;
+import org.keycloak.common.util.Resteasy;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
@@ -39,7 +39,8 @@ public class HibernateRequestValidator implements RequestValidator {
     }
 
     public static Locale resolveLocaleUsingAcceptLanguageHeader(LocaleResolverContext lrc) {
-        final var headers = ResteasyContext.getContextData(HttpHeaders.class);
+        
+        final var headers = Resteasy.getContextData(HttpHeaders.class);
         if (headers == null) {
             return lrc.getDefaultLocale();
         }

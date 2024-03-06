@@ -17,12 +17,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.angus.mail.smtp.SMTPMessage;
 import org.jboss.logging.Logger;
+import org.keycloak.common.enums.HostnameVerificationPolicy;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailSenderProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.theme.Theme;
-import org.keycloak.truststore.HostnameVerificationPolicy;
 import org.keycloak.truststore.JSSETruststoreConfigurator;
 import org.keycloak.vault.VaultStringSecret;
 
