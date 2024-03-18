@@ -112,7 +112,10 @@ h1, h2, h3, h4 {
 }
 
 .form-group:has([aria-invalid=true]) .invalid-feedback,
-.form-group:has([aria-invalid=true]) .invalid-tooltip {
+.form-group:has([aria-invalid=true]) .invalid-tooltip,
+.form-check:has([aria-invalid=true]) .invalid-feedback, 
+.form-check:has([aria-invalid=true]) .invalid-tooltip
+{
     display: block;
 }
 
