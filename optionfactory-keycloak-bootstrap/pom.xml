@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>6.3-SNAPSHOT</version>
+        <version>6.3</version>
     </parent>
     <artifactId>optionfactory-keycloak-bootstrap</artifactId>
     <description>optionfactory-keycloak bootstrap based theme</description>
