@@ -24,6 +24,11 @@
             <scope>provided</scope>
         </dependency>        
         <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>provided</scope>
+        </dependency>   
+        <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
             <scope>provided</scope>

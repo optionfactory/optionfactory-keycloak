@@ -56,12 +56,12 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.parameters>true</maven.compiler.parameters>
-        <kc.version>24.0.4</kc.version>
-        <resteasy.reactive.common.version>3.8.4</resteasy.reactive.common.version>
-        <libphonenumber.version>8.13.37</libphonenumber.version>
+        <kc.version>25.0.1</kc.version>
+        <resteasy.reactive.common.version>3.8.5</resteasy.reactive.common.version>
+        <libphonenumber.version>8.13.40</libphonenumber.version>
         <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>
     </properties>
 
@@ -109,7 +109,6 @@
                 <version>${resteasy.reactive.common.version}</version>    
                 <scope>provided</scope>
             </dependency>
-            
             <dependency>
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
@@ -154,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -194,7 +193,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.6.3</version>
+                        <version>3.7.0</version>
                         <configuration>
                             <doclint>none</doclint>
                         </configuration>

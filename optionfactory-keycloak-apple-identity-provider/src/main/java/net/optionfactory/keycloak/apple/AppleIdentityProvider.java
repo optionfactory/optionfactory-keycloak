@@ -114,10 +114,16 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
             this.userJson = userJson;
         }
 
+        
         @POST
-        public Response authResponse(@FormParam(value = AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_STATE) String state, @FormParam(value = AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_CODE) String authorizationCode, @FormParam(value = "user") String userJson, @FormParam(value = OAuth2Constants.ERROR) String error) {
+        public Response authResponse(
+                @FormParam(value = AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_STATE) String state, 
+                @FormParam(value = AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_CODE) String authorizationCode, 
+                @FormParam(value = "user") String userJson, 
+                @FormParam(value = OAuth2Constants.ERROR) String error,
+                @FormParam(value = OAuth2Constants.ERROR_DESCRIPTION) String errorDescription) {
             this.userJson.set(userJson);
-            return super.authResponse(state, authorizationCode, error);
+            return super.authResponse(state, authorizationCode, error, errorDescription);
         }
 
     }
