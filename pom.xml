@@ -5,7 +5,7 @@
 
     <groupId>net.optionfactory.keycloak</groupId>
     <artifactId>optionfactory-keycloak</artifactId>
-    <version>6.8</version>
+    <version>6.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>optionfactory-keycloak parent pom</description>
     <name>${project.groupId}:${project.artifactId}</name>
