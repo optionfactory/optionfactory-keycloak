@@ -246,7 +246,3 @@ input[type=checkbox]:checked {
     margin-right: 30px;
     font-size: 23px;
 }
-
-.legend-mandatory-fields {
-    display: none;
-}

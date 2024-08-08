@@ -199,8 +199,6 @@
               </div>
           </#if>
 
-          <div class="legend-mandatory-fields" aria-hidden="true">I campi contrassegnati con (*) sono obbligatori</div>
-
           <#nested "form">
 
           <#if auth?has_content && auth.showTryAnotherWayLink()>
