@@ -80,7 +80,7 @@
     </script>
 </head>
 
-<body class="${properties.kcBodyClass!}">
+<body class="${properties.kcBodyClass!} ${bodyClass}">
     <#-- opfa:modification start -->
     <#if (properties.cards!"false") == 'true'>
         <div class="left">
@@ -198,6 +198,8 @@
                       <span class="${properties.kcAlertTitleClass!}">${kcSanitize(message.summary)?no_esc}</span>
               </div>
           </#if>
+
+          <div class="legend-mandatory-fields" aria-hidden="true">I campi contrassegnati con (*) sono obbligatori</div>
 
           <#nested "form">
 

@@ -1,22 +1,22 @@
 :root {
     --keycloak-body-bg: linear-gradient(90deg, #ffffff 0, #ffffff) 0 0/cover;
-    
+
     --keycloak-alert-color: #842029;
     --keycloak-alert-bg: #f8d7da;
     --keycloak-alert-border-color: #f5c2c7;
-    
+
     --keycloak-header-color: #ededed;
     --keycloak-header-background: none;
-    
+
     --keycloak-heading-color: #b3b3b3;
 
     --keycloak-card-background-color: transparent;
     --keycloak-card-box-shadow: none;
     --keycloak-card-border-color: #0066CC;
-    
-    
+
+
     --keycloak-input-group-button-color: #0d6efd;
-        
+
     --keycloak-form-control-invalid-border-color: #dc3545;
 
     --keycloak-checkbox-bg-color: #0d6efd;
@@ -43,11 +43,11 @@ body {
     --bs-gutter-x: 1.5rem;
     --bs-gutter-y: 0;
     width: 100%;
-    height: 100%;    
+    height: 100%;
     margin-right: auto;
     margin-left: auto;
     display: flex;
-    flex-direction: column;    
+    flex-direction: column;
 }
 
 @media (min-width: 576px) {
@@ -65,7 +65,7 @@ body {
     color: var(--keycloak-header-color);
     text-align: center;
     margin: 0 auto;
-    background: var(--keycloak-header-background);    
+    background: var(--keycloak-header-background);
 }
 
 .keycloak-form-header h1 {
@@ -86,12 +86,12 @@ h1, h2, h3, h4 {
     box-shadow: var(--keycloak-card-box-shadow);
     max-width: 500px;
     border-top: 4px solid;
-    border-color: var(--keycloak-card-border-color);    
-    width: 100%;    
+    border-color: var(--keycloak-card-border-color);
+    width: 100%;
     max-width: 400px;
     padding: 15px;
-    margin: 0 auto;    
-    
+    margin: 0 auto;
+
 }
 
 .form-label {
@@ -113,7 +113,7 @@ h1, h2, h3, h4 {
 
 .form-group:has([aria-invalid=true]) .invalid-feedback,
 .form-group:has([aria-invalid=true]) .invalid-tooltip,
-.form-check:has([aria-invalid=true]) .invalid-feedback, 
+.form-check:has([aria-invalid=true]) .invalid-feedback,
 .form-check:has([aria-invalid=true]) .invalid-tooltip
 {
     display: block;
@@ -169,7 +169,7 @@ input.form-control:focus-visible {
     margin-left: -1.5em;
 }
 
-.checkbox > label > input[type=checkbox] {   
+.checkbox > label > input[type=checkbox] {
     margin-left: -20px;
 }
 
@@ -187,7 +187,7 @@ input[type=checkbox] {
     -moz-appearance: none;
     appearance: none;
     -webkit-print-color-adjust: exact;
-    border-radius: 0.25em;    
+    border-radius: 0.25em;
 }
 
 input[type=checkbox]:checked {
@@ -247,3 +247,6 @@ input[type=checkbox]:checked {
     font-size: 23px;
 }
 
+.legend-mandatory-fields {
+    display: none;
+}
