@@ -1,5 +1,5 @@
 <#-- opfa:imported from 25.0.2 -->
-<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false header1='' header2='' showFooterCard=false>
+<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}"<#if realm.internationalizationEnabled> lang="${locale.currentLanguageTag}"</#if>>
 
@@ -128,8 +128,8 @@
             <#if displayRequiredFields>
                 <div class="${properties.kcContentWrapperClass!}">
                     <#-- opfa:modification start: added header2 -->
-                    <#if header1?has_content><h1 id="kc-page-title">${header1}</h1></#if>
-                    <#if header2?has_content><h2 id="kc-page-subtitle">${header2}</h2></#if>
+                    <h1 id="kc-page-title"><#nested "header"></h1>
+                    <p id="kc-page-subtitle"><#nested "header2"></p>
                     <div class="${properties.kcLabelWrapperClass!} subtitle">
                         <span class="subtitle"><span class="required">*</span> ${msg("requiredFields")}</span>
                     </div>
@@ -137,8 +137,8 @@
                 </div>
             <#else>
                 <#-- opfa:modification start: added header2 -->
-                <#if header1?has_content><h1 id="kc-page-title">${header1}</h1></#if>
-                <#if header2?has_content><h2 id="kc-page-subtitle">${header2}</h2></#if>
+                <h1 id="kc-page-title"><#nested "header"></h1>
+                <p id="kc-page-subtitle"><#nested "header2"></p>
                 <#-- opfa:modification end -->
             </#if>
         <#else>
