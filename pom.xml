@@ -55,14 +55,13 @@
     </modules>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <maven.compiler.parameters>true</maven.compiler.parameters>
-        <kc.version>25.0.4</kc.version>
+        <kc.version>25.0.6</kc.version>
         <resteasy.reactive.common.version>3.8.5</resteasy.reactive.common.version>
-        <libphonenumber.version>8.13.41</libphonenumber.version>
+        <libphonenumber.version>8.13.46</libphonenumber.version>
         <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
     <dependencyManagement>
@@ -179,7 +178,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.4</version>
+                        <version>3.2.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -193,7 +192,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.7.0</version>
+                        <version>3.10.0</version>
                         <configuration>
                             <doclint>none</doclint>
                         </configuration>
