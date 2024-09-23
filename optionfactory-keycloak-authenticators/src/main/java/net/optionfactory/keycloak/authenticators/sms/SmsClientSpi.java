@@ -54,7 +54,7 @@ public class SmsClientSpi implements Spi {
         public void init(Config.Scope scope) {
             final var config = new Conf(getId(), scope);
 
-            final var type = config.anyOf("type", "placebo", "sns");
+            final var type = config.anyOfWithDefault("type", "placebo", "placebo", "sns");
             if ("placebo".equals(type)) {
                 logger.infof("configured a PlaceboSmsClient");
                 clientRef.set(new PlaceboSmsClient());

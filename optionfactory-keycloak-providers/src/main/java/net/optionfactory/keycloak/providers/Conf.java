@@ -17,6 +17,13 @@ public class Conf {
         this.scope = scope;
     }
 
+    public String anyOfWithDefault(String key, String defaultValue, String... values) {
+        final var value = string(key, defaultValue);
+        final var domain = Set.of(values);
+        ensure(domain.contains(value), "'%s' must be one of %s, got: '%s'", key, domain, value);
+        return value;
+    }
+
     public String anyOf(String key, String... values) {
         final var value = string(key);
         final var domain = Set.of(values);
@@ -36,7 +43,7 @@ public class Conf {
 
     public URI uri(String key, String defaultValue) {
         final var value = scope.get(key, defaultValue);
-        if(value == null){
+        if (value == null) {
             return null;
         }
         try {
