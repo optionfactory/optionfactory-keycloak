@@ -67,7 +67,7 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
                 props.setProperty("mail.smtp.starttls.enable", "true");
             }
 
-            if (ssl || starttls) {
+            if (ssl || starttls || auth){
                 props.put("mail.smtp.ssl.protocols", SUPPORTED_SSL_PROTOCOLS);
 
                 setupTruststore(props);
@@ -77,6 +77,9 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             props.setProperty("mail.smtp.connectiontimeout", "10000");
 
             String from = config.get("from");
+            if (from == null) {
+                throw new EmailException("No sender address configured in the realm settings for emails");
+            }
             String fromDisplayName = config.get("fromDisplayName");
             String replyTo = config.get("replyTo");
             String replyToDisplayName = config.get("replyToDisplayName");
@@ -131,9 +134,9 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             msg.saveChanges();
             msg.setSentDate(new Date());
 
-            try ( Transport transport = emailSession.getTransport("smtp")) {
+            try (Transport transport = emailSession.getTransport("smtp")) {
                 if (auth) {
-                    try ( VaultStringSecret vaultStringSecret = this.session.vault().getStringSecret(config.get("password"))) {
+                    try (VaultStringSecret vaultStringSecret = this.session.vault().getStringSecret(config.get("password"))) {
                         transport.connect(config.get("user"), vaultStringSecret.get().orElse(config.get("password")));
                     }
                 } else {
@@ -141,9 +144,11 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
                 }
                 transport.sendMessage(msg, new InternetAddress[]{new InternetAddress(address)});
             }
+        } catch (EmailException e) {
+            throw e;
         } catch (Exception e) {
             ServicesLogger.LOGGER.failedToSendEmail(e);
-            throw new EmailException(e);
+            throw new EmailException("Error when attempting to send the email to the server. More information is available in the server log.", e);
         }
     }
 
@@ -164,8 +169,6 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
     }
 
     private void setupTruststore(Properties props) {
-        boolean checkServerIdentity = true;
-
         JSSETruststoreConfigurator configurator = new JSSETruststoreConfigurator(session);
 
         SSLSocketFactory factory = configurator.getSSLSocketFactory();
@@ -173,12 +176,11 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             props.put("mail.smtp.ssl.socketFactory", factory);
             if (configurator.getProvider().getPolicy() == HostnameVerificationPolicy.ANY) {
                 props.setProperty("mail.smtp.ssl.trust", "*");
-                checkServerIdentity = false;
+                props.put("mail.smtp.ssl.checkserveridentity", Boolean.FALSE.toString()); // this should be the default but seems to be impl specific, so set it explicitly just to be sure
             }
-        }
-
-        if (checkServerIdentity) {
-            props.put("mail.smtp.ssl.checkserveridentity", "true");
+            else {
+                props.put("mail.smtp.ssl.checkserveridentity", Boolean.TRUE.toString());
+            }
         }
     }
 
