@@ -52,6 +52,7 @@
         <module>optionfactory-keycloak-bootstrap</module>
         <module>optionfactory-keycloak-apple-identity-provider</module>
         <module>optionfactory-keycloak-authenticators</module>
+        <module>optionfactory-keycloak-cookies</module>
     </modules>
 
     <properties>
