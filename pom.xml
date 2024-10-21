@@ -5,7 +5,7 @@
 
     <groupId>net.optionfactory.keycloak</groupId>
     <artifactId>optionfactory-keycloak</artifactId>
-    <version>6.14</version>
+    <version>6.15</version>
     <packaging>pom</packaging>
     <description>optionfactory-keycloak parent pom</description>
     <name>${project.groupId}:${project.artifactId}</name>
@@ -56,9 +56,9 @@
     </modules>
 
     <properties>
-        <kc.version>26.0.0</kc.version>
+        <kc.version>26.0.1</kc.version>
         <resteasy.reactive.common.version>3.15.1</resteasy.reactive.common.version>
-        <libphonenumber.version>8.13.47</libphonenumber.version>
+        <libphonenumber.version>8.13.48</libphonenumber.version>
         <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>

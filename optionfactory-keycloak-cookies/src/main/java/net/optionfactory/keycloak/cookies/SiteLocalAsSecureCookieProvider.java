@@ -8,7 +8,6 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
-import org.keycloak.common.util.SecureContextResolver;
 import org.keycloak.cookie.CookieMaxAge;
 import org.keycloak.cookie.CookieProvider;
 import org.keycloak.cookie.CookieProviderFactory;
@@ -17,24 +16,26 @@ import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resources.RealmsResource;
+import org.keycloak.utils.SecureContextResolver;
 
 public class SiteLocalAsSecureCookieProvider implements CookieProvider {
 
     private static final Logger logger = Logger.getLogger(SiteLocalAsSecureCookieProvider.class);
 
-    private final KeycloakContext context;
+    private final KeycloakSession session;
 
-    private final Resolver pathResolver;
+    private final CookiePathResolver pathResolver;
 
     private final boolean secure;
 
     private final Map<String, Cookie> cookies;
 
-    public SiteLocalAsSecureCookieProvider(KeycloakContext context) {
-        this.context = context;
+    public SiteLocalAsSecureCookieProvider(KeycloakSession session) {
+        KeycloakContext context = session.getContext();        
+        this.session = session;
         this.cookies = context.getRequestHeaders().getCookies();
-        this.pathResolver = new Resolver(context);
-        this.secure = SecureContextResolver.isSecureContext(context.getUri().getRequestUri())
+        this.pathResolver = new CookiePathResolver(context);
+        this.secure = SecureContextResolver.isSecureContext(session)
                 || isAllowed(context.getUri().getRequestUri());
 
         if (logger.isTraceEnabled()) {
@@ -78,7 +79,7 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
                 .sameSite(sameSite)
                 .build();
 
-        context.getHttpResponse().setCookieIfAbsent(newCookie);
+        session.getContext().getHttpResponse().setCookieIfAbsent(newCookie);
 
         logger.tracef("Setting cookie: name: %s, path: %s, same-site: %s, secure: %s, http-only: %s, max-age: %d", name, path, sameSite, secure, httpOnly, maxAge);
     }
@@ -101,7 +102,7 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
                     .maxAge(CookieMaxAge.EXPIRED)
                     .build();
 
-            context.getHttpResponse().setCookieIfAbsent(newCookie);
+            session.getContext().getHttpResponse().setCookieIfAbsent(newCookie);
 
             logger.tracef("Expiring cookie: name: %s, path: %s", cookie.getName(), path);
         }
@@ -132,14 +133,14 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
     /**
      * duplicated from keycloak for visibility
      */
-    public static class Resolver {
+    public static class CookiePathResolver {
 
         private final KeycloakContext context;
         private String realmPath;
 
         private String requestPath;
 
-        public Resolver(KeycloakContext context) {
+        CookiePathResolver(KeycloakContext context) {
             this.context = context;
         }
 
@@ -166,7 +167,7 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
 
         @Override
         public CookieProvider create(KeycloakSession session) {
-            return new SiteLocalAsSecureCookieProvider(session.getContext());
+            return new SiteLocalAsSecureCookieProvider(session);
         }
 
         @Override
