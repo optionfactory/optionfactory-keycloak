@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
--- Dumped by pg_dump version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped from database version 17.2 (Debian 17.2-1.pgdg120+1)
+-- Dumped by pg_dump version 17.2 (Debian 17.2-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -60,7 +60,8 @@ CREATE TABLE public.admin_event_entity (
     resource_path character varying(2550),
     representation text,
     error character varying(255),
-    resource_type character varying(64)
+    resource_type character varying(64),
+    details_json text
 );
 
 
@@ -1416,7 +1417,7 @@ ALTER TABLE public.web_origins OWNER TO postgres;
 -- Data for Name: admin_event_entity; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.admin_event_entity (id, admin_event_time, realm_id, operation_type, auth_realm_id, auth_client_id, auth_user_id, ip_address, resource_path, representation, error, resource_type) FROM stdin;
+COPY public.admin_event_entity (id, admin_event_time, realm_id, operation_type, auth_realm_id, auth_client_id, auth_user_id, ip_address, resource_path, representation, error, resource_type, details_json) FROM stdin;
 \.
 
 
@@ -2311,6 +2312,11 @@ unique-consentuser-mysql	keycloak	META-INF/jpa-changelog-25.0.0.xml	2024-11-27 1
 26.0.0-32583-drop-redundant-index-on-client-session	keycloak	META-INF/jpa-changelog-26.0.0.xml	2024-11-27 17:11:49.743551	142	EXECUTED	9:24972d83bf27317a055d234187bb4af9	dropIndex indexName=IDX_US_SESS_ID_ON_CL_SESS, tableName=OFFLINE_CLIENT_SESSION		\N	4.29.1	\N	\N	2727508830
 26.0.0.32582-remove-tables-user-session-user-session-note-and-client-session	keycloak	META-INF/jpa-changelog-26.0.0.xml	2024-11-27 17:11:49.764761	143	EXECUTED	9:febdc0f47f2ed241c59e60f58c3ceea5	dropTable tableName=CLIENT_SESSION_ROLE; dropTable tableName=CLIENT_SESSION_NOTE; dropTable tableName=CLIENT_SESSION_PROT_MAPPER; dropTable tableName=CLIENT_SESSION_AUTH_STATUS; dropTable tableName=CLIENT_USER_SESSION_NOTE; dropTable tableName=CLI...		\N	4.29.1	\N	\N	2727508830
 26.0.0-33201-org-redirect-url	keycloak	META-INF/jpa-changelog-26.0.0.xml	2024-11-27 17:11:49.767194	144	EXECUTED	9:4d0e22b0ac68ebe9794fa9cb752ea660	addColumn tableName=ORG		\N	4.29.1	\N	\N	2727508830
+25.0.0-28265-index-cleanup-uss-createdon	keycloak	META-INF/jpa-changelog-25.0.0.xml	2024-12-03 10:49:17.668201	145	MARK_RAN	9:78ab4fc129ed5e8265dbcc3485fba92f	dropIndex indexName=IDX_OFFLINE_USS_CREATEDON, tableName=OFFLINE_USER_SESSION		\N	4.29.1	\N	\N	3222957648
+25.0.0-28265-index-cleanup-uss-preload	keycloak	META-INF/jpa-changelog-25.0.0.xml	2024-12-03 10:49:17.684573	146	MARK_RAN	9:de5f7c1f7e10994ed8b62e621d20eaab	dropIndex indexName=IDX_OFFLINE_USS_PRELOAD, tableName=OFFLINE_USER_SESSION		\N	4.29.1	\N	\N	3222957648
+25.0.0-28265-index-cleanup-uss-by-usersess	keycloak	META-INF/jpa-changelog-25.0.0.xml	2024-12-03 10:49:17.69018	147	MARK_RAN	9:6eee220d024e38e89c799417ec33667f	dropIndex indexName=IDX_OFFLINE_USS_BY_USERSESS, tableName=OFFLINE_USER_SESSION		\N	4.29.1	\N	\N	3222957648
+25.0.0-28265-index-cleanup-css-preload	keycloak	META-INF/jpa-changelog-25.0.0.xml	2024-12-03 10:49:17.695231	148	MARK_RAN	9:5411d2fb2891d3e8d63ddb55dfa3c0c9	dropIndex indexName=IDX_OFFLINE_CSS_PRELOAD, tableName=OFFLINE_CLIENT_SESSION		\N	4.29.1	\N	\N	3222957648
+26.0.6-34013	keycloak	META-INF/jpa-changelog-26.0.6.xml	2024-12-03 10:49:17.701268	149	EXECUTED	9:e6b686a15759aef99a6d758a5c4c6a26	addColumn tableName=ADMIN_EVENT_ENTITY		\N	4.29.1	\N	\N	3222957648
 \.
 
 
@@ -2590,6 +2596,7 @@ f37266fd-f534-416d-b26d-43ade62a9679	3a9fd404-d708-4128-83e7-ef00fa943752	f	${ro
 COPY public.migration_model (id, version, update_time) FROM stdin;
 hcfyq	18.0.0	1653471532
 wgh99	26.0.5	1732727510
+dwpwm	26.0.7	1733222957
 \.
 
 
@@ -3530,8 +3537,8 @@ COPY public.scope_policy (scope_id, policy_id) FROM stdin;
 --
 
 COPY public.user_attribute (name, value, user_id, id, long_value_hash, long_value_hash_lower_case, long_value) FROM stdin;
-loginStats	2:1653654922871:1732813042193	dfef0e06-05d1-4103-a8a4-f3a19a7e2802	bec3379f-5ed1-4166-8cf8-ccc032ebca11	\N	\N	\N
 TEST_ATTRIBUTE	TEST_VALUE	3d0bd8f9-ad4a-4d08-babb-14a48f210450	61557f45-b1e4-4952-a247-24523cb49a89	\N	\N	\N
+loginStats	5:1653654922871:1732886498097	dfef0e06-05d1-4103-a8a4-f3a19a7e2802	631821c3-f3ca-42b8-8876-99fcda4149c8	\N	\N	\N
 \.
 
 

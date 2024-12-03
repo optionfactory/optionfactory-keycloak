@@ -33,7 +33,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-cookies/target/optionfactory-keycloak-cookies-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-cookies.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian12-jdk21-keycloak2
+		optionfactory/debian12-jdk21-keycloak2:102
 
 
 local-db: local-network
@@ -44,7 +44,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian12-postgres17
+		optionfactory/debian12-postgres17:102
 
 local-smtp: local-network
 	docker run -d -it --rm \
