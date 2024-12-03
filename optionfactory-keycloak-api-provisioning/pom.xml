@@ -13,12 +13,6 @@
     <dependencies>      
         <dependency>
             <groupId>net.optionfactory.keycloak</groupId>
-            <artifactId>optionfactory-keycloak-validation</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>        
-        <dependency>
-            <groupId>net.optionfactory.keycloak</groupId>
             <artifactId>optionfactory-keycloak-providers</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
