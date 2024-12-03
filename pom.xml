@@ -44,13 +44,12 @@
     <modules>
         <module>optionfactory-keycloak-providers</module>
         <module>optionfactory-keycloak-remoting</module>
-        <module>optionfactory-keycloak-validation</module>
         <module>optionfactory-keycloak-email-sender</module>
         <module>optionfactory-keycloak-login-stats</module>
-        <module>optionfactory-keycloak-provisioning-api</module>
+        <module>optionfactory-keycloak-api-provisioning</module>
         <module>optionfactory-keycloak-welcome</module>
         <module>optionfactory-keycloak-bootstrap</module>
-        <module>optionfactory-keycloak-apple-identity-provider</module>
+        <module>optionfactory-keycloak-idp-apple</module>
         <module>optionfactory-keycloak-authenticators</module>
         <module>optionfactory-keycloak-cookies</module>
     </modules>

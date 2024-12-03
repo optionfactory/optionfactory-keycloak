@@ -18,6 +18,19 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.utils.SecureContextResolver;
 
+/**
+ * must be used together with
+ * <code>
+ * --unsafely-treat-insecure-origin-as-secure=http://172.18.xxx.xxx:8080/
+ * </code>
+ * on chrome:
+ * <code>
+ * chrome://flags/#unsafely-treat-insecure-origin-as-secure 
+ * </code>
+ * 
+ *
+ * @author rferranti
+ */
 public class SiteLocalAsSecureCookieProvider implements CookieProvider {
 
     private static final Logger logger = Logger.getLogger(SiteLocalAsSecureCookieProvider.class);
@@ -27,22 +40,23 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
     private final CookiePathResolver pathResolver;
 
     private final boolean secure;
+    private final boolean allowed;
 
     private final Map<String, Cookie> cookies;
 
     public SiteLocalAsSecureCookieProvider(KeycloakSession session) {
-        KeycloakContext context = session.getContext();        
+        KeycloakContext context = session.getContext();
         this.session = session;
         this.cookies = context.getRequestHeaders().getCookies();
         this.pathResolver = new CookiePathResolver(context);
-        this.secure = SecureContextResolver.isSecureContext(session)
-                || isAllowed(context.getUri().getRequestUri());
+        this.secure = SecureContextResolver.isSecureContext(session);
+        this.allowed = isAllowed(context.getUri().getRequestUri());
 
         if (logger.isTraceEnabled()) {
             logger.tracef("Received cookies: %s, path: %s", String.join(", ", this.cookies.keySet()), context.getUri().getRequestUri().getRawPath());
         }
 
-        if (!secure) {
+        if (!secure && !allowed) {
             logger.warnf("Non-secure context detected; cookies are not secured, and will not be available in cross-origin POST requests");
         }
 
@@ -62,7 +76,7 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
     public void set(CookieType cookieType, String value, int maxAge) {
         String name = cookieType.getName();
         NewCookie.SameSite sameSite = cookieType.getScope().getSameSite();
-        if (NewCookie.SameSite.NONE.equals(sameSite) && !secure) {
+        if (NewCookie.SameSite.NONE.equals(sameSite) && !secure && !allowed) {
             sameSite = NewCookie.SameSite.LAX;
         }
 
@@ -74,7 +88,7 @@ public class SiteLocalAsSecureCookieProvider implements CookieProvider {
                 .value(value)
                 .path(path)
                 .maxAge(maxAge)
-                .secure(secure)
+                .secure(secure || allowed)
                 .httpOnly(httpOnly)
                 .sameSite(sameSite)
                 .build();

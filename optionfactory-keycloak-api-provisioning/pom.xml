@@ -6,19 +6,31 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>6.17-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-providers</artifactId>
-    <description>optionfactory-keycloak realm resource authenticator</description>
+    <artifactId>optionfactory-keycloak-api-provisioning</artifactId>
+    <description>optionfactory-keycloak provisioning API</description>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
-    <dependencies>  
+    <dependencies>      
+        <dependency>
+            <groupId>net.optionfactory.keycloak</groupId>
+            <artifactId>optionfactory-keycloak-validation</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>        
+        <dependency>
+            <groupId>net.optionfactory.keycloak</groupId>
+            <artifactId>optionfactory-keycloak-providers</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>        
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>provided</scope>
+        </dependency>   
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-services</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -28,24 +40,16 @@
         </dependency>        
         <dependency>
             <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+            <scope>provided</scope>
+        </dependency>        
+        <dependency>
+            <groupId>org.keycloak</groupId>
             <artifactId>keycloak-model-jpa</artifactId>
             <scope>provided</scope>
         </dependency>        
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <scope>provided</scope>
-        </dependency>        
-        <dependency>
-            <groupId>com.googlecode.libphonenumber</groupId>
-            <artifactId>libphonenumber</artifactId>
-            <scope>provided</scope>
-        </dependency>                               
-        <dependency>
-            <groupId>io.quarkus.resteasy.reactive</groupId>
-            <artifactId>resteasy-reactive-common</artifactId>
-            <scope>provided</scope>
-        </dependency>
+   
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
