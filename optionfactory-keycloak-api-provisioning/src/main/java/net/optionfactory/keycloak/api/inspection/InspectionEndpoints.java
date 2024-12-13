@@ -22,14 +22,16 @@ import net.optionfactory.keycloak.providers.filtering.GroupFilter;
 import net.optionfactory.keycloak.providers.filtering.QueryBuilder;
 import net.optionfactory.keycloak.providers.filtering.TextFilter;
 import net.optionfactory.keycloak.providers.filtering.TimestampFilter;
-import net.optionfactory.keycloak.providers.ResourceAuthenticator;
 import org.keycloak.Config;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.models.RealmModel;
 import org.keycloak.services.ServicesLogger;
-import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resource.RealmResourceProviderFactory;
+import org.keycloak.services.resources.admin.AdminEventBuilder;
+import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
+import org.keycloak.services.resources.admin.ext.AdminRealmResourceProviderFactory;
+import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
 
 /**
  * @see org.keycloak.services.resources.admin.UserResource }
@@ -42,7 +44,7 @@ public class InspectionEndpoints {
     private final KeycloakSession session;
 
     private static final QueryBuilder QUERY_TEMPLATE = new QueryBuilder(
-        """
+            """
         select 
             id, username, email, first_name, last_name, 
             enabled, email_verified, created_timestamp, 
@@ -95,7 +97,7 @@ public class InspectionEndpoints {
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // mapped to be http://localhost:8080/realms/{realm}/inspection/users
+    // mapped to be http://localhost:8080/admin/realms/{realm}/inspection/users
     // \doS+ ->>
     public PageResponse<UserResponse> users(
             Map<String, String[]> filters,
@@ -130,16 +132,14 @@ public class InspectionEndpoints {
         return new PageResponse(slice, totalAcc.get());
     }
 
-    public static class Factory implements RealmResourceProviderFactory {
-
-        private String[] requiredClientRole;
+    public static class Factory implements AdminRealmResourceProviderFactory {
 
         @Override
-        public RealmResourceProvider create(KeycloakSession session) {
-            ResourceAuthenticator.enforceServiceAccountHasClientRole(session, requiredClientRole[0], requiredClientRole[1]);
-            return new RealmResourceProvider() {
+        public AdminRealmResourceProvider create(KeycloakSession session) {
+            return new AdminRealmResourceProvider() {
                 @Override
-                public Object getResource() {
+                public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator ape, AdminEventBuilder aeb) {
+                    ape.users().requireView();
                     return new InspectionEndpoints(session);
                 }
 
@@ -147,12 +147,12 @@ public class InspectionEndpoints {
                 public void close() {
 
                 }
+
             };
         }
 
         @Override
         public void init(Config.Scope config) {
-            this.requiredClientRole = config.get("role", "realm-management/view-users").split("/");
         }
 
         @Override

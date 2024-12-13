@@ -2605,6 +2605,7 @@ dwpwm	26.0.7	1733222957
 --
 
 COPY public.offline_client_session (user_session_id, client_id, offline_flag, "timestamp", data, client_storage_provider, external_client_id, version) FROM stdin;
+c736be65-5dea-43cf-b668-5c31f91af609	193c8e25-0d00-4c45-ad5c-fa2a6e50d8f6	0	1733408471	{"authMethod":"openid-connect","redirectUri":"http://172.18.26.2:8080/admin/master/console/","notes":{"clientId":"193c8e25-0d00-4c45-ad5c-fa2a6e50d8f6","iss":"http://172.18.26.2:8080/realms/master","startedAt":"1733408471","response_type":"code","level-of-authentication":"-1","code_challenge_method":"S256","nonce":"a9ddfe98-6add-4a02-a410-36c76be28030","response_mode":"query","scope":"openid","userSessionStartedAt":"1733408471","redirect_uri":"http://172.18.26.2:8080/admin/master/console/","state":"4e0e9cfe-bd3b-4efd-9d67-966bf16d8b5a","code_challenge":"zHx-ZCrxYtrCyyjzTBivLW6raJ9aqfcgVqTXOJ9Asn8"}}	local	local	0
 \.
 
 
@@ -2613,6 +2614,7 @@ COPY public.offline_client_session (user_session_id, client_id, offline_flag, "t
 --
 
 COPY public.offline_user_session (user_session_id, user_id, realm_id, created_on, offline_flag, data, last_session_refresh, broker_session_id, version) FROM stdin;
+c736be65-5dea-43cf-b668-5c31f91af609	dfef0e06-05d1-4103-a8a4-f3a19a7e2802	86f52c97-a5c0-4a5c-8da8-3ff79cf7fa3e	1733408471	0	{"ipAddress":"172.18.26.1","authMethod":"openid-connect","rememberMe":false,"started":0,"notes":{"KC_DEVICE_NOTE":"eyJpcEFkZHJlc3MiOiIxNzIuMTguMjYuMSIsIm9zIjoiTGludXgiLCJvc1ZlcnNpb24iOiJVbmtub3duIiwiYnJvd3NlciI6IkNocm9tZS8xMzAuMC4wIiwiZGV2aWNlIjoiT3RoZXIiLCJsYXN0QWNjZXNzIjowLCJtb2JpbGUiOmZhbHNlfQ==","AUTH_TIME":"1733408471","authenticators-completed":"{\\"007f1f17-6174-4cc4-91d9-8a352e6ad834\\":1733408471}"},"state":"LOGGED_IN"}	1733408471	\N	0
 \.
 
 
@@ -3538,7 +3540,7 @@ COPY public.scope_policy (scope_id, policy_id) FROM stdin;
 
 COPY public.user_attribute (name, value, user_id, id, long_value_hash, long_value_hash_lower_case, long_value) FROM stdin;
 TEST_ATTRIBUTE	TEST_VALUE	3d0bd8f9-ad4a-4d08-babb-14a48f210450	61557f45-b1e4-4952-a247-24523cb49a89	\N	\N	\N
-loginStats	5:1653654922871:1732886498097	dfef0e06-05d1-4103-a8a4-f3a19a7e2802	631821c3-f3ca-42b8-8876-99fcda4149c8	\N	\N	\N
+loginStats	6:1653654922871:1733408471315	dfef0e06-05d1-4103-a8a4-f3a19a7e2802	15149e57-3cba-465c-ac51-c74b6dd91f1e	\N	\N	\N
 \.
 
 

@@ -8,7 +8,6 @@ import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
-import net.optionfactory.keycloak.providers.ResourceAuthenticator;
 import net.optionfactory.keycloak.providers.validation.RequestValidator;
 import org.keycloak.Config;
 import org.keycloak.models.GroupModel;
@@ -18,8 +17,10 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.ServicesLogger;
-import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resource.RealmResourceProviderFactory;
+import org.keycloak.services.resources.admin.AdminEventBuilder;
+import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
+import org.keycloak.services.resources.admin.ext.AdminRealmResourceProviderFactory;
+import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
 
 /**
  * @see org.keycloak.services.resources.admin.UserResource }
@@ -39,7 +40,7 @@ public class ProvisioningEndpoints {
     @DELETE
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
-    // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
+    // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
         validator.enforce(ids);
         final RealmModel realm = session.getContext().getRealm();
@@ -55,7 +56,7 @@ public class ProvisioningEndpoints {
     @PUT
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
-    // mapped to be http://localhost:8080/realms/{realm}/provisioning/users
+    // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
         validator.enforce(req);
 
@@ -86,19 +87,17 @@ public class ProvisioningEndpoints {
         }
     }
 
-
-    public static class Factory implements RealmResourceProviderFactory {
-
-        private String[] requiredClientRole;
+    public static class Factory implements AdminRealmResourceProviderFactory {
 
         @Override
-        public RealmResourceProvider create(KeycloakSession session) {
-            ResourceAuthenticator.enforceServiceAccountHasClientRole(session, requiredClientRole[0], requiredClientRole[1]);
+        public AdminRealmResourceProvider create(KeycloakSession session) {
             final var validator = session.getProvider(RequestValidator.class);
-            return new RealmResourceProvider() {
+            return new AdminRealmResourceProvider() {
+
                 @Override
-                public Object getResource() {
-                    return new ProvisioningEndpoints(validator, session);
+                public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator ape, AdminEventBuilder aeb) {
+                    ape.clients().requireManage();
+                    return new ProvisioningEndpoints(validator, ks);
                 }
 
                 @Override
@@ -110,7 +109,6 @@ public class ProvisioningEndpoints {
 
         @Override
         public void init(Config.Scope config) {
-            this.requiredClientRole = config.get("role", "realm-management/manage-users").split("/");
         }
 
         @Override
