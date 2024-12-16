@@ -32,8 +32,9 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-idp-apple/target/optionfactory-keycloak-idp-apple-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-idp-apple.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-cookies/target/optionfactory-keycloak-cookies-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-cookies.jar \
+		--mount type=bind,source=${PWD}/optionfactory-keycloak-ldap/target/optionfactory-keycloak-ldap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-ldap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian12-jdk21-keycloak2:102
+		optionfactory/debian12-jdk21-keycloak2:103
 
 
 local-db: local-network
@@ -44,7 +45,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian12-postgres17:102
+		optionfactory/debian12-postgres17:103
 
 local-smtp: local-network
 	docker run -d -it --rm \
@@ -63,28 +64,28 @@ local-test-api:
 	$(eval ACCESS_TOKEN := $(shell echo '${TOKEN}' | jq -r '.access_token'))
 	@echo "inspecting users"
 	@echo " filter id EQ"
-	curl -v 'http://172.18.26.2:8080/realms/test/inspection/users/?offset=0&limit=10' \
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"id": ["NEQ","CASE_SENSITIVE","dfef0e06-05d1-4103-a8a4-f3a19a7e2802"]}'
 	@echo ""
 	@echo ""
 	@echo " filter id NEQ"
-	curl -v 'http://172.18.26.2:8080/realms/test/inspection/users/?offset=0&limit=10' \
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"id": ["EQ","CASE_SENSITIVE", "3d0bd8f9-ad4a-4d08-babb-14a48f210450"]}'
 	@echo ""
 	@echo ""
 	@echo " filter attribute CONTAINS"
-	curl -v 'http://172.18.26.2:8080/realms/test/inspection/users/?offset=0&limit=10' \
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"attributes": ["CONTAINS","CASE_SENSITIVE","TEST_ATTRIBUTE","VALUE"]}'
 	@echo ""
 	@echo ""
 	@echo " filter group ANY"
-	curl -v 'http://172.18.26.2:8080/realms/test/inspection/users/?offset=0&limit=10&sort=username,ASC' \
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10&sort=username,ASC' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"groups": ["ANY","test-group", "unknown-group"]}'

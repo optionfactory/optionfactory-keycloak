@@ -6,25 +6,15 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>6.19-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-remoting</artifactId>
-    <description>optionfactory-keycloak remoting</description>
+    <artifactId>optionfactory-keycloak-ldap</artifactId>
+    <description>optionfactory-keycloak ldap</description>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
-    <dependencies>      
+    <dependencies>  
         <dependency>
             <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-server-spi-private</artifactId>
+            <artifactId>keycloak-ldap-federation</artifactId>
             <scope>provided</scope>
-        </dependency>        
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-services</artifactId>
-            <scope>provided</scope>
-        </dependency>        
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
-    </dependencies>
+    </dependencies>    
 </project>
