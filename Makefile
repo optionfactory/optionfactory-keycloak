@@ -47,6 +47,20 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
 		optionfactory/debian12-postgres17:103
 
+local-ldap: local-network
+	docker run -ti --rm \
+		--network keycloak \
+		--name keycloak-openldap \
+		--ip 172.18.26.4 \
+		--env LDAP_ADMIN_USERNAME=admin \
+		--env LDAP_ADMIN_PASSWORD=admin \
+		--env LDAP_USERS=user \
+		--env LDAP_PASSWORDS=user \
+		--env LDAP_ROOT=dc=notprod,dc=net \
+		--env LDAP_ADMIN_DN=cn=admin,dc=notprod,dc=net \
+		--env LDAP_GROUP=writers \
+		bitnami/openldap:2.5.19
+
 local-smtp: local-network
 	docker run -d -it --rm \
 		--network keycloak \
@@ -88,6 +102,6 @@ local-test-api:
 	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10&sort=username,ASC' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
-		--data '{"groups": ["ANY","test-group", "unknown-group"]}'
+		--data '{"groups": ["ANY","test-group", "unknown-group", "readers"]}'
 	@echo ""
 	@echo ""
