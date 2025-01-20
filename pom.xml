@@ -56,10 +56,10 @@
     </modules>
 
     <properties>
-        <kc.version>26.0.7</kc.version>
-        <resteasy.reactive.common.version>3.15.1</resteasy.reactive.common.version>
-        <libphonenumber.version>8.13.52</libphonenumber.version>
-        <hibernatevalidator.version>8.0.1.Final</hibernatevalidator.version>
+        <kc.version>26.1.0</kc.version>
+        <resteasy.reactive.common.version>3.15.2</resteasy.reactive.common.version>
+        <libphonenumber.version>8.13.53</libphonenumber.version>
+        <hibernatevalidator.version>8.0.2.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
@@ -199,7 +199,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.10.1</version>
+                        <version>3.11.2</version>
                         <configuration>
                             <doclint>none</doclint>
                         </configuration>
