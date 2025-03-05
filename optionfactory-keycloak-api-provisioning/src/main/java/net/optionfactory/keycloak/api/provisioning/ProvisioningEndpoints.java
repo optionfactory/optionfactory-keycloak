@@ -74,7 +74,7 @@ public class ProvisioningEndpoints {
         for (Map.Entry<String, List<String>> entry : req.attributes.entrySet()) {
             user.setAttribute(entry.getKey(), entry.getValue());
         }
-        for (String reduiredAction : req.reduiredActions) {
+        for (String reduiredAction : req.requiredActions) {
             user.addRequiredAction(reduiredAction);
         }
         for (String groupName : req.groups) {

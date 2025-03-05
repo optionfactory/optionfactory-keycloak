@@ -20,7 +20,7 @@ public class UserProvisioningRequest {
     @NotNull
     public List<String> groups;
     @NotNull
-    public List<String> reduiredActions;
+    public List<String> requiredActions;
     public boolean enabled;
     public boolean emailVerified;
 
