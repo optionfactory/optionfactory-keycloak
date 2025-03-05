@@ -96,7 +96,7 @@ public class ProvisioningEndpoints {
 
                 @Override
                 public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator ape, AdminEventBuilder aeb) {
-                    ape.clients().requireManage();
+                    ape.users().requireManage();
                     return new ProvisioningEndpoints(validator, ks);
                 }
 
