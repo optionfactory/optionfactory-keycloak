@@ -74,8 +74,8 @@ public class ProvisioningEndpoints {
         for (Map.Entry<String, List<String>> entry : req.attributes.entrySet()) {
             user.setAttribute(entry.getKey(), entry.getValue());
         }
-        for (String reduiredAction : req.requiredActions) {
-            user.addRequiredAction(reduiredAction);
+        for (String requiredAction : req.requiredActions) {
+            user.addRequiredAction(requiredAction);
         }
         for (String groupName : req.groups) {
             final GroupModel group = session.groups()
