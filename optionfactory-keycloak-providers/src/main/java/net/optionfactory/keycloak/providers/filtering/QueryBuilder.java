@@ -33,6 +33,7 @@ public class QueryBuilder {
             EntityManager em,
             Map<String, String[]> requestedFilters,
             List<String> requestedSorters,
+            boolean countOverTotal,
             int offset,
             int limit,
             Object... params) {
@@ -52,6 +53,7 @@ public class QueryBuilder {
         final var orderClause = sorters.isEmpty() ? "" : String.format("order by %s", sorters.stream().map(s -> String.format("%s %s", s.alias(), s.dir())).collect(Collectors.joining(",")));
 
         final var qs = template
+                .replace("{COUNT_OVER_TOTAL}", countOverTotal ? ", count(*) over() as total" : "")
                 .replace("{CONDITIONS}", conditions)
                 .replace("{ORDER_CLAUSE}", orderClause);
 

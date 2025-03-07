@@ -2,6 +2,7 @@ package net.optionfactory.keycloak.api.inspection;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 public class UserResponse {
@@ -16,6 +17,6 @@ public class UserResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public Instant createdAt;
     public Map<String, String> groups;
-    public Map<String, String> attributes;
+    public Map<String, List<String>> attributes;
 
 }

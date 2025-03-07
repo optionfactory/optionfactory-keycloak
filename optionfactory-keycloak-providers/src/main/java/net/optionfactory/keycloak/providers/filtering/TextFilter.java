@@ -39,7 +39,7 @@ public record TextFilter(String name, String alias) implements AllowedFilter {
     }
 
     public static String likePattern(Operator op, String value) {
-        final java.lang.String esc = value.replace("%", "\\%").replace("_", "\\_");
+        final var esc = value.replace("%", "\\%").replace("_", "\\_");
         if (op == Operator.STARTS_WITH) {
             return esc + "%";
         }
