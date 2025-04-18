@@ -18,13 +18,14 @@ import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.angus.mail.smtp.SMTPMessage;
 import org.jboss.logging.Logger;
 import org.keycloak.common.enums.HostnameVerificationPolicy;
+import org.keycloak.email.EmailAuthenticator;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailSenderProvider;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.theme.Theme;
 import org.keycloak.truststore.JSSETruststoreConfigurator;
-import org.keycloak.vault.VaultStringSecret;
 
 public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
@@ -32,10 +33,21 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
     private static final Logger logger = Logger.getLogger(CidEmbeddingEmailSenderProvider.class);
 
+    private final Map<EmailAuthenticator.AuthenticatorType, EmailAuthenticator> authenticators;
     private final KeycloakSession session;
 
-    public CidEmbeddingEmailSenderProvider(KeycloakSession session) {
+    public CidEmbeddingEmailSenderProvider(KeycloakSession session, Map<EmailAuthenticator.AuthenticatorType, EmailAuthenticator> authenticators) {
+        this.authenticators = authenticators;
         this.session = session;
+    }
+
+    @Override
+    public void send(Map<String, String> config, UserModel user, String subject, String textBody, String htmlBody) throws EmailException {
+        String address = user.getEmail();
+        if (address == null) {
+            throw new EmailException("No email address configured for the user");
+        }
+        send(config, address, subject, textBody, htmlBody);
     }
 
     @Override
@@ -50,6 +62,8 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             boolean auth = "true".equals(config.get("auth"));
             boolean ssl = "true".equals(config.get("ssl"));
             boolean starttls = "true".equals(config.get("starttls"));
+            boolean authToken = "token".equals(config.get("authType"));
+            boolean debug = "true".equals(config.get("debug"));
 
             if (config.containsKey("port") && config.get("port") != null) {
                 props.setProperty("mail.smtp.port", config.get("port"));
@@ -58,7 +72,12 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             if (auth) {
                 props.setProperty("mail.smtp.auth", "true");
             }
-
+            if (authToken) {
+                props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+            }
+            if (debug) {
+                props.put("mail.debug", "true");
+            }
             if (ssl) {
                 props.setProperty("mail.smtp.ssl.enable", "true");
             }
@@ -67,7 +86,7 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
                 props.setProperty("mail.smtp.starttls.enable", "true");
             }
 
-            if (ssl || starttls || auth){
+            if (ssl || starttls || auth) {
                 props.put("mail.smtp.ssl.protocols", SUPPORTED_SSL_PROTOCOLS);
 
                 setupTruststore(props);
@@ -75,6 +94,7 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
             props.setProperty("mail.smtp.timeout", "10000");
             props.setProperty("mail.smtp.connectiontimeout", "10000");
+            props.setProperty("mail.smtp.writetimeout", "10000");
 
             String from = config.get("from");
             if (from == null) {
@@ -135,17 +155,14 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             msg.setSentDate(new Date());
 
             try (Transport transport = emailSession.getTransport("smtp")) {
-                if (auth) {
-                    try (VaultStringSecret vaultStringSecret = this.session.vault().getStringSecret(config.get("password"))) {
-                        transport.connect(config.get("user"), vaultStringSecret.get().orElse(config.get("password")));
-                    }
-                } else {
-                    transport.connect();
-                }
+                final var selectedAuthenticator = auth
+                        ? authenticators.get(EmailAuthenticator.AuthenticatorType.valueOf(config.getOrDefault("authType", "basic").toUpperCase()))
+                        : authenticators.get(EmailAuthenticator.AuthenticatorType.NONE);
+
+                selectedAuthenticator.connect(this.session, config, transport);
+
                 transport.sendMessage(msg, new InternetAddress[]{new InternetAddress(address)});
             }
-        } catch (EmailException e) {
-            throw e;
         } catch (Exception e) {
             ServicesLogger.LOGGER.failedToSendEmail(e);
             throw new EmailException("Error when attempting to send the email to the server. More information is available in the server log.", e);
@@ -177,8 +194,7 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             if (configurator.getProvider().getPolicy() == HostnameVerificationPolicy.ANY) {
                 props.setProperty("mail.smtp.ssl.trust", "*");
                 props.put("mail.smtp.ssl.checkserveridentity", Boolean.FALSE.toString()); // this should be the default but seems to be impl specific, so set it explicitly just to be sure
-            }
-            else {
+            } else {
                 props.put("mail.smtp.ssl.checkserveridentity", Boolean.TRUE.toString());
             }
         }
