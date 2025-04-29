@@ -19,14 +19,14 @@ public record AttributeFilter(String name) implements AllowedFilter {
                 if (value == null) {
                     Parsers.ensure(operator == Operator.EQ || operator == Operator.NEQ, name(), "Operator %s expects a non-null value", operator);
                     yield new ConfiguredFilter(
-                    subselect(String.format("user_id = u.id and name = ? and coalesce(long_value, value) %s null)", operator == Operator.EQ ? "is" : "is not")),
+                    subselect(String.format("user_id = u.id and name = ? and coalesce(long_value, value) %s null", operator == Operator.EQ ? "is" : "is not")),
                     field
                     );
                 }
                 yield new ConfiguredFilter(
                 subselect(String.format(sensitivity == CaseSensitivity.CASE_SENSITIVE
-                ? "user_id = u.id and name = ? and coalesce(long_value, value) %s ?)"
-                : "user_id = u.id and name = ? and lower(coalesce(long_value, value)) %s ?)", operator.op)
+                ? "user_id = u.id and name = ? and coalesce(long_value, value) %s ?"
+                : "user_id = u.id and name = ? and lower(coalesce(long_value, value)) %s ?", operator.op)
                 ),
                 field,
                 sensitivity == CaseSensitivity.CASE_SENSITIVE ? value : value.toLowerCase()
