@@ -1,4 +1,4 @@
-<#-- opfa:imported from 26.1.0 -->
+<#-- opfa:imported from 26.1.2 -->
 <#import "footer.ftl" as loginFooter>
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
@@ -90,7 +90,7 @@
     </#if>
 </head>
 
-<body class="${properties.kcBodyClass!} ${bodyClass}">
+<body class="${properties.kcBodyClass!} ${bodyClass}"  data-page-id="login-${pageId}">
     <#-- opfa:modification start -->
     <#if (properties.cards!"false") == 'true'>
         <div class="left">
