@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>7.2</version>
+        <version>7.3-SNAPSHOT</version>
     </parent>
     <artifactId>optionfactory-keycloak-login-stats</artifactId>
     <description>optionfactory-keycloak login stats</description>
