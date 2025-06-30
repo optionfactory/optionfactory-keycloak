@@ -6,11 +6,15 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>7.3-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-welcome</artifactId>
-    <description>optionfactory-keycloak welcome theme</description>
-    <name>${project.groupId}:${project.artifactId}</name>
+    <artifactId>optionfactory-keycloak-themes</artifactId>
+    <description>optionfactory-keycloak login theme</description>
+    <name>net.optionfactory.keycloak:optionfactory-keycloak-themes</name>
     <packaging>jar</packaging>
-    <dependencies>  
+    <dependencies> 
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

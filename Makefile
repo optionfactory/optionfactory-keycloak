@@ -27,14 +27,13 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-email-sender/target/optionfactory-keycloak-email-sender-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-email-sender.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-api-provisioning/target/optionfactory-keycloak-api-provisioning-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-api-provisioning.jar \
-		--mount type=bind,source=${PWD}/optionfactory-keycloak-welcome/target/optionfactory-keycloak-welcome-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-welcome.jar \
-		--mount type=bind,source=${PWD}/optionfactory-keycloak-bootstrap/target/optionfactory-keycloak-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-bootstrap.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-idp-apple/target/optionfactory-keycloak-idp-apple-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-idp-apple.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
-		--mount type=bind,source=${PWD}/optionfactory-keycloak-cookies/target/optionfactory-keycloak-cookies-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-cookies.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-ldap/target/optionfactory-keycloak-ldap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-ldap.jar \
+		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
+		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes-bootstrap/target/optionfactory-keycloak-themes-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes-bootstrap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian12-jdk21-keycloak2:106
+		optionfactory/debian12-jdk21-keycloak2:110
 
 
 local-db: local-network
@@ -45,7 +44,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian12-postgres17:106
+		optionfactory/debian12-postgres17:110
 
 local-ldap: local-network
 	docker run -ti --rm \

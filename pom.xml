@@ -47,11 +47,11 @@
         <module>optionfactory-keycloak-email-sender</module>
         <module>optionfactory-keycloak-login-stats</module>
         <module>optionfactory-keycloak-api-provisioning</module>
-        <module>optionfactory-keycloak-welcome</module>
-        <module>optionfactory-keycloak-bootstrap</module>
         <module>optionfactory-keycloak-idp-apple</module>
         <module>optionfactory-keycloak-authenticators</module>
         <module>optionfactory-keycloak-ldap</module>
+        <module>optionfactory-keycloak-themes</module>
+        <module>optionfactory-keycloak-themes-bootstrap</module>
     </modules>
 
     <properties>

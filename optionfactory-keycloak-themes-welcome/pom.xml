@@ -6,9 +6,9 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>7.3-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-bootstrap</artifactId>
-    <description>optionfactory-keycloak bootstrap based theme</description>
-    <name>net.optionfactory.keycloak:optionfactory-keycloak-bootstrap</name>
+    <artifactId>optionfactory-keycloak-themes-welcome</artifactId>
+    <description>optionfactory-keycloak welcome theme</description>
+    <name>net.optionfactory.keycloak:optionfactory-keycloak-themes-welcome</name>
     <packaging>jar</packaging>
     <dependencies>  
         <dependency>
