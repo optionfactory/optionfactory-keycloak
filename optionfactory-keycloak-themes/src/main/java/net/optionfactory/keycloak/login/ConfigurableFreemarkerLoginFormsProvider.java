@@ -25,7 +25,6 @@ public class ConfigurableFreemarkerLoginFormsProvider extends FreeMarkerLoginFor
         this.attributes.put("conf", conf);
         this.attributes.put("baseUri", session.getContext().getUri().getBaseUri().getPath());
         this.attributes.put("realmUri", Urls.realmBase(session.getContext().getUri().getBaseUri()).path("{realm}").build(session.getContext().getRealm().getName()).getPath());
-        System.out.println(this.attributes);
     }
 
     @Override
