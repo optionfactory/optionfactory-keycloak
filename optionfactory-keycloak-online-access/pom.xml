@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>8.1-SNAPSHOT</version>
+        <version>8.1</version>
     </parent>
     <artifactId>optionfactory-keycloak-online-access</artifactId>
     <description>optionfactory-keycloak online-access API</description>
