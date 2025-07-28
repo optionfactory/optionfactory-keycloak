@@ -6,6 +6,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.common.util.StringPropertyReplacer;
 import org.keycloak.forms.login.LoginFormsProviderFactory;
@@ -43,6 +44,7 @@ public class ConfigurableFreemarkerLoginFormsProvider extends FreeMarkerLoginFor
     public static class Factory implements LoginFormsProviderFactory {
 
         private Map<String, String> conf;
+        private static final Logger logger = Logger.getLogger(Factory.class);
 
         @Override
         public ConfigurableFreemarkerLoginFormsProvider create(KeycloakSession session) {
@@ -51,14 +53,14 @@ public class ConfigurableFreemarkerLoginFormsProvider extends FreeMarkerLoginFor
 
         @Override
         public void init(Config.Scope ignored) {
-            final var prefix = "kc.conf-login-";
+            final var prefix = "kc.login-theme-conf--";
             //fuck keycloak and their fetish for dashes
             final var config = ConfigProvider.getConfig();
             conf = StreamSupport.stream(config.getPropertyNames().spliterator(), false)
                     .filter(key -> key.startsWith(prefix))
                     .map(k -> Map.entry(k.substring(prefix.length()), config.getValue(k, String.class)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+            logger.infof("login:opfa-freemarker-configurable initialized: with %s custom properties", conf.size());
         }
 
         @Override

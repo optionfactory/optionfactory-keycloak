@@ -27,6 +27,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-email-sender/target/optionfactory-keycloak-email-sender-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-email-sender.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-api-provisioning/target/optionfactory-keycloak-api-provisioning-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-api-provisioning.jar \
+		--mount type=bind,source=${PWD}/optionfactory-keycloak-online-access/target/optionfactory-keycloak-online-access-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-online-access.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-idp-apple/target/optionfactory-keycloak-idp-apple-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-idp-apple.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-ldap/target/optionfactory-keycloak-ldap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-ldap.jar \

@@ -6,16 +6,17 @@
         <artifactId>optionfactory-keycloak</artifactId>
         <version>8.1-SNAPSHOT</version>
     </parent>
-    <artifactId>optionfactory-keycloak-email-sender</artifactId>
-    <description>optionfactory-keycloak email</description>
+    <artifactId>optionfactory-keycloak-online-access</artifactId>
+    <description>optionfactory-keycloak online-access API</description>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-server-spi</artifactId>
+            <groupId>net.optionfactory.keycloak</groupId>
+            <artifactId>optionfactory-keycloak-providers</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>

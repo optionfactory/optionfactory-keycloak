@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.Set;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
+import org.keycloak.quarkus.runtime.configuration.MicroProfileConfigProvider;
+import org.keycloak.quarkus.runtime.configuration.MicroProfileConfigProvider.MicroProfileScope;
 
 public class Conf {
 
@@ -15,6 +17,12 @@ public class Conf {
     public Conf(String name, Config.Scope scope) {
         this.name = name;
         this.scope = scope;
+    }
+
+    public static Conf fromPrefix(String name, String prefix) {
+        final var mpcfg = new MicroProfileConfigProvider();
+        final var mps = mpcfg.new MicroProfileScope("kc.%s--".formatted(prefix));
+        return new Conf(name, mps);
     }
 
     public String anyOfWithDefault(String key, String defaultValue, String... values) {
