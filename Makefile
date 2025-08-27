@@ -106,6 +106,24 @@ local-test-api:
 
 	@echo ""
 	@echo ""
+	@echo " exact user search by id"
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/3d0bd8f9-ad4a-4d08-babb-14a48f210450' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
+	@echo ""
+	@echo ""
+	@echo " exact user search by username"
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?username=user@example.com' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
+	@echo ""
+	@echo ""
+	@echo "inspecting groups"
+	@echo ""
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
+		-H 'Content-Type: application/json' \
+		--data '{}'
+	@echo ""
+	@echo ""
 	@echo " provisioning: user patch: groups "
 	curl -X PATCH -v 'http://172.18.26.2:8080/admin/realms/test/provisioning/users/' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
