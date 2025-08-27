@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>8.3-SNAPSHOT</version>
+        <version>8.3</version>
     </parent>
     <artifactId>optionfactory-keycloak-idp-apple</artifactId>
     <description>optionfactory-keycloak Apple Identity Provider</description>
