@@ -56,9 +56,9 @@
     </modules>
 
     <properties>
-        <kc.version>26.3.2</kc.version>
+        <kc.version>26.3.3</kc.version>
         <resteasy.reactive.common.version>3.20.1</resteasy.reactive.common.version>
-        <libphonenumber.version>9.0.8</libphonenumber.version>
+        <libphonenumber.version>9.0.11</libphonenumber.version>
         <hibernatevalidator.version>9.0.1.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>

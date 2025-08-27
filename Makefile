@@ -34,7 +34,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes-bootstrap/target/optionfactory-keycloak-themes-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes-bootstrap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian12-jdk21-keycloak2:113
+		optionfactory/debian13-jdk21-keycloak2:201
 
 
 local-db: local-network
@@ -45,7 +45,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian12-postgres17:113
+		optionfactory/debian13-postgres17:201
 
 local-ldap: local-network
 	docker run -ti --rm \
@@ -65,7 +65,7 @@ local-smtp: local-network
 	docker run -d -it --rm \
 		--network keycloak \
 		--name keycloak-smtp \
-		--ip 172.18.26.4 \
+		--ip 172.18.26.5 \
 		maildev/maildev:2.0.5 --web 8080 --smtp 2525 --web-user admin --web-pass admin
 
 update-local-initdb-script: 
@@ -74,7 +74,7 @@ update-local-initdb-script:
 
 local-test-api:
 	@echo "fetching token"
-	$(eval TOKEN := $(shell curl --silent --data "grant_type=client_credentials&client_id=test-sa-view-client&client_secret=LokDtT7ZAwhEvekQcQLLW7c89YQIbkce" http://172.18.26.2:8080/realms/test/protocol/openid-connect/token))
+	$(eval TOKEN := $(shell curl --silent --data "grant_type=client_credentials&client_id=test-sa-client&client_secret=LokDtT7ZAwhEvekQcQLLW7c89YQIbkce" http://172.18.26.2:8080/realms/test/protocol/openid-connect/token))
 	$(eval ACCESS_TOKEN := $(shell echo '${TOKEN}' | jq -r '.access_token'))
 	@echo "inspecting users"
 	@echo " filter id EQ"
@@ -103,3 +103,11 @@ local-test-api:
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"groups": ["ANY","test-group", "unknown-group", "readers"]}'
+
+	@echo ""
+	@echo ""
+	@echo " provisioning: user patch: groups "
+	curl -X PATCH -v 'http://172.18.26.2:8080/admin/realms/test/provisioning/users/' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
+		-H 'Content-Type: application/json' \
+		--data '{"id":"3d0bd8f9-ad4a-4d08-babb-14a48f210450","attributesPatchMode":"APPEND","attributes":{"test": ["value1", "value2"]}, "groupsPatchMode":"APPEND", "groups": ["LOCAL/TEST_GROUP"]}'

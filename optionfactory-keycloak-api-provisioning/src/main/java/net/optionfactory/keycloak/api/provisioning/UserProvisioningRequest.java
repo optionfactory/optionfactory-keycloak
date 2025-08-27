@@ -5,23 +5,16 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class UserProvisioningRequest {
-
-    @NotEmpty
-    public String id;
-    @NotEmpty
-    public String username;
-    @NotEmpty
-    public String firstName;
-    @NotEmpty
-    public String lastName;
-    @NotNull
-    public Map<String, List<String>> attributes;
-    @NotNull
-    public List<String> groups;
-    @NotNull
-    public List<String> requiredActions;
-    public boolean enabled;
-    public boolean emailVerified;
+public record UserProvisioningRequest(
+        @NotEmpty String id,
+        @NotEmpty String username,
+        @NotEmpty String email,
+        @NotEmpty String firstName,
+        @NotEmpty String lastName,
+        @NotNull Map<String, List<String>> attributes,
+        @NotNull List<String> groups,
+        @NotNull List<String> requiredActions,
+        boolean enabled,
+        boolean emailVerified) {
 
 }

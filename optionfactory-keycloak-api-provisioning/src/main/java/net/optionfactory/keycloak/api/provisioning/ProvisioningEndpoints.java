@@ -1,21 +1,24 @@
 package net.optionfactory.keycloak.api.provisioning;
 
+import net.optionfactory.keycloak.providers.groups.Groups;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response.Status;
+import net.optionfactory.keycloak.api.provisioning.UserPatchRequest.PatchMode;
 import net.optionfactory.keycloak.providers.validation.RequestValidator;
 import org.keycloak.Config;
-import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
+import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
@@ -63,27 +66,92 @@ public class ProvisioningEndpoints {
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
 
-        final UserModel user = Optional.ofNullable(users.getUserById(realm, req.id))
-                .orElseGet(() -> users.addUser(realm, req.id, req.username, true, true));
+        final UserModel user = Optional.ofNullable(users.getUserById(realm, req.id()))
+                .orElseGet(() -> users.addUser(realm, req.id(), req.username(), true, true));
 
-        user.setFirstName(req.firstName);
-        user.setLastName(req.lastName);
-        user.setEnabled(req.enabled);
-        user.setEmail(req.username);
-        user.setEmailVerified(req.emailVerified);
-        for (Map.Entry<String, List<String>> entry : req.attributes.entrySet()) {
+        user.setFirstName(req.firstName());
+        user.setLastName(req.lastName());
+        user.setEnabled(req.enabled());
+        user.setEmail(req.email());
+        user.setEmailVerified(req.emailVerified());
+        for (final var entry : req.attributes().entrySet()) {
             user.setAttribute(entry.getKey(), entry.getValue());
         }
-        for (String requiredAction : req.requiredActions) {
+        for (final var requiredAction : req.requiredActions()) {
             user.addRequiredAction(requiredAction);
         }
-        for (String groupName : req.groups) {
-            final GroupModel group = session.groups()
-                    .getGroupsStream(realm)
-                    .filter(g -> g.getName().equals(groupName))
-                    .findFirst()
-                    .orElseGet(() -> session.groups().createGroup(realm, groupName));
-            user.joinGroup(group);
+        for (final var groupName : req.groups()) {
+            user.joinGroup(Groups.provide(session, realm, groupName));
+        }
+    }
+
+    @PATCH
+    @Path("/users")
+    @Consumes(MediaType.APPLICATION_JSON)
+    // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
+    public void patch(UserPatchRequest req) {
+        validator.enforce(req);
+
+        final RealmModel realm = session.getContext().getRealm();
+        final UserProvider users = session.users();
+
+        final UserModel user = Optional.ofNullable(users.getUserById(realm, req.id()))
+                .orElseThrow(() -> ErrorResponse.error("Unknown user", Status.BAD_REQUEST));
+
+        if (req.firstName() != null) {
+            user.setFirstName(req.firstName());
+        }
+        if (req.lastName() != null) {
+            user.setLastName(req.lastName());
+        }
+        if (req.enabled() != null) {
+            user.setEnabled(req.enabled());
+        }
+        if (req.username() != null) {
+            user.setUsername(req.username());
+        }
+        if (req.email() != null) {
+            user.setEmail(req.email());
+        }
+        if (req.emailVerified() != null) {
+            user.setEmailVerified(req.emailVerified());
+        }
+        if (req.attributes() != null) {
+            final var mode = req.attributesPatchMode() == null ? PatchMode.REPLACE : req.attributesPatchMode();
+            final var actual = user.getAttributes();
+            final var desired = req.attributes();
+            final var attributes = Patch.ofMap(mode, actual, desired);
+
+            for (final var entry : attributes.toBeRemoved()) {
+                user.removeAttribute(entry.getKey());
+            }
+            for (final var entry : attributes.toBeAdded()) {
+                user.setAttribute(entry.getKey(), entry.getValue());
+            }
+        }
+        if (req.requiredActions() != null) {
+            final var mode = req.requiredActionsPatchMode() == null ? PatchMode.REPLACE : req.requiredActionsPatchMode();
+            final var actual = user.getRequiredActionsStream().toList();
+            final var desired = req.requiredActions();
+            final var actions = Patch.of(mode, actual, desired);
+            for (final var item : actions.toBeRemoved()) {
+                user.removeRequiredAction(item);
+            }
+            for (String item : actions.toBeAdded()) {
+                user.addRequiredAction(item);
+            }
+        }
+        if (req.groups() != null) {
+            final var mode = req.groupsPatchMode() == null ? PatchMode.REPLACE : req.groupsPatchMode();
+            final var actual = user.getGroupsStream().toList();
+            final var desired = req.groups().stream().map(gp -> Groups.provide(session, realm, gp)).toList();
+            final var groups = Patch.of(mode, actual, desired);
+            for (final var item : groups.toBeRemoved()) {
+                user.leaveGroup(item);
+            }
+            for (final var item : groups.toBeAdded()) {
+                user.joinGroup(item);
+            }
         }
     }
 

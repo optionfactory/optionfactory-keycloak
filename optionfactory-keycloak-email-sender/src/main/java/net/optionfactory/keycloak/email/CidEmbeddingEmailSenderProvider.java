@@ -26,6 +26,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.theme.Theme;
 import org.keycloak.truststore.JSSETruststoreConfigurator;
+import org.keycloak.utils.EmailValidationUtil;
+import org.keycloak.utils.SMTPUtil;
 
 public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
@@ -39,6 +41,25 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
     public CidEmbeddingEmailSenderProvider(KeycloakSession session, Map<EmailAuthenticator.AuthenticatorType, EmailAuthenticator> authenticators) {
         this.authenticators = authenticators;
         this.session = session;
+    }
+
+    @Override
+    public void validate(Map<String, String> config) throws EmailException {
+        // just static configuration checking here, not really testing email
+        checkFromAddress(config.get("from"), isAllowUTF8(config));
+    }
+
+    private static boolean isAllowUTF8(Map<String, String> config) {
+        return "true".equals(config.get("allowutf8"));
+    }
+
+    private static String checkFromAddress(String from, boolean allowutf8) throws EmailException {
+        final String covertedFrom = convertEmail(from, allowutf8);
+        if (from == null) {
+            throw new EmailException(String.format("Invalid sender address '%s'. If the address contains UTF-8 characters in the local part please ensure the SMTP server supports the SMTPUTF8 extension and enable 'Allow UTF-8' in the email realm configuration.",
+                    from));
+        }
+        return covertedFrom;
     }
 
     @Override
@@ -104,6 +125,9 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             String replyTo = config.get("replyTo");
             String replyToDisplayName = config.get("replyToDisplayName");
             String envelopeFrom = config.get("envelopeFrom");
+            if (isAllowUTF8(config)) {
+                props.setProperty("mail.mime.allowutf8", "true");
+            }
 
             final Session emailSession = Session.getInstance(props);
             final var alternatives = new MimeMultipart("alternative");
@@ -173,6 +197,26 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
         final var bp = new MimeBodyPart();
         bp.setContent(part);
         return bp;
+    }
+
+    private static String convertEmail(String email, boolean allowutf8) throws EmailException {
+        if (!EmailValidationUtil.isValidEmail(email)) {
+            return null;
+        }
+
+        if (allowutf8) {
+            // if allowutf8 the extension will manage both parts
+            return email;
+        }
+
+        // if no allowutf8, do the IDN conversion over the domain part
+        final String convertedEmail = SMTPUtil.convertIDNEmailAddress(email);
+        if (convertedEmail == null || !convertedEmail.chars().allMatch(c -> c < 128)) {
+            // now if there are non-ascii characters, we should send an error
+            return null;
+        }
+
+        return convertedEmail;
     }
 
     protected InternetAddress toInternetAddress(String email, String displayName) throws UnsupportedEncodingException, AddressException, EmailException {
