@@ -115,12 +115,18 @@ local-test-api:
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
 	@echo ""
 	@echo ""
-	@echo "inspecting groups"
+	@echo "inspecting group memberhip"
 	@echo ""
-	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups' \
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups/membership' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{}'
+	@echo ""
+	@echo ""
+	@echo "inspecting groups"
+	@echo ""
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
 	@echo ""
 	@echo ""
 	@echo " provisioning: user patch: groups "
@@ -128,13 +134,6 @@ local-test-api:
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{"id":"3d0bd8f9-ad4a-4d08-babb-14a48f210450","attributesPatchMode":"APPEND","attributes":{"test": ["value1", "value2"]}, "groupsPatchMode":"APPEND", "groups": ["LOCAL/TEST_GROUP"]}'
-
-local-test-groups:
-	@echo "fetching token"
-	$(eval TOKEN := $(shell curl --silent --data "grant_type=client_credentials&client_id=test-sa-client&client_secret=LokDtT7ZAwhEvekQcQLLW7c89YQIbkce" http://172.18.26.2:8080/realms/test/protocol/openid-connect/token))
-	$(eval ACCESS_TOKEN := $(shell echo '${TOKEN}' | jq -r '.access_token'))
-	@echo ""
-	@echo ""
 	@echo " provide group"
 	curl -X PUT -v 'http://172.18.26.2:8080/admin/realms/test/provisioning/groups/local/test/asd' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'

@@ -34,6 +34,7 @@ import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
@@ -230,8 +231,8 @@ public class InspectionEndpoints {
             .sorter("path", "path");
 
     @POST
-    @Path("/groups")
-    public List<GroupResponse> groups(Map<String, String[]> filters, @QueryParam("sort") List<String> sort) {
+    @Path("/groups/membership")
+    public List<GroupMemberhipResponse> groupsMemberhip(Map<String, String[]> filters, @QueryParam("sort") List<String> sort) {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         final var query = GROUPS_QUERY_TEMPLATE.create(em, filters, sort, false, 0, 0, realmId);
@@ -241,7 +242,7 @@ public class InspectionEndpoints {
             final var path = (String) row[2];
             try {
                 final var members = om.readValue((String) row[3], MAP_TYPE);
-                return new GroupResponse(id, name, path, members);
+                return new GroupMemberhipResponse(id, name, path, members);
             } catch (JsonProcessingException ex) {
                 throw new IllegalStateException(ex);
             }
@@ -249,8 +250,20 @@ public class InspectionEndpoints {
         }).toList();
 
     }
+    
+    @GET
+    @Path("/groups")
+    public List<GroupResponse> groups() {
+        final var realm = session.getContext().getRealm();
+        return session.groups().getGroupsStream(realm).map(g -> new GroupResponse(g.getId(), g.getName(), KeycloakModelUtils.buildGroupPath(g)))
+            .toList();
+    }
 
-    public record GroupResponse(String id, String name, String path, Map<String, String> members) {
+    
+    public record GroupResponse(String id, String name, String path) {
+
+    }
+    public record GroupMemberhipResponse(String id, String name, String path, Map<String, String> members) {
 
     }
 
