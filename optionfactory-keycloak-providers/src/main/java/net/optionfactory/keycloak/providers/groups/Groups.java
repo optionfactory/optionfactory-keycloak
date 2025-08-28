@@ -22,4 +22,7 @@ public class Groups {
         return parentGroup;
     }
 
+    public static GroupModel search(KeycloakSession session, RealmModel realm, String groupPath) {
+        return KeycloakModelUtils.findGroupByPath(session, realm, groupPath);
+    }
 }
