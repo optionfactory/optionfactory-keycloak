@@ -115,17 +115,23 @@ local-test-api:
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
 	@echo ""
 	@echo ""
-	@echo "inspecting group memberhip"
+	@echo "inspecting group membership"
 	@echo ""
 	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups/membership' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
 		-H 'Content-Type: application/json' \
 		--data '{}'
+	@echo "inspecting group membership"
+	@echo ""
+	curl -X POST -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups/membership/LOCAL/TEST_GROUP' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
+		-H 'Content-Type: application/json' \
+		--data '{}'		
 	@echo ""
 	@echo ""
 	@echo "inspecting groups"
 	@echo ""
-	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups' \
+	curl -X POST -v 'http://172.18.26.2:8080/admin/realms/test/inspection/groups' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
 	@echo ""
 	@echo ""

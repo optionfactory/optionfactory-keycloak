@@ -37,13 +37,11 @@ public class ProvisioningEndpoints {
     private final ServicesLogger logger = ServicesLogger.LOGGER;
     private final RequestValidator validator;
     private final KeycloakSession session;
-    private final AdminPermissionEvaluator auth;
     private final AdminEventBuilder events;
 
-    public ProvisioningEndpoints(RequestValidator validator, KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder events) {
+    public ProvisioningEndpoints(RequestValidator validator, KeycloakSession session, AdminEventBuilder events) {
         this.validator = validator;
         this.session = session;
-        this.auth = auth;
         this.events = events;
     }
 
@@ -52,8 +50,6 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
-        auth.users().requireManage();
-
         validator.enforce(ids);
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -70,7 +66,6 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
-        auth.users().requireManage();
         validator.enforce(req);
 
         final RealmModel realm = session.getContext().getRealm();
@@ -100,7 +95,6 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void patch(UserPatchRequest req) {
-        auth.users().requireManage();
         validator.enforce(req);
 
         final RealmModel realm = session.getContext().getRealm();
@@ -171,7 +165,6 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/groups
     public GroupRepresentation putGroup(@PathParam("path") String path) {
-        auth.groups().requireManage();
         final RealmModel realm = session.getContext().getRealm();
         final var gm = Groups.provide(session, realm, path);
         return ModelToRepresentation.toRepresentation(gm, true);
@@ -182,7 +175,6 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/groups
     public void deleteGroup(@PathParam("path") String path) {
-        auth.groups().requireManage();
         final var realm = session.getContext().getRealm();
         final var g = Groups.search(session, realm, path);
         if (g == null) {
@@ -200,7 +192,8 @@ public class ProvisioningEndpoints {
 
                 @Override
                 public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator auth, AdminEventBuilder events) {
-                    return new ProvisioningEndpoints(validator, ks, auth, events);
+                    auth.users().requireManage();                    
+                    return new ProvisioningEndpoints(validator, ks, events);
                 }
 
                 @Override

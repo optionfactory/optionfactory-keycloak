@@ -19,6 +19,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import net.optionfactory.keycloak.providers.filtering.AttributeFilter;
@@ -27,6 +28,7 @@ import net.optionfactory.keycloak.providers.filtering.GroupFilter;
 import net.optionfactory.keycloak.providers.filtering.QueryBuilder;
 import net.optionfactory.keycloak.providers.filtering.TextFilter;
 import net.optionfactory.keycloak.providers.filtering.TimestampFilter;
+import net.optionfactory.keycloak.providers.groups.Groups;
 import net.optionfactory.keycloak.providers.pagination.PageResponse;
 import net.optionfactory.keycloak.providers.pagination.SliceResponse;
 import org.keycloak.Config;
@@ -35,8 +37,6 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
-import org.keycloak.services.ErrorResponse;
-import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProviderFactory;
@@ -48,7 +48,6 @@ import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
  */
 public class InspectionEndpoints {
 
-    private final ServicesLogger logger = ServicesLogger.LOGGER;
     private final ObjectMapper om;
     private final KeycloakSession session;
 
@@ -118,15 +117,15 @@ public class InspectionEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/inspection/users/{id}
-    public UserResponse user(@PathParam("id") String id) {
+    public Optional<UserResponse> user(@PathParam("id") String id) {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("id", new String[]{"EQ", "CASE_SENSITIVE", id}), List.of(), false, 0, 1, realmId);
         try {
             final var row = (Object[]) query.getSingleResult();
-            return userFromRow(om, row);
+            return Optional.of(userFromRow(om, row));
         } catch (NoResultException ex) {
-            throw ErrorResponse.error(String.format("User with id %s not found", id), Response.Status.NOT_FOUND);
+            return Optional.empty();
         }
     }
 
@@ -135,15 +134,15 @@ public class InspectionEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/inspection/users
-    public UserResponse userByUsername(@QueryParam("username") String id) {
+    public Optional<UserResponse> userByUsername(@QueryParam("username") String username) {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("username", new String[]{"EQ", "CASE_SENSITIVE", id}), List.of(), false, 0, 1, realmId);
+        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("username", new String[]{"EQ", "CASE_SENSITIVE", username}), List.of(), false, 0, 1, realmId);
         try {
             final var row = (Object[]) query.getSingleResult();
-            return userFromRow(om, row);
+            return Optional.of(userFromRow(om, row));
         } catch (NoResultException ex) {
-            throw ErrorResponse.error(String.format("User with id %s not found", id), Response.Status.NOT_FOUND);
+            return Optional.empty();
         }
     }
 
@@ -158,7 +157,6 @@ public class InspectionEndpoints {
             @DefaultValue("0") @QueryParam("offset") int offset,
             @DefaultValue("0") @QueryParam("limit") int limit
     ) {
-
         final var slice = MediaType.valueOf("application/slice+json").equals(accept);
 
         final var realmId = session.getContext().getRealm().getId();
@@ -250,19 +248,61 @@ public class InspectionEndpoints {
         }).toList();
 
     }
-    
-    @GET
+
+    @POST
+    @Path("/groups/membership/{path:.+}")
+    @Produces("application/slice+json")
+    public Response groupMemberhip(
+            @HeaderParam("Accept") MediaType accept,
+            @PathParam("path") String groupPath,
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @DefaultValue("0") @QueryParam("limit") int limit) {
+        final var slice = MediaType.valueOf("application/slice+json").equals(accept);
+        final var rb = Response.ok()
+                .type(slice ? "application/slice+json" : "application/page+json");
+
+        final var realm = session.getContext().getRealm();
+        final var group = Groups.search(session, realm, groupPath);
+        if (group == null) {
+            if (slice) {
+                rb.entity(new SliceResponse(List.of(), false));
+            }
+            return rb.entity(new PageResponse(List.of(), 0)).build();
+        }
+        final var chunk = session.users().getGroupMembersStream(realm, group, offset, limit == 0 ? null : limit + 1)
+                .map(u -> new GroupMember(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()))
+                .toList();
+
+        if (!slice) {
+            final var fakeSize = limit == 0
+                    ? chunk.size()
+                    : offset + limit + (chunk.size() > limit ? 1 : 0);
+            return rb.entity(new PageResponse(chunk, fakeSize)).build();
+        }
+        if (limit == 0) {
+            return rb.entity(new SliceResponse(chunk, false)).build();
+        }
+        final var sliceData = chunk.subList(0, Math.min(chunk.size(), limit));
+        return rb.entity(new SliceResponse(sliceData, sliceData.size() < limit)).build();
+    }
+
+    @POST
     @Path("/groups")
     public List<GroupResponse> groups() {
         final var realm = session.getContext().getRealm();
-        return session.groups().getGroupsStream(realm).map(g -> new GroupResponse(g.getId(), g.getName(), KeycloakModelUtils.buildGroupPath(g)))
-            .toList();
+        return session.groups()
+                .getGroupsStream(realm).map(g -> new GroupResponse(g.getId(), g.getName(), KeycloakModelUtils.buildGroupPath(g)))
+                .toList();
     }
 
-    
+    public record GroupMember(String id, String username, String email, String firstName, String lastName) {
+
+    }
+
     public record GroupResponse(String id, String name, String path) {
 
     }
+
     public record GroupMemberhipResponse(String id, String name, String path, Map<String, String> members) {
 
     }
@@ -273,8 +313,8 @@ public class InspectionEndpoints {
         public AdminRealmResourceProvider create(KeycloakSession session) {
             return new AdminRealmResourceProvider() {
                 @Override
-                public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator ape, AdminEventBuilder aeb) {
-                    ape.users().requireView();
+                public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator auth, AdminEventBuilder aeb) {
+                    auth.users().requireView();
                     return new InspectionEndpoints(session);
                 }
 
