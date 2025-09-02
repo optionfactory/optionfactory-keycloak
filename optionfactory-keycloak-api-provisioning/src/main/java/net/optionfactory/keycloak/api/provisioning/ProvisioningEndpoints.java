@@ -6,9 +6,10 @@ import java.util.Optional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 import net.optionfactory.keycloak.api.provisioning.UserPatchRequest.PatchMode;
@@ -22,7 +23,6 @@ import org.keycloak.models.UserProvider;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.services.ErrorResponse;
-import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProviderFactory;
@@ -34,15 +34,12 @@ import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
  */
 public class ProvisioningEndpoints {
 
-    private final ServicesLogger logger = ServicesLogger.LOGGER;
     private final RequestValidator validator;
     private final KeycloakSession session;
-    private final AdminEventBuilder events;
 
-    public ProvisioningEndpoints(RequestValidator validator, KeycloakSession session, AdminEventBuilder events) {
+    public ProvisioningEndpoints(RequestValidator validator, KeycloakSession session) {
         this.validator = validator;
         this.session = session;
-        this.events = events;
     }
 
     @DELETE
@@ -160,21 +157,21 @@ public class ProvisioningEndpoints {
         }
     }
 
-    @PUT
-    @Path("/groups/{path:.+}")
+    @POST
+    @Path("/groups/@by-path")
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/groups
-    public GroupRepresentation putGroup(@PathParam("path") String path) {
+    public GroupRepresentation putGroup(@QueryParam("path") String path) {
         final RealmModel realm = session.getContext().getRealm();
         final var gm = Groups.provide(session, realm, path);
         return ModelToRepresentation.toRepresentation(gm, true);
     }
 
     @DELETE
-    @Path("/groups/{path:.+}")
+    @Path("/groups/@by-path")
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/groups
-    public void deleteGroup(@PathParam("path") String path) {
+    public void deleteGroup(@QueryParam("path") String path) {
         final var realm = session.getContext().getRealm();
         final var g = Groups.search(session, realm, path);
         if (g == null) {
@@ -192,8 +189,8 @@ public class ProvisioningEndpoints {
 
                 @Override
                 public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator auth, AdminEventBuilder events) {
-                    auth.users().requireManage();                    
-                    return new ProvisioningEndpoints(validator, ks, events);
+                    auth.users().requireManage();
+                    return new ProvisioningEndpoints(validator, ks);
                 }
 
                 @Override

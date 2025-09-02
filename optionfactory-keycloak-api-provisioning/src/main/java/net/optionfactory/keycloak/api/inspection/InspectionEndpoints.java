@@ -212,10 +212,10 @@ public class InspectionEndpoints {
                 union all
                 select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id
             )            
-            select gp.id, gp.name, gp.path, jsonb_object_agg(ue.username, ue.id) as members 
+            select gp.id, gp.name, gp.path, coalesce(jsonb_object_agg(ue.username, ue.id) filter (where ue.id is not null), '{}'::jsonb) as members
             from group_path gp
-                inner join user_group_membership ugm on ugm.group_id = gp.id
-                inner join user_entity ue on ue.id = ugm.user_id
+                left join user_group_membership ugm on ugm.group_id = gp.id
+                left join user_entity ue on ue.id = ugm.user_id
             where 
                 1 = 1 {CONDITIONS}
             {ORDER_CLAUSE}        
@@ -250,11 +250,11 @@ public class InspectionEndpoints {
     }
 
     @POST
-    @Path("/groups/membership/{path:.+}")
+    @Path("/groups/membership/@by-path")
     @Produces("application/slice+json")
     public Response groupMemberhip(
             @HeaderParam("Accept") MediaType accept,
-            @PathParam("path") String groupPath,
+            @QueryParam("path") String path,
             @DefaultValue("0") @QueryParam("offset") int offset,
             @DefaultValue("0") @QueryParam("limit") int limit) {
         final var slice = MediaType.valueOf("application/slice+json").equals(accept);
@@ -262,7 +262,7 @@ public class InspectionEndpoints {
                 .type(slice ? "application/slice+json" : "application/page+json");
 
         final var realm = session.getContext().getRealm();
-        final var group = Groups.search(session, realm, groupPath);
+        final var group = Groups.search(session, realm, path);
         if (group == null) {
             if (slice) {
                 rb.entity(new SliceResponse(List.of(), false));
