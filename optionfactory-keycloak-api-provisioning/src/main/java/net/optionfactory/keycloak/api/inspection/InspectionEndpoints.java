@@ -251,7 +251,6 @@ public class InspectionEndpoints {
 
     @POST
     @Path("/groups/membership/@by-path")
-    @Produces("application/slice+json")
     public Response groupMemberhip(
             @HeaderParam("Accept") MediaType accept,
             @QueryParam("path") String path,

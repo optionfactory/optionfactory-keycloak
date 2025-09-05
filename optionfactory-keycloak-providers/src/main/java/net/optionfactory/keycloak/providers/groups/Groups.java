@@ -16,6 +16,10 @@ public class Groups {
             parentGroup = groups.filter(group -> group.getName().equals(groupName)).findFirst().orElseGet(() -> {
                 final var g = realm.createGroup(groupName);
                 g.setParent(currentParentGroup);
+                if(currentParentGroup != null){
+                    //this is needed to invalidate the infinispan cache.
+                    currentParentGroup.addChild(g);
+                }
                 return g;
             });
         }
