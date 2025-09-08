@@ -34,7 +34,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes-bootstrap/target/optionfactory-keycloak-themes-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes-bootstrap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian13-jdk21-keycloak2:201
+		optionfactory/debian13-jdk21-keycloak2:203
 
 
 local-db: local-network
@@ -45,7 +45,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian13-postgres17:201
+		optionfactory/debian13-postgres17:203
 
 local-ldap: local-network
 	docker run -ti --rm \
@@ -147,3 +147,15 @@ local-test-api:
 	@echo " delete group"
 	curl -X DELETE -v 'http://172.18.26.2:8080/admin/realms/test/provisioning/groups/local/test/asd' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
+
+
+
+
+test-bug:
+	@echo "fetching token"
+	$(eval TOKEN := $(shell curl --silent --data "grant_type=client_credentials&client_id=test-sa-client&client_secret=LokDtT7ZAwhEvekQcQLLW7c89YQIbkce" http://172.18.26.2:8080/realms/test/protocol/openid-connect/token))
+	$(eval ACCESS_TOKEN := $(shell echo '${TOKEN}' | jq -r '.access_token'))
+	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10' \
+		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
+		-H 'Content-Type: application/json' \
+		--data '{"groups": ["NONE", "/unknown-group"]}'

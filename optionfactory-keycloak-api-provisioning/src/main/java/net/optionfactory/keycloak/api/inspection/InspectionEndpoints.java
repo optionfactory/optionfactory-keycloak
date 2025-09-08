@@ -65,9 +65,9 @@ public class InspectionEndpoints {
         from 
             user_entity u 
             left join lateral (
-                select jsonb_object_agg(gp.path, g.id) as groups from user_group_membership ug 
-                inner join keycloak_group g on ug.group_id = g.id
-                inner join group_path gp on gp.id = g.id            
+                select coalesce(jsonb_object_agg(gp.path, g.id) filter (where g.id is not null), '{}'::jsonb) as groups from user_group_membership ug 
+                left join keycloak_group g on ug.group_id = g.id
+                left join group_path gp on gp.id = g.id            
                 where ug.user_id = u.id
             ) gs on true
             left join lateral (
