@@ -29,6 +29,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-api-provisioning/target/optionfactory-keycloak-api-provisioning-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-api-provisioning.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-online-access/target/optionfactory-keycloak-online-access-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-online-access.jar \
+		--mount type=bind,source=${PWD}/optionfactory-keycloak-idp-apple/target/optionfactory-keycloak-idp-apple-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-idp-apple.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-ldap/target/optionfactory-keycloak-ldap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-ldap.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
@@ -45,7 +46,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian13-postgres17:205
+		optionfactory/debian13-postgres17:206
 
 local-ldap: local-network
 	docker run -ti --rm \
@@ -66,7 +67,7 @@ local-smtp: local-network
 		--network keycloak \
 		--name keycloak-smtp \
 		--ip 172.18.26.5 \
-		maildev/maildev:2.0.5 --web 8080 --smtp 2525 --web-user admin --web-pass admin
+		maildev/maildev:2.2.1 --web 8080 --smtp 2525 --web-user admin --web-pass admin
 
 update-local-initdb-script: 
 	docker exec -ti keycloak-psql pg_dump --create -U postgres keycloak > local/00_init_db.sql
@@ -148,14 +149,3 @@ local-test-api:
 	curl -X DELETE -v 'http://172.18.26.2:8080/admin/realms/test/provisioning/groups/local/test/asd' \
 		-H 'Authorization: Bearer ${ACCESS_TOKEN}'
 
-
-
-
-test-bug:
-	@echo "fetching token"
-	$(eval TOKEN := $(shell curl --silent --data "grant_type=client_credentials&client_id=test-sa-client&client_secret=LokDtT7ZAwhEvekQcQLLW7c89YQIbkce" http://172.18.26.2:8080/realms/test/protocol/openid-connect/token))
-	$(eval ACCESS_TOKEN := $(shell echo '${TOKEN}' | jq -r '.access_token'))
-	curl -v 'http://172.18.26.2:8080/admin/realms/test/inspection/users/?offset=0&limit=10' \
-		-H 'Authorization: Bearer ${ACCESS_TOKEN}' \
-		-H 'Content-Type: application/json' \
-		--data '{"groups": ["NONE", "/unknown-group"]}'
