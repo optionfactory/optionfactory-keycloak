@@ -61,7 +61,7 @@ public class InspectionEndpoints {
         select 
             id, username, email, first_name, last_name, 
             enabled, email_verified, created_timestamp, 
-            groups, attributes {COUNT_OVER_TOTAL}
+            groups, attributes, federated_identities {COUNT_OVER_TOTAL}
         from 
             user_entity u 
             left join lateral (
@@ -73,6 +73,11 @@ public class InspectionEndpoints {
             left join lateral (
                 with ua as (select name, coalesce(long_value, value) as value from user_attribute where user_id = u.id) select jsonb_agg(ua) as attributes from ua
             ) at on true
+            left join lateral (
+                select coalesce(jsonb_object_agg(fi.identity_provider, fi.federated_user_id,), '{}'::jsonb) as federated_identities 
+                from federated_identity fi 
+                where fi.user_id = u.id
+            ) ft on true            
         where 
             service_account_client_link is null
             and realm_id = ?
@@ -166,7 +171,7 @@ public class InspectionEndpoints {
         final AtomicInteger totalAcc = new AtomicInteger();
         final var chunk = ((Stream<Object[]>) query.getResultStream()).map(row -> {
             if (!slice) {
-                totalAcc.set(((Number) row[10]).intValue());
+                totalAcc.set(((Number) row[11]).intValue());
             }
             return userFromRow(om, row);
         }).toList();
@@ -199,6 +204,7 @@ public class InspectionEndpoints {
             ur.attributes = row[9] == null ? Map.of() : om.readValue((String) row[9], ATTRIBUTES_TYPE).stream().collect(
                     Collectors.toMap(attr -> attr.name(), attr -> List.of(attr.value()), (lhs, rhs) -> Stream.concat(lhs.stream(), rhs.stream()).toList())
             );
+            ur.federatedIdentities = row[10] == null ? Map.of() : om.readValue((String) row[10], MAP_TYPE);
             return ur;
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException(ex);

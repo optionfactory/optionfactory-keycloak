@@ -18,5 +18,6 @@ public class UserResponse {
     public Instant createdAt;
     public Map<String, String> groups;
     public Map<String, List<String>> attributes;
+    public Map<String, String> federatedIdentities;
 
 }

@@ -21,20 +21,20 @@ local-keycloak: local-network
 		--name keycloak \
 		--ip 172.18.26.2 \
 		-e DEBUG=true \
-		-e DEBUG_PORT="*:8787" \
+		-e DEBUG_PORT="8787" \
+		-e JAVA_TOOL_OPTIONS="--add-opens=java.base/java.lang=ALL-UNNAMED" \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-providers/target/optionfactory-keycloak-providers-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-providers.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-remoting/target/optionfactory-keycloak-remoting-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-remoting.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-email-sender/target/optionfactory-keycloak-email-sender-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-email-sender.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-login-stats/target/optionfactory-keycloak-login-stats-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-login-stats.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-api-provisioning/target/optionfactory-keycloak-api-provisioning-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-api-provisioning.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-online-access/target/optionfactory-keycloak-online-access-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-online-access.jar \
-		--mount type=bind,source=${PWD}/optionfactory-keycloak-idp-apple/target/optionfactory-keycloak-idp-apple-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-idp-apple.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-authenticators/target/optionfactory-keycloak-authenticators-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-authenticators.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-ldap/target/optionfactory-keycloak-ldap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-ldap.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes-bootstrap/target/optionfactory-keycloak-themes-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes-bootstrap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian13-jdk21-keycloak2:203
+		optionfactory/debian13-jdk25-keycloak2:206
 
 
 local-db: local-network
@@ -45,7 +45,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian13-postgres17:203
+		optionfactory/debian13-postgres17:205
 
 local-ldap: local-network
 	docker run -ti --rm \

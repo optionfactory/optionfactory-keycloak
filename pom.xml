@@ -56,7 +56,7 @@
 
     <properties>
         <kc.version>26.4.0</kc.version>
-        <resteasy.reactive.common.version>3.20.1</resteasy.reactive.common.version>
+        <resteasy.reactive.common.version>3.27.0</resteasy.reactive.common.version>
         <libphonenumber.version>9.0.15</libphonenumber.version>
         <hibernatevalidator.version>9.0.1.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
