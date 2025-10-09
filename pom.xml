@@ -48,7 +48,6 @@
         <module>optionfactory-keycloak-login-stats</module>
         <module>optionfactory-keycloak-api-provisioning</module>
         <module>optionfactory-keycloak-online-access</module>
-        <module>optionfactory-keycloak-idp-apple</module>
         <module>optionfactory-keycloak-authenticators</module>
         <module>optionfactory-keycloak-ldap</module>
         <module>optionfactory-keycloak-themes</module>
@@ -56,9 +55,9 @@
     </modules>
 
     <properties>
-        <kc.version>26.3.4</kc.version>
+        <kc.version>26.4.0</kc.version>
         <resteasy.reactive.common.version>3.20.1</resteasy.reactive.common.version>
-        <libphonenumber.version>9.0.14</libphonenumber.version>
+        <libphonenumber.version>9.0.15</libphonenumber.version>
         <hibernatevalidator.version>9.0.1.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
