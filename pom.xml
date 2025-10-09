@@ -48,6 +48,7 @@
         <module>optionfactory-keycloak-login-stats</module>
         <module>optionfactory-keycloak-api-provisioning</module>
         <module>optionfactory-keycloak-online-access</module>
+        <module>optionfactory-keycloak-idp-apple</module>
         <module>optionfactory-keycloak-authenticators</module>
         <module>optionfactory-keycloak-ldap</module>
         <module>optionfactory-keycloak-themes</module>
