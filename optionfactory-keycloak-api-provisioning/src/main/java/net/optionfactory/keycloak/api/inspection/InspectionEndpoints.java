@@ -74,7 +74,7 @@ public class InspectionEndpoints {
                 with ua as (select name, coalesce(long_value, value) as value from user_attribute where user_id = u.id) select jsonb_agg(ua) as attributes from ua
             ) at on true
             left join lateral (
-                select coalesce(jsonb_object_agg(fi.identity_provider, fi.federated_user_id,), '{}'::jsonb) as federated_identities 
+                select coalesce(jsonb_object_agg(fi.identity_provider, fi.federated_user_id), '{}'::jsonb) as federated_identities 
                 from federated_identity fi 
                 where fi.user_id = u.id
             ) ft on true            
