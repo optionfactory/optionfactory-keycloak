@@ -200,7 +200,7 @@ public class OnlineAccessEndpoints {
 
         @Override
         public void init(Config.Scope scope) {
-            final var config = Conf.fromPrefix("online-access-endpoins", "online-access");
+            final var config = Conf.fromPrefix("online-access-endpoints", "online-access");
             this.enabled = config.bool("enabled", false);
             this.tokenDurationInSeconds = (int) config.number("token-duration", 60);
             logger.infof("online-access(endpoints) initialized: %s", this.enabled ? "enabled": "disabled");
