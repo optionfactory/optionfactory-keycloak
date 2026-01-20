@@ -29,7 +29,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
-import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.http.simple.SimpleHttpRequest;
 
 public class AppleIdentityProvider extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
@@ -109,7 +108,7 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
 
         private final AtomicReference<String> userJson;
 
-        public AppleOidcEndpoint(IdentityProvider.AuthenticationCallback callback, RealmModel realm, EventBuilder event, AtomicReference<String> userJson, final AppleIdentityProvider outer) {
+        public AppleOidcEndpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event, AtomicReference<String> userJson, final AppleIdentityProvider outer) {
             super(callback, realm, event, outer);
             this.userJson = userJson;
         }
