@@ -57,7 +57,6 @@
 
     <properties>
         <kc.version>26.5.1</kc.version>
-        <resteasy.reactive.common.version>3.27.1</resteasy.reactive.common.version>
         <libphonenumber.version>9.0.22</libphonenumber.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
@@ -112,12 +111,6 @@
                 <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-ldap-federation</artifactId>
                 <version>${kc.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkus.resteasy.reactive</groupId>
-                <artifactId>resteasy-reactive-common</artifactId>
-                <version>${resteasy.reactive.common.version}</version>    
                 <scope>provided</scope>
             </dependency>
             <dependency>
