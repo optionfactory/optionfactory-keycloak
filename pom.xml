@@ -59,7 +59,6 @@
         <kc.version>26.5.1</kc.version>
         <resteasy.reactive.common.version>3.27.1</resteasy.reactive.common.version>
         <libphonenumber.version>9.0.22</libphonenumber.version>
-        <hibernatevalidator.version>9.1.0.Final</hibernatevalidator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
@@ -121,12 +120,6 @@
                 <version>${resteasy.reactive.common.version}</version>    
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>org.hibernate.validator</groupId>
-                <artifactId>hibernate-validator</artifactId>
-                <version>${hibernatevalidator.version}</version>
-                <scope>provided</scope>
-            </dependency>        
             <dependency>
                 <groupId>com.googlecode.libphonenumber</groupId>
                 <artifactId>libphonenumber</artifactId>

@@ -12,14 +12,14 @@ public interface ResourceAuthenticator {
     public static void enforceScope(KeycloakSession session, String scope) {
         final var auth = new BearerTokenAuthenticator(session).authenticate();
         authenticated(auth != null, "Bearer");
-        final var hasScope = Stream.of(auth.getToken().getScope().split(" ")).anyMatch(scope::equals);
+        final var hasScope = Stream.of(auth.token().getScope().split(" ")).anyMatch(scope::equals);
         authorized(hasScope, "Client does not have required scope '%s'", scope);
     }
 
     public static void enforceServiceAccountHasClientRole(KeycloakSession session, String clientName, String roleName) {
         final var auth = new BearerTokenAuthenticator(session).authenticate();
         authenticated(auth != null, "Bearer");
-        final var client = auth.getClient();
+        final var client = auth.client();
         authorized(client != null, "Session context has no associated client");
         final var sa = session.users().getServiceAccount(client);
         authorized(sa != null, "Client does not have an associated service account");

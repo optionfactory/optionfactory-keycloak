@@ -1,5 +1,6 @@
 package net.optionfactory.keycloak.api.provisioning;
 
+import jakarta.ws.rs.BadRequestException;
 import net.optionfactory.keycloak.providers.groups.Groups;
 import java.util.List;
 import java.util.Optional;
@@ -11,9 +12,11 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.util.ArrayList;
 import net.optionfactory.keycloak.api.provisioning.UserPatchRequest.PatchMode;
-import net.optionfactory.keycloak.providers.validation.RequestValidator;
+import net.optionfactory.keycloak.providers.validation.Problem;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -34,11 +37,9 @@ import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
  */
 public class ProvisioningEndpoints {
 
-    private final RequestValidator validator;
     private final KeycloakSession session;
 
-    public ProvisioningEndpoints(RequestValidator validator, KeycloakSession session) {
-        this.validator = validator;
+    public ProvisioningEndpoints(KeycloakSession session) {
         this.session = session;
     }
 
@@ -47,7 +48,14 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
-        validator.enforce(ids);
+        if(ids == null){
+            final var response = Response.status(Response.Status.BAD_REQUEST)
+                .type("application/failures+json")
+                .entity(List.of(new Problem("FIELD_ERROR", "ids", "must not be null")))
+                .build();
+            throw new BadRequestException(response);
+        }
+        
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
         for (String id : ids) {
@@ -63,8 +71,36 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
-        validator.enforce(req);
-
+        final var problems = new ArrayList<>();
+        if(req.id() == null || req.id().isBlank()){
+            problems.add(new Problem("FIELD_ERROR", "id", "must not be blank"));
+        }
+        if(req.email() == null || req.email().isBlank()){
+            problems.add(new Problem("FIELD_ERROR", "email", "must not be blank"));
+        }
+        if(req.firstName() == null || req.firstName().isBlank()){
+            problems.add(new Problem("FIELD_ERROR", "firstName", "must not be blank"));
+        }
+        if(req.lastName() == null || req.lastName().isBlank()){
+            problems.add(new Problem("FIELD_ERROR", "lastName", "must not be blank"));
+        }
+        if(req.attributes() == null){
+            problems.add(new Problem("FIELD_ERROR", "attributes", "must not be null"));
+        }
+        if(req.groups() == null){
+            problems.add(new Problem("FIELD_ERROR", "groups", "Campo obbligatorio"));
+        }
+        if(req.requiredActions() == null){
+            problems.add(new Problem("FIELD_ERROR", "requiredActions", "must not be null"));
+        }
+        if(!problems.isEmpty()){
+            final var response = Response.status(Response.Status.BAD_REQUEST)
+                .type("application/failures+json")
+                .entity(problems)
+                .build();
+            throw new BadRequestException(response);
+            
+        }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
 
@@ -92,8 +128,13 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void patch(UserPatchRequest req) {
-        validator.enforce(req);
-
+        if(req.id() == null || req.id().isBlank()){
+            final var response = Response.status(Response.Status.BAD_REQUEST)
+                .type("application/failures+json")
+                .entity(List.of(new Problem("FIELD_ERROR", "id", "must not be blank")))
+                .build();
+            throw new BadRequestException(response);        
+        }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
 
@@ -184,13 +225,12 @@ public class ProvisioningEndpoints {
 
         @Override
         public AdminRealmResourceProvider create(KeycloakSession session) {
-            final var validator = session.getProvider(RequestValidator.class);
             return new AdminRealmResourceProvider() {
 
                 @Override
                 public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator auth, AdminEventBuilder events) {
                     auth.users().requireManage();
-                    return new ProvisioningEndpoints(validator, ks);
+                    return new ProvisioningEndpoints(ks);
                 }
 
                 @Override
