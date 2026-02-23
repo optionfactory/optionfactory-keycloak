@@ -1,12 +1,11 @@
 package net.optionfactory.keycloak.api.provisioning;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
 public record UserPatchRequest(
-        @NotEmpty String id,
+        /*@NotEmpty*/ String id,
         @Nullable String username,
         @Nullable String email,
         @Nullable String firstName,
