@@ -56,8 +56,8 @@
     </modules>
 
     <properties>
-        <kc.version>26.5.4</kc.version>
-        <libphonenumber.version>9.0.24</libphonenumber.version>
+        <kc.version>26.6.1</kc.version>
+        <libphonenumber.version>9.0.28</libphonenumber.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
