@@ -56,8 +56,8 @@
     </modules>
 
     <properties>
-        <kc.version>26.6.1</kc.version>
-        <libphonenumber.version>9.0.28</libphonenumber.version>
+        <kc.version>26.6.2</kc.version>
+        <libphonenumber.version>9.0.31</libphonenumber.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
@@ -151,7 +151,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <goals>

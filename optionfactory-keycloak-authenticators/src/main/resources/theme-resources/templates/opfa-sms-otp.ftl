@@ -1,5 +1,5 @@
+<#-- opfa:imported from 26.6.2 -->
 <#import "template.ftl" as layout>
-<#-- opfa:imported from 21.1.1 -->
 <@layout.registrationLayout displayMessage=true; section>
     <#if section = "header">
         ${msg("opfaSmsOtpTitle")}
