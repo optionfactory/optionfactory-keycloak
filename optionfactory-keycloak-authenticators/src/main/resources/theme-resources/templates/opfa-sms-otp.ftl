@@ -1,4 +1,4 @@
-<#-- opfa:imported from 26.6.2 -->
+<#-- opfa:imported from 26.6.3 -->
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayMessage=true; section>
     <#if section = "header">
