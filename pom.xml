@@ -5,7 +5,7 @@
 
     <groupId>net.optionfactory.keycloak</groupId>
     <artifactId>optionfactory-keycloak</artifactId>
-    <version>9.3</version>
+    <version>9.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>optionfactory-keycloak parent pom</description>
     <name>${project.groupId}:${project.artifactId}</name>
@@ -56,8 +56,8 @@
     </modules>
 
     <properties>
-        <kc.version>26.6.2</kc.version>
-        <libphonenumber.version>9.0.31</libphonenumber.version>
+        <kc.version>26.6.3</kc.version>
+        <libphonenumber.version>9.0.32</libphonenumber.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
