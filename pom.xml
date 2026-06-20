@@ -31,16 +31,6 @@
             <organizationUrl>http://optionfactory.net</organizationUrl>
         </developer>
     </developers>
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
     <modules>
         <module>optionfactory-keycloak-providers</module>
         <module>optionfactory-keycloak-remoting</module>
