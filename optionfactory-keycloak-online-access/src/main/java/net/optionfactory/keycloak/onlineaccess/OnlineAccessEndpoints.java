@@ -25,27 +25,24 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.utils.RedirectUtils;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.Urls;
+import org.keycloak.services.managers.AppAuthManager;
+import org.keycloak.services.resource.RealmResourceProvider;
+import org.keycloak.services.resource.RealmResourceProviderFactory;
 import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.resources.RealmsResource;
-import org.keycloak.services.resources.admin.AdminEventBuilder;
-import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
-import org.keycloak.services.resources.admin.ext.AdminRealmResourceProviderFactory;
-import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
 
 /**
  * @author rferranti
  */
 public class OnlineAccessEndpoints {
 
+    public static final String REQUIRED_ROLE = "online-access";
     private final KeycloakSession session;
     private final int tokenDurationInSeconds;
-
-    public static final String REQUIRED_ROLE = "online-access";
 
     public OnlineAccessEndpoints(KeycloakSession session, int tokenDurationInSeconds) {
         this.session = session;
@@ -95,9 +92,9 @@ public class OnlineAccessEndpoints {
     }
 
     /**
-     * Requesting client must have online-access role. If requesting client
-     * and the access_token client differ, online-access role, online-access
-     * role must have a possibly multi-values 'clients' attribute containing the
+     * Requesting client must have online-access role. If requesting client and
+     * the access_token client differ, online-access role, online-access role
+     * must have a possibly multi-values 'clients' attribute containing the
      * access_token client id. Allowed redirect_uri are inherited from the at
      * client, allowlist can be expanded by adding redirect_uri attributes to
      * the online-access role.
@@ -171,30 +168,34 @@ public class OnlineAccessEndpoints {
         }
     }
 
-    public static class Factory implements AdminRealmResourceProviderFactory {
+    public static class Factory implements RealmResourceProviderFactory {
 
         private boolean enabled;
         private int tokenDurationInSeconds;
 
         private static final Logger logger = Logger.getLogger(Factory.class);
 
-
         @Override
-        public AdminRealmResourceProvider create(KeycloakSession session) {
+        public RealmResourceProvider create(KeycloakSession session) {
+            return new RealmResourceProvider() {
 
-            return !enabled ? null : new AdminRealmResourceProvider() {
                 @Override
-                public Object getResource(KeycloakSession ks, RealmModel rm, AdminPermissionEvaluator ape, AdminEventBuilder aeb) {
-                    if (ape.adminAuth().getClient().getRole(REQUIRED_ROLE) == null) {
-                        throw new ForbiddenException(String.format("client must have %s role", REQUIRED_ROLE));
+                public Object getResource() {
+                    final var auth = new AppAuthManager.BearerTokenAuthenticator(session).authenticate();
+                    if (auth == null) {
+                        throw new ForbiddenException("Invalid client or Invalid client credentials");
                     }
-                    return new OnlineAccessEndpoints(ks, tokenDurationInSeconds);
+                    if (auth.client().getRole(REQUIRED_ROLE) == null) {
+                        throw new ForbiddenException("client is missing a required role");
+                    }
+                    return new OnlineAccessEndpoints(session, tokenDurationInSeconds);
                 }
 
                 @Override
                 public void close() {
 
                 }
+
             };
         }
 
@@ -203,7 +204,7 @@ public class OnlineAccessEndpoints {
             final var config = Conf.fromPrefix("online-access-endpoints", "online-access");
             this.enabled = config.bool("enabled", false);
             this.tokenDurationInSeconds = (int) config.number("token-duration", 60);
-            logger.infof("online-access(endpoints) initialized: %s", this.enabled ? "enabled": "disabled");
+            logger.infof("online-access(endpoints) initialized: %s", this.enabled ? "enabled" : "disabled");
         }
 
         @Override
