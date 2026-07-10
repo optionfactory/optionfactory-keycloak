@@ -1,5 +1,5 @@
 BRIDGE_SUBNET=172.18.26.0/24
-
+OPFA_DOCKER_VERSION=227
 build:
 	mvn clean package
 bump:
@@ -32,7 +32,7 @@ local-keycloak: local-network
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes/target/optionfactory-keycloak-themes-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes.jar \
 		--mount type=bind,source=${PWD}/optionfactory-keycloak-themes-bootstrap/target/optionfactory-keycloak-themes-bootstrap-${CURRENT_VERSION}.jar,target=/opt/keycloak/providers/optionfactory-keycloak-themes-bootstrap.jar \
 		--mount type=bind,source=${PWD}/local/keycloak.conf,target=/opt/keycloak/conf/keycloak.conf \
-		optionfactory/debian13-jdk25-keycloak2:213 --verbose
+		optionfactory/debian13-jdk25-keycloak2:$(OPFA_DOCKER_VERSION) --verbose
 
 
 local-db: local-network
@@ -43,7 +43,7 @@ local-db: local-network
 		--mount type=bind,source=${PWD}/local/00_init_db.sql,target=/sql-init.d/00_init_db.sql,readonly \
 		--mount type=bind,source=${PWD}/local/pg_hba.conf,target=/var/lib/postgresql/conf/pg_hba.conf \
 		--mount type=bind,source=${PWD}/local/postgres,target=/var/lib/postgresql/data \
-		optionfactory/debian13-postgres17:213
+		optionfactory/debian13-postgres17:$(OPFA_DOCKER_VERSION)
 
 local-ldap: local-network
 	docker run -ti --rm \

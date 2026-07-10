@@ -1,5 +1,6 @@
-<#-- opfa:imported from 26.6.3 -->
+<#-- opfa:imported from 26.7.0 -->
 <#import "footer.ftl" as loginFooter>
+
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}" lang="${lang}"<#if realm.internationalizationEnabled> dir="${(locale.rtl)?then('rtl','ltr')}"</#if>>
@@ -21,8 +22,32 @@
         </#list>
     </#if>
     <title>${title!}</title>
-    <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
-
+    <#if themeResources?? && themeResources.favicons?has_content>
+        <@themeResourceTags.renderFavicons themeResources.favicons url.resourcesPath />
+    <#else>
+        <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
+    </#if>
+    <#if themeResources?? && themeResources.stylesCommon?has_content>
+        <@themeResourceTags.renderStyles themeResources.stylesCommon url.resourcesCommonPath />
+    <#elseif properties.stylesCommon?has_content>
+        <#list properties.stylesCommon?split(' ') as style>
+            <link href="${url.resourcesCommonPath}/${style}" rel="stylesheet" />
+        </#list>
+    </#if>
+    <#if themeResources?? && themeResources.styles?has_content>
+        <@themeResourceTags.renderStyles themeResources.styles url.resourcesPath />
+    <#elseif properties.styles?has_content>
+        <#list properties.styles?split(' ') as style>
+            <link href="${url.resourcesPath}/${style}" rel="stylesheet" />
+        </#list>
+    </#if>
+    <#if themeResources?? && themeResources.scripts?has_content>
+        <@themeResourceTags.renderScripts themeResources.scripts url.resourcesPath "text/javascript" />
+    <#elseif properties.scripts?has_content>
+        <#list properties.scripts?split(' ') as script>
+            <script src="${url.resourcesPath}/${script}" type="text/javascript"></script>
+        </#list>
+    </#if>
     <#-- opfa:modification start (google fonts, baseHeaders, themeHeaders)-->
 
     <#if properties.googleFonts?has_content>
@@ -44,21 +69,7 @@
 
     <#-- opfa:modification end -->
 
-    <#if properties.stylesCommon?has_content>
-        <#list properties.stylesCommon?split(' ') as style>
-            <link href="${url.resourcesCommonPath}/${style}" rel="stylesheet" />
-        </#list>
-    </#if>
-    <#if properties.styles?has_content>
-        <#list properties.styles?split(' ') as style>
-            <link href="${url.resourcesPath}/${style}" rel="stylesheet" />
-        </#list>
-    </#if>
-    <#if properties.scripts?has_content>
-        <#list properties.scripts?split(' ') as script>
-            <script src="${url.resourcesPath}/${script}" type="text/javascript"></script>
-        </#list>
-    </#if>
+
     <script type="importmap">
         {
             "imports": {
@@ -244,6 +255,16 @@
                       <input type="hidden" name="tryAnotherWay" value="on"/>
                       <a href="#" id="try-another-way"
                          onclick="document.forms['kc-select-try-another-way-form'].requestSubmit();return false;">${msg("doTryAnotherWay")}</a>
+                  </div>
+              </form>
+          </#if>
+
+          <#if switchOrganizationEnabled?? && switchOrganizationEnabled>
+              <form id="kc-switch-organization-form" action="${url.loginAction}" method="post">
+                  <div class="${properties.kcFormGroupClass!}">
+                      <input type="hidden" name="switchOrganization" value="true"/>
+                      <a href="#" id="switch-organization"
+                         onclick="document.forms['kc-switch-organization-form'].requestSubmit();return false;">${msg("doSwitchOrganization")}</a>
                   </div>
               </form>
           </#if>
