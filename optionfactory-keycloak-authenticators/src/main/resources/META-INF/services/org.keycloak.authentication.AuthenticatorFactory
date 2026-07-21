@@ -1,3 +1,4 @@
 net.optionfactory.keycloak.authenticators.ConditionalAuthNoteAuthenticator$Factory
 net.optionfactory.keycloak.authenticators.ConditionalClientIdAuthenticator$Factory
 net.optionfactory.keycloak.authenticators.ConditionalUserGroupAuthenticator$Factory
+net.optionfactory.keycloak.authenticators.ConditionalClientRoleAttributeAuthenticator$Factory

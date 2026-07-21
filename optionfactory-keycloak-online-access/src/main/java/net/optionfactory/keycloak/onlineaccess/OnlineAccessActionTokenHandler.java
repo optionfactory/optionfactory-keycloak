@@ -2,11 +2,11 @@ package net.optionfactory.keycloak.onlineaccess;
 
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventType;
-import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
 import jakarta.ws.rs.core.Response;
+import java.net.URI;
 import net.optionfactory.keycloak.providers.Conf;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
@@ -18,6 +18,7 @@ import org.keycloak.common.util.Time;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.services.managers.AuthenticationManager;
 
 public class OnlineAccessActionTokenHandler implements ActionTokenHandler<OnlineAccessActionToken> {
 
@@ -50,9 +51,19 @@ public class OnlineAccessActionTokenHandler implements ActionTokenHandler<Online
 
         final var clientSessionContext = AuthenticationProcessor.attachSession(authenticationSession, userSession, context.getSession(), context.getRealm(), connection, eventBuilder);
         final var maybeNewUserSession = clientSessionContext.getClientSession().getUserSession();
-        final var response = AuthenticationManager.redirectAfterSuccessfulFlow(session, realm, maybeNewUserSession, clientSessionContext, httpRequest, uriInfo, connection, eventBuilder, authenticationSession);
-        session.singleUseObjects().put(token.serializeKey(), token.getExp() - Time.currentTime(), null);
-        return response;
+
+        //final var response = AuthenticationManager.redirectAfterSuccessfulFlow(session, realm, maybeNewUserSession, clientSessionContext, httpRequest, uriInfo, connection, eventBuilder, authenticationSession);
+        //session.singleUseObjects().put(token.serializeKey(), token.getExp() - Time.currentTime(), null);
+        //return response;        
+        
+        AuthenticationManager.createLoginCookie(
+                session, realm, maybeNewUserSession.getUser(), maybeNewUserSession, uriInfo, connection);
+
+        session.singleUseObjects().put(token.serializeKey(), token.getExp() - Time.currentTimeSeconds(), null);
+
+        return Response.status(Response.Status.FOUND)
+                .location(URI.create(token.getRedirectUri()))
+                .build();
     }
 
     @Override
