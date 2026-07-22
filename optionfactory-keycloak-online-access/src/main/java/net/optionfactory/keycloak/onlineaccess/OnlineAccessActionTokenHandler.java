@@ -15,6 +15,7 @@ import org.keycloak.authentication.actiontoken.ActionTokenContext;
 import org.keycloak.authentication.actiontoken.ActionTokenHandler;
 import org.keycloak.authentication.actiontoken.ActionTokenHandlerFactory;
 import org.keycloak.common.util.Time;
+import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -45,22 +46,27 @@ public class OnlineAccessActionTokenHandler implements ActionTokenHandler<Online
         final var eventBuilder = new EventBuilder(realm, session);
         final var connection = session.getContext().getConnection();
         final var userSession = session.getContext().getUserSession();
-        final var httpRequest = context.getSession().getContext().getHttpRequest();
         final var authenticationSession = context.getAuthenticationSession();
         authenticationSession.setRedirectUri(token.getRedirectUri());
 
         final var clientSessionContext = AuthenticationProcessor.attachSession(authenticationSession, userSession, context.getSession(), context.getRealm(), connection, eventBuilder);
         final var maybeNewUserSession = clientSessionContext.getClientSession().getUserSession();
 
-        //final var response = AuthenticationManager.redirectAfterSuccessfulFlow(session, realm, maybeNewUserSession, clientSessionContext, httpRequest, uriInfo, connection, eventBuilder, authenticationSession);
-        //session.singleUseObjects().put(token.serializeKey(), token.getExp() - Time.currentTime(), null);
-        //return response;        
-        
-        AuthenticationManager.createLoginCookie(
-                session, realm, maybeNewUserSession.getUser(), maybeNewUserSession, uriInfo, connection);
+        maybeNewUserSession.setNote(AuthenticationManager.AUTH_TIME, String.valueOf(Time.currentTimeSeconds()));
+
+        eventBuilder.event(EventType.LOGIN)
+                .user(maybeNewUserSession.getUser())
+                .session(maybeNewUserSession)
+                .detail(Details.AUTH_METHOD, "online_access_token")
+                .success();
+
+        AuthenticationManager.createLoginCookie(session, realm, maybeNewUserSession.getUser(), maybeNewUserSession, uriInfo, connection);
 
         session.singleUseObjects().put(token.serializeKey(), token.getExp() - Time.currentTimeSeconds(), null);
 
+        if (authenticationSession.getParentSession() != null) {
+            session.authenticationSessions().removeRootAuthenticationSession(realm, authenticationSession.getParentSession());
+        }
         return Response.status(Response.Status.FOUND)
                 .location(URI.create(token.getRedirectUri()))
                 .build();
