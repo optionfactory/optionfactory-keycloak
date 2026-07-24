@@ -12,16 +12,17 @@ public class Groups {
         GroupModel parentGroup = null;
         for (String groupName : groupNames) {
             final var currentParentGroup = parentGroup;
-            final var groups = parentGroup == null ? session.groups().getTopLevelGroupsStream(realm) : parentGroup.getSubGroupsStream();
-            parentGroup = groups.filter(group -> group.getName().equals(groupName)).findFirst().orElseGet(() -> {
-                final var g = realm.createGroup(groupName);
-                g.setParent(currentParentGroup);
-                if(currentParentGroup != null){
-                    //this is needed to invalidate the infinispan cache.
-                    currentParentGroup.addChild(g);
-                }
-                return g;
-            });
+            try(final var groups = parentGroup == null ? session.groups().getTopLevelGroupsStream(realm) : parentGroup.getSubGroupsStream()){
+                parentGroup = groups.filter(group -> group.getName().equals(groupName)).findFirst().orElseGet(() -> {
+                    final var g = realm.createGroup(groupName);
+                    g.setParent(currentParentGroup);
+                    if(currentParentGroup != null){
+                        //this is needed to invalidate the infinispan cache.
+                        currentParentGroup.addChild(g);
+                    }
+                    return g;
+                });
+            }
         }
         return parentGroup;
     }

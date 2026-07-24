@@ -33,9 +33,11 @@ import net.optionfactory.keycloak.providers.pagination.PageResponse;
 import net.optionfactory.keycloak.providers.pagination.SliceResponse;
 import org.keycloak.Config;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
+import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 import org.keycloak.services.resources.admin.ext.AdminRealmResourceProvider;
@@ -169,12 +171,15 @@ public class InspectionEndpoints {
 
         final var query = USERS_QUERY_TEMPLATE.create(em, filters, sort, !slice, offset, limit == 0 ? 0 : limit + 1, realmId);
         final AtomicInteger totalAcc = new AtomicInteger();
-        final var chunk = ((Stream<Object[]>) query.getResultStream()).map(row -> {
-            if (!slice) {
-                totalAcc.set(((Number) row[11]).intValue());
-            }
-            return userFromRow(om, row);
-        }).toList();
+        final List<UserResponse> chunk;
+        try (final var ress = ((Stream<Object[]>) query.getResultStream())) {
+            chunk = ress.map(row -> {
+                if (!slice) {
+                    totalAcc.set(((Number) row[11]).intValue());
+                }
+                return userFromRow(om, row);
+            }).toList();
+        }
 
         final var rb = Response.ok()
                 .type(slice ? "application/slice+json" : "application/page+json");
@@ -240,19 +245,21 @@ public class InspectionEndpoints {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         final var query = GROUPS_QUERY_TEMPLATE.create(em, filters, sort, false, 0, 0, realmId);
-        return ((Stream<Object[]>) query.getResultStream()).map(row -> {
-            final var id = (String) row[0];
-            final var name = (String) row[1];
-            final var path = (String) row[2];
-            try {
-                final var members = om.readValue((String) row[3], MAP_TYPE);
-                return new GroupMemberhipResponse(id, name, path, members);
-            } catch (JsonProcessingException ex) {
-                throw new IllegalStateException(ex);
-            }
 
-        }).toList();
+        try (final var ress = ((Stream<Object[]>) query.getResultStream())) {
+            return ress.map(row -> {
+                final var id = (String) row[0];
+                final var name = (String) row[1];
+                final var path = (String) row[2];
+                try {
+                    final var members = om.readValue((String) row[3], MAP_TYPE);
+                    return new GroupMemberhipResponse(id, name, path, members);
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalStateException(ex);
+                }
 
+            }).toList();
+        }
     }
 
     @POST
@@ -274,9 +281,12 @@ public class InspectionEndpoints {
             }
             return rb.entity(new PageResponse(List.of(), 0)).build();
         }
-        final var chunk = session.users().getGroupMembersStream(realm, group, offset, limit == 0 ? null : limit + 1)
-                .map(u -> new GroupMember(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()))
-                .toList();
+        final List<GroupMember> chunk;
+        try (final var gms = session.users().getGroupMembersStream(realm, group, offset, limit == 0 ? null : limit + 1)) {
+            chunk = gms
+                    .map(u -> new GroupMember(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()))
+                    .toList();
+        }
 
         if (!slice) {
             final var fakeSize = limit == 0
@@ -295,9 +305,10 @@ public class InspectionEndpoints {
     @Path("/groups")
     public List<GroupResponse> groups() {
         final var realm = session.getContext().getRealm();
-        return session.groups()
-                .getGroupsStream(realm).map(g -> new GroupResponse(g.getId(), g.getName(), KeycloakModelUtils.buildGroupPath(g)))
-                .toList();
+        try (final var gs = session.groups().getGroupsStream(realm)) {
+            return gs.map(g -> new GroupResponse(g.getId(), g.getName(), KeycloakModelUtils.buildGroupPath(g)))
+                    .toList();
+        }
     }
 
     public record GroupMember(String id, String username, String email, String firstName, String lastName) {

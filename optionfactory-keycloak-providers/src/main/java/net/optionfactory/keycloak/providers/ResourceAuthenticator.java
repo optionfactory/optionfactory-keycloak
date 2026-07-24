@@ -27,8 +27,10 @@ public interface ResourceAuthenticator {
         authorized(roleClient != null, "Required client '%s' does not exist", clientName);
         final var role = session.roles().getClientRole(roleClient, roleName);
         authorized(role != null, "Required realm role '%s' does not exist", roleName);
-        final var hasRole = RoleUtils.hasRole(sa.getClientRoleMappingsStream(roleClient), role);
-        authorized(hasRole, "Service account does not have required realm role '%s'", roleName);
+        try (var clientRoleMappings = sa.getClientRoleMappingsStream(roleClient)) {
+            final var hasRole = RoleUtils.hasRole(clientRoleMappings, role);
+            authorized(hasRole, "Service account does not have required realm role '%s'", roleName);
+        }
     }
 
     public static void authenticated(boolean test, String message, Object... args) {

@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.authenticators;
 
 import java.util.List;
+import java.util.Objects;
 import org.keycloak.Config.Scope;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.authenticators.conditional.ConditionalAuthenticator;
@@ -15,7 +16,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 public class ConditionalUserHasFederationLink implements ConditionalAuthenticator {
 
-    public static ConditionalUserHasFederationLink SINGLETON = new ConditionalUserHasFederationLink();
+    public static ConditionalUserHasFederationLink INSTANCE = new ConditionalUserHasFederationLink();
 
     @Override
     public boolean matchCondition(AuthenticationFlowContext context) {
@@ -27,9 +28,6 @@ public class ConditionalUserHasFederationLink implements ConditionalAuthenticato
         final var expectedFederationLink = authConfig.get("federationLink");
         final var negate = Boolean.parseBoolean(authConfig.get("negate"));
         final var user = context.getUser();
-        if (user == null) {
-            return negate;
-        }
         final var fedLinkId = user.getFederationLink();
         if (fedLinkId == null) {
             return negate;
@@ -39,7 +37,7 @@ public class ConditionalUserHasFederationLink implements ConditionalAuthenticato
             return negate;
         }
         final var federationName = federation.getName();
-        final var match = expectedFederationLink.equals(federationName);
+        final var match = Objects.equals(expectedFederationLink, federationName);
         return negate ? !match : match;
     }
 
@@ -113,7 +111,7 @@ public class ConditionalUserHasFederationLink implements ConditionalAuthenticato
         public List<ProviderConfigProperty> getConfigProperties() {
 
             final var groupProp = new ProviderConfigProperty();
-            groupProp.setType(ProviderConfigProperty.GROUP_TYPE);
+            groupProp.setType(ProviderConfigProperty.STRING_TYPE);
             groupProp.setName("federationLink");
             groupProp.setLabel("Federation Link");
             groupProp.setHelpText("Federation Link");
@@ -129,7 +127,7 @@ public class ConditionalUserHasFederationLink implements ConditionalAuthenticato
 
         @Override
         public ConditionalAuthenticator getSingleton() {
-            return ConditionalUserHasFederationLink.SINGLETON;
+            return ConditionalUserHasFederationLink.INSTANCE;
         }
     }
 

@@ -28,9 +28,11 @@ public class ConditionalUserGroupAuthenticator implements ConditionalAuthenticat
         }
         final var authConfig = context.getAuthenticatorConfig().getConfig();
         final var expectedGroup = authConfig.get("group");
-        final var match = user.getGroupsStream().anyMatch(g -> g.getName().equals(expectedGroup));
-        final var negate = Boolean.parseBoolean(authConfig.get("negate"));
-        return negate ? !match : match;
+        try(final var ugs = user.getGroupsStream()){
+            final var match = ugs.anyMatch(g -> g.getName().equals(expectedGroup));
+            final var negate = Boolean.parseBoolean(authConfig.get("negate"));
+            return negate ? !match : match;
+        }
     }
 
     @Override

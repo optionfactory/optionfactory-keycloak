@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.optionfactory.keycloak.providers.Conf;
+import net.optionfactory.keycloak.providers.model.Models;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.TokenVerifier;
@@ -55,7 +56,7 @@ public class OnlineAccessEndpoints {
 
         public IssuedForContainsAuthorizedClient(ClientModel client) {
             this.authorizedClients = Stream.concat(Stream.of(client.getClientId()), Optional.ofNullable(client.getRole(REQUIRED_ROLE))
-                    .map(r -> r.getAttributeStream("clients"))
+                    .map(r -> Models.attribute(r, "clients").stream())
                     .orElse(Stream.of()))
                     .collect(Collectors.toSet());
         }
@@ -142,7 +143,7 @@ public class OnlineAccessEndpoints {
             }
             final var validRedirectsFromClient = otherClient.getRedirectUris();
             final var validRedirectsFromRole = Stream.concat(Stream.of(client.getClientId()), Optional.ofNullable(client.getRole(REQUIRED_ROLE))
-                    .map(r -> r.getAttributeStream("redirect_uri"))
+                    .map(r -> Models.attribute(r, "redirect_uri").stream())
                     .orElse(Stream.of()))
                     .toList();
 

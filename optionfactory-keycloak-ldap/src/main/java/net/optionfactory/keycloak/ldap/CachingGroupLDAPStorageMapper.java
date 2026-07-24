@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.ldap;
 
 import java.util.List;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
@@ -58,10 +59,11 @@ public class CachingGroupLDAPStorageMapper extends GroupLDAPStorageMapper {
         List<LDAPObject> ldapGroups = getLDAPGroupMappings(ldapUser);
 
         final GroupModel ldapGroupsRoot = getKcGroupsPathGroup(realm);
-
-        user.getGroupsStream()
-                .filter(gm -> ldapGroupsRoot == null || ldapGroupsRoot.equals(gm.getParent()))
-                .forEach(gm -> user.leaveGroup(gm));
+        try (final var ugs = user.getGroupsStream()) {
+            ugs
+                    .filter(gm -> ldapGroupsRoot == null || ldapGroupsRoot.equals(gm.getParent()))
+                    .forEach(gm -> user.leaveGroup(gm));
+        }
         // Import role mappings from LDAP into Keycloak DB
         for (LDAPObject ldapGroup : ldapGroups) {
 

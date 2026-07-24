@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import net.optionfactory.keycloak.api.provisioning.UserPatchRequest.PatchMode;
+import net.optionfactory.keycloak.providers.model.Models;
 import net.optionfactory.keycloak.providers.validation.Problem;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
@@ -48,14 +49,14 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
-        if(ids == null){
+        if (ids == null) {
             final var response = Response.status(Response.Status.BAD_REQUEST)
-                .type("application/failures+json")
-                .entity(List.of(new Problem("FIELD_ERROR", "ids", "must not be null")))
-                .build();
+                    .type("application/failures+json")
+                    .entity(List.of(new Problem("FIELD_ERROR", "ids", "must not be null")))
+                    .build();
             throw new BadRequestException(response);
         }
-        
+
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
         for (String id : ids) {
@@ -72,34 +73,34 @@ public class ProvisioningEndpoints {
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
         final var problems = new ArrayList<>();
-        if(req.id() == null || req.id().isBlank()){
+        if (req.id() == null || req.id().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "id", "must not be blank"));
         }
-        if(req.email() == null || req.email().isBlank()){
+        if (req.email() == null || req.email().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "email", "must not be blank"));
         }
-        if(req.firstName() == null || req.firstName().isBlank()){
+        if (req.firstName() == null || req.firstName().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "firstName", "must not be blank"));
         }
-        if(req.lastName() == null || req.lastName().isBlank()){
+        if (req.lastName() == null || req.lastName().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "lastName", "must not be blank"));
         }
-        if(req.attributes() == null){
+        if (req.attributes() == null) {
             problems.add(new Problem("FIELD_ERROR", "attributes", "must not be null"));
         }
-        if(req.groups() == null){
+        if (req.groups() == null) {
             problems.add(new Problem("FIELD_ERROR", "groups", "Campo obbligatorio"));
         }
-        if(req.requiredActions() == null){
+        if (req.requiredActions() == null) {
             problems.add(new Problem("FIELD_ERROR", "requiredActions", "must not be null"));
         }
-        if(!problems.isEmpty()){
+        if (!problems.isEmpty()) {
             final var response = Response.status(Response.Status.BAD_REQUEST)
-                .type("application/failures+json")
-                .entity(problems)
-                .build();
+                    .type("application/failures+json")
+                    .entity(problems)
+                    .build();
             throw new BadRequestException(response);
-            
+
         }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -128,12 +129,12 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void patch(UserPatchRequest req) {
-        if(req.id() == null || req.id().isBlank()){
+        if (req.id() == null || req.id().isBlank()) {
             final var response = Response.status(Response.Status.BAD_REQUEST)
-                .type("application/failures+json")
-                .entity(List.of(new Problem("FIELD_ERROR", "id", "must not be blank")))
-                .build();
-            throw new BadRequestException(response);        
+                    .type("application/failures+json")
+                    .entity(List.of(new Problem("FIELD_ERROR", "id", "must not be blank")))
+                    .build();
+            throw new BadRequestException(response);
         }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -174,7 +175,7 @@ public class ProvisioningEndpoints {
         }
         if (req.requiredActions() != null) {
             final var mode = req.requiredActionsPatchMode() == null ? PatchMode.REPLACE : req.requiredActionsPatchMode();
-            final var actual = user.getRequiredActionsStream().toList();
+            final var actual = Models.requiredActions(user);
             final var desired = req.requiredActions();
             final var actions = Patch.of(mode, actual, desired);
             for (final var item : actions.toBeRemoved()) {
@@ -186,7 +187,7 @@ public class ProvisioningEndpoints {
         }
         if (req.groups() != null) {
             final var mode = req.groupsPatchMode() == null ? PatchMode.REPLACE : req.groupsPatchMode();
-            final var actual = user.getGroupsStream().toList();
+            final var actual = Models.userGroups(user).stream().toList();
             final var desired = req.groups().stream().map(gp -> Groups.provide(session, realm, gp)).toList();
             final var groups = Patch.of(mode, actual, desired);
             for (final var item : groups.toBeRemoved()) {

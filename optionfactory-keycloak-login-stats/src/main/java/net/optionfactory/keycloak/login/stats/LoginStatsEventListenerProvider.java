@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.login.stats;
 
 import java.util.List;
+import net.optionfactory.keycloak.providers.model.Models;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
@@ -25,8 +26,7 @@ public class LoginStatsEventListenerProvider implements EventListenerProvider {
         final long now = System.currentTimeMillis();
         final var realm = session.realms().getRealm(event.getRealmId());
         final var user = session.users().getUserById(realm, event.getUserId());
-        final var current = user.getAttributeStream(attribute)
-                .findFirst()
+        final var current = Models.attributeFirst(user, attribute)
                 .filter(v -> !v.isBlank())
                 .map(v -> v.split(":"))
                 .orElse(new String[]{"0", Long.toString(now), ""});

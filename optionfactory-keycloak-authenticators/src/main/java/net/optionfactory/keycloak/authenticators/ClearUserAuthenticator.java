@@ -16,6 +16,8 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 public class ClearUserAuthenticator implements Authenticator {
 
+    public static ClearUserAuthenticator INSTANCE = new ClearUserAuthenticator();
+
     private static final Logger logger = Logger.getLogger(ClearUserAuthenticator.class);
 
     @Override
@@ -52,7 +54,7 @@ public class ClearUserAuthenticator implements Authenticator {
 
         @Override
         public Authenticator create(KeycloakSession session) {
-            return new ClearUserAuthenticator();
+            return INSTANCE;
         }
 
         @Override
