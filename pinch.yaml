@@ -2,7 +2,7 @@
 schema_version: 1
 project:
   name: "optionfactory-keycloak"
-  tier: tier3
+  tier: tier2
   lifecycle: active
   type: library
   stewards:
