@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.optionfactory.keycloak</groupId>
         <artifactId>optionfactory-keycloak</artifactId>
-        <version>9.10-SNAPSHOT</version>
+        <version>9.10</version>
     </parent>
     <artifactId>optionfactory-keycloak-remoting</artifactId>
     <description>optionfactory-keycloak remoting</description>
