@@ -1,4 +1,4 @@
-<#-- opfa:imported from 26.7.0 -->
+<#-- opfa:imported from 26.7.2 -->
 <#import "footer.ftl" as loginFooter>
 
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
