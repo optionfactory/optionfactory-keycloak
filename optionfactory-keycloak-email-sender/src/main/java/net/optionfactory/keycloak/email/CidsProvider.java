@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +28,7 @@ public class CidsProvider {
             try (final var is = theme.getResourceAsStream("allowed_cids.json")) {
                 return is == null ? Map.of() : mapper.readValue(is, CID_SOURCE_LIST)
                         .stream()
-                        .collect(Collectors.toMap(c -> c.id, c -> c));
+                        .collect(Collectors.toMap(c -> c.id, c -> c, (lhs, rhs) -> lhs));
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
             }
@@ -40,17 +40,17 @@ public class CidsProvider {
 
     public List<CidSource> cids(String htmlBody) {
         final var matcher = CID_PATTERN.matcher(htmlBody);
-        final var matches = new ArrayList<CidSource>();
+        final var matches = new LinkedHashSet<CidSource>();
         while (matcher.find()) {
             final var cid = matcher.group(2);
             final var found = allowedCids.get(cid);
             if (found == null) {
-                logger.infof("in email theme '%s' cid '%s' is referenced in the email but not allowed in allow_cids.json (%s entries)", themeName, cid, allowedCids.size());
+                logger.infof("in email theme '%s' cid '%s' is referenced in the email but not allowed in allowed_cids.json (%s entries)", themeName, cid, allowedCids.size());
                 continue;
             }
             matches.add(found);
         }
-        return matches;
+        return List.copyOf(matches);
     }
 
 }
