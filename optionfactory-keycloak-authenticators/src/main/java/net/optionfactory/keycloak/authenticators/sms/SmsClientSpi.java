@@ -3,14 +3,13 @@ package net.optionfactory.keycloak.authenticators.sms;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.security.KeyManagementException;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicReference;
 import net.optionfactory.keycloak.providers.Conf;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -71,9 +70,10 @@ public class SmsClientSpi implements Spi {
                     region,
                     senderIdOrNull);
             try {
-                final var sslContext = new SSLContextBuilder()
-                        .loadTrustMaterial(null, (chain, authType) -> true).build();
-                final var hostnameVerifier = new NoopHostnameVerifier();
+                // sns.<region>.amazonaws.com serves a publicly-trusted certificate:
+                // default jvm trust material and hostname verification are used.
+                final var sslContext = new SSLContextBuilder().build();
+                final var hostnameVerifier = new DefaultHostnameVerifier();
 
                 final var socketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
 
@@ -85,7 +85,7 @@ public class SmsClientSpi implements Spi {
 
                 httpClientRef.set(httpClient);
                 clientRef.set(new SnsSmsClient(httpClient, clientId, clientSecret, region, senderIdOrNull));
-            } catch (KeyStoreException | KeyManagementException | NoSuchAlgorithmException ex) {
+            } catch (KeyManagementException | NoSuchAlgorithmException ex) {
                 throw new IllegalStateException(ex);
             }
         }
