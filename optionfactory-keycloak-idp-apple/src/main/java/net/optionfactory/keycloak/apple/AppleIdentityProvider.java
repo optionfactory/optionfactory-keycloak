@@ -3,6 +3,7 @@ package net.optionfactory.keycloak.apple;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
+import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.util.Time;
 import org.keycloak.crypto.Algorithm;
@@ -39,6 +40,10 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         super(session, config);
         config.setAuthorizationUrl("https://appleid.apple.com/auth/authorize?response_mode=form_post");
         config.setTokenUrl("https://appleid.apple.com/auth/token");
+        config.setJwksUrl("https://appleid.apple.com/auth/keys");
+        config.setUseJwksUrl(true);
+        config.setValidateSignature(true);
+        config.setIssuer("https://appleid.apple.com");
     }
 
     @Override
@@ -51,13 +56,16 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         BrokeredIdentityContext context = super.getFederatedIdentity(response);
         final String uj = userJsonRef.get();
         if (uj != null) {
+            userJsonRef.compareAndSet(uj, null);
             try {
                 AppleUser user = JsonSerialization.readValue(uj, AppleUser.class);
                 context.setEmail(user.email);
-                context.setFirstName(user.name.firstName);
-                context.setLastName(user.name.lastName);
+                if (user.name != null) {
+                    context.setFirstName(user.name.firstName);
+                    context.setLastName(user.name.lastName);
+                }
             } catch (IOException e) {
-                logger.errorf("Failed to parse userJson [%s]: %s", uj, e);
+                logger.errorf("Failed to parse userJson: %s", e.getMessage());
             }
         }
 
@@ -68,11 +76,10 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         public SimpleHttpRequest authenticateTokenRequest(SimpleHttpRequest tokenRequest) {
         AppleIdentityProviderConfig config = (AppleIdentityProviderConfig) getConfig();
         tokenRequest.param(OAUTH2_PARAMETER_CLIENT_ID, config.getClientId());
-        String base64PrivateKey = config.getClientSecret();
 
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
-            byte[] pkc8ePrivateKey = Base64.getDecoder().decode(base64PrivateKey);
+            byte[] pkc8ePrivateKey = Base64.getDecoder().decode(stripPemArmor(config.getClientSecret()));
             PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(pkc8ePrivateKey);
             PrivateKey privateKey = keyFactory.generatePrivate(keySpecPKCS8);
 
@@ -92,11 +99,20 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
             String clientSecret = new JWSBuilder().jsonContent(token).sign(signer);
 
             tokenRequest.param(OAUTH2_PARAMETER_CLIENT_SECRET, clientSecret);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            logger.errorf("Failed to generate client secret: %s", e);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException e) {
+            logger.errorf("Failed to generate apple client secret from the configured private key: %s", e.getMessage());
+            // proceeding without a client_secret would only yield a confusing invalid_client from apple
+            throw new IdentityBrokerException("Invalid apple client private key", e);
         }
 
         return tokenRequest;
+    }
+
+    private static String stripPemArmor(String key) {
+        return key
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
     }
 
     @Override
