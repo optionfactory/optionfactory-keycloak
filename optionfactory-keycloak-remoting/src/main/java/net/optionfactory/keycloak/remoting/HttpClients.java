@@ -10,10 +10,12 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.net.ssl.HostnameVerifier;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -47,67 +49,184 @@ public class HttpClients {
         }
     }
 
-    public enum HostnameOptions {
-        VERIFY, TRUST;
+    public static Builder builder(String name) {
+        return new Builder(name);
     }
-    public static class Timeouts {
-        public int connect;
-        public int socket;
 
-        public static Timeouts defaults() {
-            final var t = new Timeouts();
-            t.connect = 3_000;
-            t.socket = 30_000;
-            return t;
+    public static class Builder {
+
+        private final String name;
+        private KeyMaterial keyMaterial;
+        private KeyStore truststore = null;
+        private org.apache.http.ssl.TrustStrategy trustStrategy = null;
+        private HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
+        private int connectTimeoutMillis = 3_000;
+        private int socketTimeoutMillis = 30_000;
+        private boolean followRedirects = false;
+        private org.apache.http.client.CookieStore cookieStore;
+
+        private Builder(String name) {
+            this.name = name;
         }
-        
-        
-    }
 
-    public static CloseableHttpClient create(String name, Optional<KeyMaterial> keyMaterial, HostnameOptions hostnameOptions, Timeouts timeouts) {
-        final var sslcb = new SSLContextBuilder();
-        try {
-            sslcb.loadTrustMaterial(null, (chain, authType) -> true);
-            keyMaterial.ifPresent(km -> {
-                try {
-                    sslcb.loadKeyMaterial(km.keystore, km.keyPassword.map(pwd -> pwd.toCharArray()).orElse(null));
-                } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException ex) {
-                    throw new IllegalStateException(ex);
+        /**
+         * Mutual TLS: present the client certificate from the given key
+         * material.
+         */
+        public Builder keyMaterial(KeyMaterial keyMaterial) {
+            this.keyMaterial = keyMaterial;
+            return this;
+        }
+
+        /**
+         * Validate the certificate chain against the default jvm trust
+         * material (default).
+         */
+        public Builder trustSystem() {
+            this.truststore = null;
+            this.trustStrategy = null;
+            return this;
+        }
+
+        /**
+         * Validate the certificate chain against the given truststore.
+         */
+        public Builder trustCertificatesIn(KeyStore truststore) {
+            if (truststore == null) {
+                throw new IllegalArgumentException("truststore is required");
+            }
+            this.truststore = truststore;
+            this.trustStrategy = null;
+            return this;
+        }
+
+        /**
+         * Disable certificate chain validation. Use only against endpoints
+         * where transport authenticity is irrelevant or enforced by other
+         * means.
+         */
+        public Builder trustAny() {
+            this.truststore = null;
+            this.trustStrategy = (chain, authType) -> true;
+            return this;
+        }
+
+        /**
+         * Require the server certificate to match the requested hostname,
+         * rfc 2818/6125 (default).
+         */
+        public Builder verifyHostnames() {
+            this.hostnameVerifier = new DefaultHostnameVerifier();
+            return this;
+        }
+
+        /**
+         * Verify hostnames using the given verifier instead of the default
+         * rfc 2818/6125 policy.
+         */
+        public Builder verifyHostnamesWith(HostnameVerifier hostnameVerifier) {
+            if (hostnameVerifier == null) {
+                throw new IllegalArgumentException("hostnameVerifier is required");
+            }
+            this.hostnameVerifier = hostnameVerifier;
+            return this;
+        }
+
+        /**
+         * Do not verify hostnames.
+         */
+        public Builder verifyNoHostname() {
+            this.hostnameVerifier = new NoopHostnameVerifier();
+            return this;
+        }
+
+        public Builder timeouts(int connectTimeoutMillis, int socketTimeoutMillis) {
+            this.connectTimeoutMillis = connectTimeoutMillis;
+            this.socketTimeoutMillis = socketTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Follow 3xx redirects (GET/HEAD, up to the library limit) instead of
+         * returning them to the caller. Disabled by default: the destination
+         * of a redirect is server-controlled, and following it replays the
+         * request (headers, query) to that destination.
+         */
+        public Builder followRedirects() {
+            this.followRedirects = true;
+            return this;
+        }
+
+        /**
+         * Maintain cookies across requests using the given store. Disabled by
+         * default: a shared client would otherwise carry session state (and
+         * any authenticated session cookies) across unrelated requests.
+         */
+        public Builder cookieStore(org.apache.http.client.CookieStore cookieStore) {
+            if (cookieStore == null) {
+                throw new IllegalArgumentException("cookieStore is required");
+            }
+            this.cookieStore = cookieStore;
+            return this;
+        }
+
+        public CloseableHttpClient build() {
+            final var sslcb = new SSLContextBuilder();
+            try {
+                // null strategy = standard jsse validation against the store
+                // (null store = default jvm trust material)
+                sslcb.loadTrustMaterial(truststore, trustStrategy);
+                if (keyMaterial != null) {
+                    sslcb.loadKeyMaterial(keyMaterial.keystore, keyMaterial.keyPassword.map(pwd -> pwd.toCharArray()).orElse(null));
                 }
-            });
-            final var sslc = sslcb.build();
-            final var hostnameVerifier = hostnameOptions == HostnameOptions.VERIFY ? null : new NoopHostnameVerifier();
-            final var socketFactory = new SSLConnectionSocketFactory(sslc, hostnameVerifier);
-            final var counter = new AtomicLong(0);
-            return HttpClientBuilder.create()
-                    .setSSLSocketFactory(socketFactory)
-                    .setDefaultRequestConfig(RequestConfig.custom()
-                            .setConnectTimeout(timeouts.connect)
-                            .setSocketTimeout(timeouts.socket)
-                            .build())
-                    .setDefaultSocketConfig(SocketConfig.custom().setSoKeepAlive(true).build())
-                    .addInterceptorLast((HttpRequest hr, HttpContext hc) -> {
-                        if (hc.getAttribute("log") == null) {
-                            return;
-                        }
-                        final var rid = counter.incrementAndGet();
-                        hc.setAttribute("rid", rid);
-                        final var uri = hr.getRequestLine().getUri();
-                        final var method = hr.getRequestLine().getMethod();
-                        LOGGER.infof("[c:%s][rid:%s] %s request on %s", name, rid, method, uri);
-                    })
-                    .addInterceptorFirst((HttpResponse hr, HttpContext hc) -> {
-                        if (hc.getAttribute("log") == null) {
-                            return;
-                        }
-                        final var rid = (long) hc.getAttribute("rid");
-                        final var status = hr.getStatusLine().getStatusCode();
-                        LOGGER.infof("[c:%s][rid:%s] response status: %s", name, rid, status);
-                    }).build();
-
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
-            throw new IllegalStateException(ex);
+                final var sslc = sslcb.build();
+                final var socketFactory = new SSLConnectionSocketFactory(sslc, hostnameVerifier);
+                final var counter = new AtomicLong(0);
+                final var cb = HttpClientBuilder.create()
+                        .setSSLSocketFactory(socketFactory)
+                        // redirects, cookies and auth caching are off by default:
+                        // the client does exactly what each request says. retries
+                        // keep the library default (idempotent requests only).
+                        .disableAuthCaching()
+                        .setDefaultRequestConfig(RequestConfig.custom()
+                                .setConnectTimeout(connectTimeoutMillis)
+                                .setSocketTimeout(socketTimeoutMillis)
+                                .build())
+                        .setDefaultSocketConfig(SocketConfig.custom().setSoKeepAlive(true).build())
+                        .addInterceptorLast((HttpRequest hr, HttpContext hc) -> {
+                            if (hc.getAttribute("log") == null) {
+                                return;
+                            }
+                            final var rid = counter.incrementAndGet();
+                            hc.setAttribute("rid", rid);
+                            final var uri = hr.getRequestLine().getUri();
+                            final var method = hr.getRequestLine().getMethod();
+                            LOGGER.infof("[c:%s][rid:%s] %s request on %s", name, rid, method, uri);
+                        })
+                        .addInterceptorFirst((HttpResponse hr, HttpContext hc) -> {
+                            if (hc.getAttribute("log") == null) {
+                                return;
+                            }
+                            final var rid = (long) hc.getAttribute("rid");
+                            final var status = hr.getStatusLine().getStatusCode();
+                            LOGGER.infof("[c:%s][rid:%s] response status: %s", name, rid, status);
+                        });
+                if (!followRedirects) {
+                    cb.disableRedirectHandling();
+                }
+                if (cookieStore == null) {
+                    cb.disableCookieManagement();
+                } else {
+                    cb.setDefaultCookieStore(cookieStore);
+                }
+                return cb.build();
+            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
+                throw new IllegalStateException(ex);
+            } catch (UnrecoverableKeyException ex) {
+                throw new IllegalStateException(ex);
+            }
         }
+
     }
 
 }
