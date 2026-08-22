@@ -15,7 +15,7 @@ public record TimestampFilter(String name, String alias) implements AllowedFilte
 
     @Override
     public ConfiguredFilter configure(String[] values) {
-        Parsers.ensure(values.length == 2, name(), "Expected 3 values: [OP,VALUE], got %s", Arrays.toString(values));
+        Parsers.ensure(values.length == 2, name(), "Expected 2 values: [OP,VALUE], got %s", Arrays.toString(values));
         final var operator = Parsers.enumeration(Operator.class, values[0], name());
         final var value = Parsers.instant(values[1], name());
         if (value == null) {

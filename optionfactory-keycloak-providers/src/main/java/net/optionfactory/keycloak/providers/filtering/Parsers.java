@@ -46,9 +46,9 @@ public class Parsers {
         }
         return requested.stream()
                 .map(c -> c.split(","))
-                .map(nad -> new String[]{nad[0].trim(), nad.length == 2 ? nad[1] : null})
+                .map(nad -> new String[]{nad[0].trim(), nad.length > 1 ? nad[1].trim() : null})
                 .filter(nad -> allowed.containsKey(nad[0]))
-                .map(nad -> new ConfiguredSorter(allowed.get(nad[0]), "DESC".equals(nad[1]) ? Direction.DESC : Direction.ASC))
+                .map(nad -> new ConfiguredSorter(allowed.get(nad[0]), "DESC".equalsIgnoreCase(nad[1]) ? Direction.DESC : Direction.ASC))
                 .toList();
     }
 
