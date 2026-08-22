@@ -10,6 +10,9 @@ import org.keycloak.common.VerificationException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.crypto.SignatureProvider;
+import java.lang.reflect.Method;
+import java.util.function.BiFunction;
+import org.keycloak.models.KeycloakContext;
 
 /**
  * The alg guard runs before any session use beyond getProvider, so a proxy
@@ -19,12 +22,12 @@ import org.keycloak.crypto.SignatureProvider;
 public class OnlineAccessEndpointsAlgorithmGuardTest {
 
     @SuppressWarnings("unchecked")
-    private static <T> T proxy(Class<T> iface, java.util.function.BiFunction<java.lang.reflect.Method, Object[], Object> handler) {
+    private static <T> T proxy(Class<T> iface, BiFunction<Method, Object[], Object> handler) {
         return (T) Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[]{iface}, (p, m, a) -> handler.apply(m, a));
     }
 
     private static KeycloakSession sessionWithNoSignatureProviders() {
-        final var context = proxy(org.keycloak.models.KeycloakContext.class, (m, a) -> null);
+        final var context = proxy(KeycloakContext.class, (m, a) -> null);
         return proxy(KeycloakSession.class, (m, a) -> {
             return switch (m.getName()) {
                 case "getContext" ->

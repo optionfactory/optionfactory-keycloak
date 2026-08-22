@@ -6,25 +6,27 @@ import java.nio.charset.StandardCharsets;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import java.io.ByteArrayInputStream;
+import java.util.List;
 
 public class MultipartFormDataEntityTest {
 
     @Test
     public void contentTypeDeclaresTheBoundary() {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of());
+        final var entity = new MultipartFormDataEntity("sep", List.of());
         Assertions.assertEquals("multipart/form-data; boundary=sep", entity.getContentType().getValue());
     }
 
     @Test
     public void emptyEntitiesStillEmitTheClosingBoundary() throws IOException {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of());
+        final var entity = new MultipartFormDataEntity("sep", List.of());
         final var body = new String(EntityUtils.toByteArray(entity), StandardCharsets.UTF_8);
         Assertions.assertEquals("--sep--\r\n", body);
     }
 
     @Test
     public void partsAreDelimitedAndTerminated() throws IOException {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of(
+        final var entity = new MultipartFormDataEntity("sep", List.of(
                 FormDataPart.field("username", "wyatt"),
                 FormDataPart.json("profile", "{\"k\":1}")
         ));
@@ -49,8 +51,8 @@ public class MultipartFormDataEntityTest {
 
     @Test
     public void filenamesAndFieldNamesAreHeaderEncoded() throws IOException {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of(
-                FormDataPart.file("upload file", "report \"final\".pdf", ContentType.create("application/pdf"), new java.io.ByteArrayInputStream("bytes".getBytes(StandardCharsets.UTF_8)))
+        final var entity = new MultipartFormDataEntity("sep", List.of(
+                FormDataPart.file("upload file", "report \"final\".pdf", ContentType.create("application/pdf"), new ByteArrayInputStream("bytes".getBytes(StandardCharsets.UTF_8)))
         ));
         final var body = new String(EntityUtils.toByteArray(entity), StandardCharsets.UTF_8);
         Assertions.assertTrue(body.contains("Content-Disposition: form-data; name=\"upload file\"; filename=\"report \\\"final\\\".pdf\""));
@@ -60,7 +62,7 @@ public class MultipartFormDataEntityTest {
 
     @Test
     public void plainFieldNamesStayUnquoted() throws IOException {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of(
+        final var entity = new MultipartFormDataEntity("sep", List.of(
                 FormDataPart.field("username", "wyatt")
         ));
         final var body = new String(EntityUtils.toByteArray(entity), StandardCharsets.UTF_8);
@@ -70,7 +72,7 @@ public class MultipartFormDataEntityTest {
 
     @Test
     public void entityIsStreamingAndUnchunked() {
-        final var entity = new MultipartFormDataEntity("sep", java.util.List.of());
+        final var entity = new MultipartFormDataEntity("sep", List.of());
         Assertions.assertTrue(entity.isStreaming());
         Assertions.assertFalse(entity.isChunked());
     }

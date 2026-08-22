@@ -14,13 +14,15 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RealmProvider;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
+import java.lang.reflect.Method;
+import java.util.function.BiFunction;
 
 public class LoginStatsEventListenerProviderTest {
 
     private static final String ATTR = "loginStats";
 
     @SuppressWarnings("unchecked")
-    private static <T> T proxy(Class<T> iface, java.util.function.BiFunction<java.lang.reflect.Method, Object[], Object> handler) {
+    private static <T> T proxy(Class<T> iface, BiFunction<Method, Object[], Object> handler) {
         return (T) Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[]{iface}, (p, m, a) -> handler.apply(m, a));
     }
 

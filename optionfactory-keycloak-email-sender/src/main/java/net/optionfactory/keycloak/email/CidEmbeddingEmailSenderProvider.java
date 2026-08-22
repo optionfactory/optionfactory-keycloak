@@ -1,5 +1,6 @@
 package net.optionfactory.keycloak.email;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -231,7 +232,7 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
                 related.addBodyPart(mbp);
             }
             return related;
-        } catch (MessagingException | java.io.IOException e) {
+        } catch (MessagingException | IOException e) {
             throw new EmailException("Error embedding cid resources from the email theme", e);
         }
     }

@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 
 /**
  * Test-only minimal http(s) server built on public jdk apis (no
@@ -103,6 +104,10 @@ final class TinyHttpServer implements AutoCloseable {
         // wildcard binding: wrong-hostname tests connect via the machine hostname
         final var serverSocket = (ServerSocket) ctx.getServerSocketFactory().createServerSocket(0, 50);
         return new TinyHttpServer(serverSocket, handler, "https");
+    }
+
+    TinyHttpServer(SSLServerSocket preconfigured, Handler handler, String scheme) {
+        this((ServerSocket) preconfigured, handler, scheme);
     }
 
     private TinyHttpServer(ServerSocket serverSocket, Handler handler, String scheme) {

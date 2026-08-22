@@ -94,7 +94,7 @@ public class QueryBuilderTest {
     @Test
     public void filtersAreAndComposedAndBoundAfterTemplateParameters() {
         final var em = new RecordedEm();
-        final var requested = new java.util.LinkedHashMap<String, String[]>();
+        final var requested = new LinkedHashMap<String, String[]>();
         requested.put("username", new String[]{"EQ", "IGNORE_CASE", "Wyatt"});
         requested.put("enabled", new String[]{"EQ", "true"});
         USERS.create(em.proxy(), requested, List.of(), false, 0, 0, "realm-x");

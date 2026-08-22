@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.keycloak.models.RevokedTokenProvider;
 import org.keycloak.models.SingleUseObjectProvider;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.IntStream;
 
 /**
  * Verifies single-use enforcement of the online-access action token without a
@@ -65,8 +67,8 @@ public class OnlineAccessActionTokenSingleUseTest {
         // two threads, first insertion wins; the framework check reads the same provider
         final var revoked = new FakeRevokedTokenProvider();
         final var token = token();
-        final var results = new java.util.concurrent.ConcurrentLinkedQueue<Boolean>();
-        java.util.stream.IntStream.range(0, 2).parallel().forEach(i -> {
+        final var results = new ConcurrentLinkedQueue<Boolean>();
+        IntStream.range(0, 2).parallel().forEach(i -> {
             results.add(OnlineAccessActionTokenHandler.consumeTokenIfUnused(revoked, token));
         });
         Assertions.assertEquals(1, results.stream().filter(b -> b).count(), "exactly one concurrent consumer may win");
