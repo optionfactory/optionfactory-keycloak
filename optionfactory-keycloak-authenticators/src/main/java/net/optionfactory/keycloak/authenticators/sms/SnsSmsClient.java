@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,7 +40,7 @@ public class SnsSmsClient implements SmsClient {
         this.client = client;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
-        this.region = region.toLowerCase();
+        this.region = region.toLowerCase(Locale.ROOT);
         this.senderIdOrNull = senderIdOrNull;
     }
 
