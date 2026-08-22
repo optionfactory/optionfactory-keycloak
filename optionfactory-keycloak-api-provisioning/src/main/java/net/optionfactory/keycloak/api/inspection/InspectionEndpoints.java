@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import net.optionfactory.keycloak.providers.filtering.AttributeFilter;
 import net.optionfactory.keycloak.providers.filtering.BooleanFilter;
 import net.optionfactory.keycloak.providers.filtering.GroupFilter;
+import net.optionfactory.keycloak.providers.filtering.Parsers;
 import net.optionfactory.keycloak.providers.filtering.QueryBuilder;
 import net.optionfactory.keycloak.providers.filtering.TextFilter;
 import net.optionfactory.keycloak.providers.filtering.TimestampFilter;
@@ -164,6 +165,8 @@ public class InspectionEndpoints {
             @DefaultValue("0") @QueryParam("offset") int offset,
             @DefaultValue("0") @QueryParam("limit") int limit
     ) {
+        Parsers.ensure(offset >= 0, "offset", "must not be negative, got: %s", offset);
+        Parsers.ensure(limit >= 0, "limit", "must not be negative, got: %s", limit);
         final var slice = MediaType.valueOf("application/slice+json").equals(accept);
 
         final var realmId = session.getContext().getRealm().getId();
@@ -269,6 +272,8 @@ public class InspectionEndpoints {
             @QueryParam("path") String path,
             @DefaultValue("0") @QueryParam("offset") int offset,
             @DefaultValue("0") @QueryParam("limit") int limit) {
+        Parsers.ensure(offset >= 0, "offset", "must not be negative, got: %s", offset);
+        Parsers.ensure(limit >= 0, "limit", "must not be negative, got: %s", limit);
         final var slice = MediaType.valueOf("application/slice+json").equals(accept);
         final var rb = Response.ok()
                 .type(slice ? "application/slice+json" : "application/page+json");

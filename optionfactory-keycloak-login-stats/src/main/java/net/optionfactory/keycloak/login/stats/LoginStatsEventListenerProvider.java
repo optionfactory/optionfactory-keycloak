@@ -23,17 +23,31 @@ public class LoginStatsEventListenerProvider implements EventListenerProvider {
         if (event.getType() != EventType.LOGIN) {
             return;
         }
-        final long now = System.currentTimeMillis();
         final var realm = session.realms().getRealm(event.getRealmId());
+        if (realm == null) {
+            return;
+        }
         final var user = session.users().getUserById(realm, event.getUserId());
-        final var current = Models.attributeFirst(user, attribute)
+        if (user == null) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        final var parsed = Models.attributeFirst(user, attribute)
                 .filter(v -> !v.isBlank())
-                .map(v -> v.split(":"))
-                .orElse(new String[]{"0", Long.toString(now), ""});
-
-        final long count = Long.parseLong(current[0]) + 1;
-        final long first = Long.parseLong(current[1]);
-        user.setAttribute(attribute, List.of(String.format("%s:%s:%s", count, first, now)));
+                .map(v -> v.split(":", 3))
+                .orElse(null);
+        long count = 0;
+        long first = now;
+        if (parsed != null && parsed.length == 3 && parsed[0].matches("\\d+") && parsed[1].matches("\\d+")) {
+            try {
+                count = Long.parseLong(parsed[0]);
+                first = Long.parseLong(parsed[1]);
+            } catch (NumberFormatException e) {
+                count = 0;
+                first = now;
+            }
+        }
+        user.setAttribute(attribute, List.of(String.format("%s:%s:%s", count + 1, first, now)));
     }
 
     @Override

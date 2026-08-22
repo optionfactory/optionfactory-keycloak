@@ -76,6 +76,9 @@ public class ProvisioningEndpoints {
         if (req.id() == null || req.id().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "id", "must not be blank"));
         }
+        if (req.username() == null || req.username().isBlank()) {
+            problems.add(new Problem("FIELD_ERROR", "username", "must not be blank"));
+        }
         if (req.email() == null || req.email().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "email", "must not be blank"));
         }
