@@ -23,6 +23,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.jboss.logging.Logger;
+import java.time.Duration;
+import org.apache.http.client.CookieStore;
+import org.apache.http.ssl.TrustStrategy;
 
 public class HttpClients {
 
@@ -30,22 +33,32 @@ public class HttpClients {
 
     public static class KeyMaterial {
 
-        public KeyStore keystore;
-        public Optional<String> keyPassword;
+        public final KeyStore keystore;
+        public final Optional<String> keyPassword;
 
-        public static KeyMaterial fromJksFile(String path, Optional<String> keystorePassword, Optional<String> keyPassword) {
+        public KeyMaterial(KeyStore keystore, Optional<String> keyPassword) {
+            this.keystore = keystore;
+            this.keyPassword = keyPassword;
+        }
+
+        public static KeyMaterial fromKeystoreFile(String path, String type, Optional<String> keystorePassword, Optional<String> keyPassword) {
             try {
-                final var keystore = KeyStore.getInstance("JKS");
+                final var keystore = KeyStore.getInstance(type);
                 try (var is = new FileInputStream(path)) {
                     keystore.load(is, keystorePassword.map(pwd -> pwd.toCharArray()).orElse(null));
                 }
-                final KeyMaterial km = new KeyMaterial();
-                km.keystore = keystore;
-                km.keyPassword = keyPassword;
-                return km;
+                return new KeyMaterial(keystore, keyPassword);
             } catch (NoSuchAlgorithmException | KeyStoreException | CertificateException | IOException ex) {
                 throw new IllegalStateException(ex);
             }
+        }
+
+        public static KeyMaterial fromJksFile(String path, Optional<String> keystorePassword, Optional<String> keyPassword) {
+            return fromKeystoreFile(path, "JKS", keystorePassword, keyPassword);
+        }
+
+        public static KeyMaterial fromPkcs12File(String path, Optional<String> keystorePassword, Optional<String> keyPassword) {
+            return fromKeystoreFile(path, "PKCS12", keystorePassword, keyPassword);
         }
     }
 
@@ -58,12 +71,12 @@ public class HttpClients {
         private final String name;
         private KeyMaterial keyMaterial;
         private KeyStore truststore = null;
-        private org.apache.http.ssl.TrustStrategy trustStrategy = null;
+        private TrustStrategy trustStrategy = null;
         private HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
-        private int connectTimeoutMillis = 3_000;
-        private int socketTimeoutMillis = 30_000;
+        private Duration connectTimeout = Duration.ofSeconds(3);
+        private Duration socketTimeout = Duration.ofSeconds(30);
         private boolean followRedirects = false;
-        private org.apache.http.client.CookieStore cookieStore;
+        private CookieStore cookieStore;
 
         private Builder(String name) {
             this.name = name;
@@ -140,9 +153,15 @@ public class HttpClients {
             return this;
         }
 
-        public Builder timeouts(int connectTimeoutMillis, int socketTimeoutMillis) {
-            this.connectTimeoutMillis = connectTimeoutMillis;
-            this.socketTimeoutMillis = socketTimeoutMillis;
+        public Builder timeouts(Duration connectTimeout, Duration socketTimeout) {
+            if (connectTimeout == null || connectTimeout.isNegative() || connectTimeout.isZero()) {
+                throw new IllegalArgumentException("connectTimeout must be positive");
+            }
+            if (socketTimeout == null || socketTimeout.isNegative() || socketTimeout.isZero()) {
+                throw new IllegalArgumentException("socketTimeout must be positive");
+            }
+            this.connectTimeout = connectTimeout;
+            this.socketTimeout = socketTimeout;
             return this;
         }
 
@@ -162,7 +181,7 @@ public class HttpClients {
          * default: a shared client would otherwise carry session state (and
          * any authenticated session cookies) across unrelated requests.
          */
-        public Builder cookieStore(org.apache.http.client.CookieStore cookieStore) {
+        public Builder cookieStore(CookieStore cookieStore) {
             if (cookieStore == null) {
                 throw new IllegalArgumentException("cookieStore is required");
             }
@@ -189,8 +208,8 @@ public class HttpClients {
                         // keep the library default (idempotent requests only).
                         .disableAuthCaching()
                         .setDefaultRequestConfig(RequestConfig.custom()
-                                .setConnectTimeout(connectTimeoutMillis)
-                                .setSocketTimeout(socketTimeoutMillis)
+                                .setConnectTimeout((int) connectTimeout.toMillis())
+                                .setSocketTimeout((int) socketTimeout.toMillis())
                                 .build())
                         .setDefaultSocketConfig(SocketConfig.custom().setSoKeepAlive(true).build())
                         .addInterceptorLast((HttpRequest hr, HttpContext hc) -> {
