@@ -49,6 +49,7 @@
         <kc.version>26.7.2</kc.version>
         <libphonenumber.version>9.0.37</libphonenumber.version>
         <junit-jupiter.version>5.13.4</junit-jupiter.version>
+        <resteasy.version>6.2.16.Final</resteasy.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
@@ -120,6 +121,12 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>${junit-jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-core</artifactId>
+                <version>${resteasy.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
