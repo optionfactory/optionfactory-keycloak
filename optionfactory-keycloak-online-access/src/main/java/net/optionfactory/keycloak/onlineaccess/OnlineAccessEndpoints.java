@@ -115,6 +115,13 @@ public class OnlineAccessEndpoints {
         final var verifier = TokenVerifier.create(at, AccessToken.class);
 
         try {
+            // the header is attacker-controlled: an unknown/null alg or kid must fail
+            // verification cleanly instead of NPE-ing on the provider lookup
+            final var algorithm = verifier.getHeader().getAlgorithm();
+            final var signatureProvider = algorithm == null ? null : session.getProvider(SignatureProvider.class, algorithm.name());
+            if (signatureProvider == null) {
+                throw new VerificationException(String.format("unknown token algorithm: %s", algorithm));
+            }
             final var token = verifier.withChecks(
                     new TokenVerifier.RealmUrlCheck(Urls.realmIssuer(uriInfo.getBaseUri(), realm.getName())),
                     new TokenVerifier.TokenTypeCheck(List.of("Bearer")),
@@ -123,7 +130,7 @@ public class OnlineAccessEndpoints {
                     TokenVerifier.IS_ACTIVE,
                     TokenVerifier.SUBJECT_EXISTS_CHECK
             )
-                    .verifierContext(session.getProvider(SignatureProvider.class, verifier.getHeader().getAlgorithm().name()).verifier(verifier.getHeader().getKeyId()))
+                    .verifierContext(signatureProvider.verifier(verifier.getHeader().getKeyId()))
                     .verify()
                     .getToken();
 

@@ -13,12 +13,19 @@ public class Groups {
 
     public static GroupModel provide(KeycloakSession session, RealmModel realm, String groupPath) {
         if (groupPath == null || groupPath.isBlank() || groupPath.equals("/")) {
-            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
-                    .type("application/failures+json")
-                    .entity(List.of(new Problem("FIELD_ERROR", "path", "must not be blank")))
-                    .build());
+            throw badPath("must not be blank");
         }
         final var groupNames = KeycloakModelUtils.splitPath(groupPath, true);
+        if (groupNames.length == 0) {
+            // e.g. '//': both slashes are stripped and nothing remains
+            throw badPath("must not be blank");
+        }
+        // 'a//b' splits to an empty segment that would create an empty-named group
+        for (final var segment : groupNames) {
+            if (segment.isBlank()) {
+                throw badPath("segments must not be blank");
+            }
+        }
         GroupModel parentGroup = null;
         for (String groupName : groupNames) {
             final var currentParentGroup = parentGroup;
@@ -35,6 +42,13 @@ public class Groups {
             }
         }
         return parentGroup;
+    }
+
+    private static BadRequestException badPath(String reason) {
+        throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
+                .type("application/failures+json")
+                .entity(List.of(new Problem("FIELD_ERROR", "path", reason)))
+                .build());
     }
 
     public static GroupModel search(KeycloakSession session, RealmModel realm, String groupPath) {

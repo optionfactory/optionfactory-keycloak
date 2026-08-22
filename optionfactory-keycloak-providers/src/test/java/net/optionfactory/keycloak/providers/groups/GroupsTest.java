@@ -22,4 +22,15 @@ public class GroupsTest {
         // would otherwise create a group with an empty name
         Assertions.assertThrows(BadRequestException.class, () -> Groups.provide(null, null, "/"));
     }
+
+    @Test
+    public void provideRejectsBlankPathSegments() {
+        // an interior double slash would create an empty-named intermediate group.
+        // leading/trailing slashes (even doubled) are trimmed by splitPath, so only
+        // interior blanks are rejected
+        Assertions.assertThrows(BadRequestException.class, () -> Groups.provide(null, null, "a//b"));
+        Assertions.assertThrows(BadRequestException.class, () -> Groups.provide(null, null, "/a//b/"));
+        Assertions.assertThrows(BadRequestException.class, () -> Groups.provide(null, null, "a/b//c"));
+        Assertions.assertThrows(BadRequestException.class, () -> Groups.provide(null, null, "//"));
+    }
 }
