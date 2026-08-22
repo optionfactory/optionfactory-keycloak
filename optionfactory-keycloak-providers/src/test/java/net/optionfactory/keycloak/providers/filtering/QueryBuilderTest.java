@@ -99,7 +99,7 @@ public class QueryBuilderTest {
         requested.put("enabled", new String[]{"EQ", "true"});
         USERS.create(em.proxy(), requested, List.of(), false, 0, 0, "realm-x");
         Assertions.assertTrue(em.query.sql.contains("and lower(u.username) = ? and u.enabled = ?"));
-        Assertions.assertEquals(List.of("realm-x", "wyatt", "true"), em.query.boundValues());
+        Assertions.assertEquals(List.of("realm-x", "wyatt", Boolean.TRUE), em.query.boundValues());
     }
 
     @Test

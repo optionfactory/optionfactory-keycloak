@@ -19,10 +19,21 @@ public class BooleanFilterTest {
     }
 
     @Test
-    public void valuesAreBoundAsParameters() {
+    public void valuesAreBoundAsBooleans() {
         final var cf = ENABLED.configure(new String[]{"EQ", "true"});
         Assertions.assertEquals("u.enabled = ?", cf.expression());
-        Assertions.assertArrayEquals(new Object[]{"true"}, cf.parameters());
+        Assertions.assertArrayEquals(new Object[]{Boolean.TRUE}, cf.parameters());
+    }
+
+    @Test
+    public void booleanValuesAreCaseInsensitive() {
+        Assertions.assertArrayEquals(new Object[]{Boolean.FALSE}, ENABLED.configure(new String[]{"EQ", "FALSE"}).parameters());
+    }
+
+    @Test
+    public void malformedValuesAreRejected() {
+        Assertions.assertThrows(BadRequestException.class, () -> ENABLED.configure(new String[]{"EQ", "yes"}));
+        Assertions.assertThrows(BadRequestException.class, () -> ENABLED.configure(new String[]{"EQ", "1"}));
     }
 
     @Test

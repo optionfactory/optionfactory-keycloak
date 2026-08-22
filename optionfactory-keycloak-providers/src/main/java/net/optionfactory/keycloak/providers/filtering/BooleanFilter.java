@@ -21,7 +21,8 @@ public record BooleanFilter(String name, String alias) implements AllowedFilter 
         if (value == null) {
             return new ConfiguredFilter(String.format("%s %s null", alias, operator == Operator.EQ ? "is" : "is not"));
         }
-        return new ConfiguredFilter(String.format("%s %s ?", alias, operator.op), value);
+        Parsers.ensure("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value), name(), "Expected a boolean value (true/false), got: '%s'", value);
+        return new ConfiguredFilter(String.format("%s %s ?", alias, operator.op), Boolean.parseBoolean(value));
     }
 
 }
