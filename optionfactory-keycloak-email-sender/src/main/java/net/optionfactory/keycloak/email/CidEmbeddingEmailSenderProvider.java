@@ -1,21 +1,27 @@
 package net.optionfactory.keycloak.email;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
+import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import org.eclipse.angus.mail.smtp.SMTPMessage;
+import jakarta.mail.internet.MimeUtility;
+
 import org.jboss.logging.Logger;
 import org.keycloak.common.enums.HostnameVerificationPolicy;
 import org.keycloak.email.EmailAuthenticator;
@@ -29,13 +35,23 @@ import org.keycloak.truststore.JSSETruststoreConfigurator;
 import org.keycloak.utils.EmailValidationUtil;
 import org.keycloak.utils.SMTPUtil;
 
+import static org.keycloak.utils.StringUtil.isNotBlank;
+
+/**
+ * Fork of {@link org.keycloak.email.DefaultEmailSenderProvider} that embeds
+ * cid-referenced resources from the email theme as related mime parts.
+ *
+ * Keep this class method-aligned with upstream: matching method names,
+ * signatures and ordering makes future upstream changes easy to diff in.
+ * The fork-specific logic lives in buildMultipartBody/cidEmbeddingRelated only.
+ */
 public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
     private static final String SUPPORTED_SSL_PROTOCOLS = getSupportedSslProtocols();
-
     private static final Logger logger = Logger.getLogger(CidEmbeddingEmailSenderProvider.class);
 
     private final Map<EmailAuthenticator.AuthenticatorType, EmailAuthenticator> authenticators;
+
     private final KeycloakSession session;
 
     public CidEmbeddingEmailSenderProvider(KeycloakSession session, Map<EmailAuthenticator.AuthenticatorType, EmailAuthenticator> authenticators) {
@@ -44,27 +60,8 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
     }
 
     @Override
-    public void validate(Map<String, String> config) throws EmailException {
-        // just static configuration checking here, not really testing email
-        checkFromAddress(config.get("from"), isAllowUTF8(config));
-    }
-
-    private static boolean isAllowUTF8(Map<String, String> config) {
-        return "true".equals(config.get("allowutf8"));
-    }
-
-    private static String checkFromAddress(String from, boolean allowutf8) throws EmailException {
-        final String covertedFrom = convertEmail(from, allowutf8);
-        if (from == null) {
-            throw new EmailException(String.format("Invalid sender address '%s'. If the address contains UTF-8 characters in the local part please ensure the SMTP server supports the SMTPUTF8 extension and enable 'Allow UTF-8' in the email realm configuration.",
-                    from));
-        }
-        return covertedFrom;
-    }
-
-    @Override
     public void send(Map<String, String> config, UserModel user, String subject, String textBody, String htmlBody) throws EmailException {
-        String address = user.getEmail();
+        String address = retrieveEmailAddress(user);
         if (address == null) {
             throw new EmailException("No email address configured for the user");
         }
@@ -73,133 +70,236 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
 
     @Override
     public void send(Map<String, String> config, String address, String subject, String textBody, String htmlBody) throws EmailException {
-        try {
-            Properties props = new Properties();
+        final boolean allowutf8 = isAllowUTF8(config);
+        final String convertedAddress = checkUserAddress(address, allowutf8);
+        final String from = checkFromAddress(config.get("from"), allowutf8);
 
-            if (config.containsKey("host")) {
-                props.setProperty("mail.smtp.host", config.get("host"));
-            }
+        Session session = Session.getInstance(buildEmailProperties(config, from));
 
-            boolean auth = "true".equals(config.get("auth"));
-            boolean ssl = "true".equals(config.get("ssl"));
-            boolean starttls = "true".equals(config.get("starttls"));
-            boolean authToken = "token".equals(config.get("authType"));
-            boolean debug = "true".equals(config.get("debug"));
+        Message message = buildMessage(session, convertedAddress, from, subject, config, buildMultipartBody(textBody, htmlBody));
 
-            if (config.containsKey("port") && config.get("port") != null) {
-                props.setProperty("mail.smtp.port", config.get("port"));
-            }
+        try (Transport transport = session.getTransport("smtp")) {
+            EmailAuthenticator selectedAuthenticator = selectAuthenticatorBasedOnConfig(config);
+            selectedAuthenticator.connect(this.session, config, transport);
 
-            if (auth) {
-                props.setProperty("mail.smtp.auth", "true");
-            }
-            if (authToken) {
-                props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
-            }
-            if (debug) {
-                props.put("mail.debug", "true");
-            }
-            if (ssl) {
-                props.setProperty("mail.smtp.ssl.enable", "true");
-            }
-
-            if (starttls) {
-                props.setProperty("mail.smtp.starttls.enable", "true");
-            }
-
-            if (ssl || starttls || auth) {
-                props.put("mail.smtp.ssl.protocols", SUPPORTED_SSL_PROTOCOLS);
-
-                setupTruststore(props);
-            }
-
-            props.setProperty("mail.smtp.timeout", "10000");
-            props.setProperty("mail.smtp.connectiontimeout", "10000");
-            props.setProperty("mail.smtp.writetimeout", "10000");
-
-            String from = config.get("from");
-            if (from == null) {
-                throw new EmailException("No sender address configured in the realm settings for emails");
-            }
-            String fromDisplayName = config.get("fromDisplayName");
-            String replyTo = config.get("replyTo");
-            String replyToDisplayName = config.get("replyToDisplayName");
-            String envelopeFrom = config.get("envelopeFrom");
-            if (isAllowUTF8(config)) {
-                props.setProperty("mail.mime.allowutf8", "true");
-            }
-
-            final Session emailSession = Session.getInstance(props);
-            final var alternatives = new MimeMultipart("alternative");
-
-            if (textBody != null) {
-                final var textPart = new MimeBodyPart();
-                textPart.setText(textBody, "UTF-8");
-                alternatives.addBodyPart(textPart);
-            }
-
-            if (htmlBody != null) {
-                final var related = new MimeMultipart("related");
-
-                final var htmlPart = new MimeBodyPart();
-                htmlPart.setContent(htmlBody, "text/html; charset=utf-8");
-
-                related.addBodyPart(htmlPart);
-                final var emailTheme = session.theme().getTheme(Theme.Type.EMAIL);
-                final var cidsProvider = new CidsProvider(emailTheme);
-                for (CidSource allowedCid : cidsProvider.cids(htmlBody)) {
-                    final var source = new CidFromThemeDataSource(emailTheme, allowedCid);
-                    final var mbp = new MimeBodyPart();
-                    mbp.setDataHandler(new DataHandler(source));
-                    mbp.setContentID(String.format("<%s>", allowedCid.id));
-                    related.addBodyPart(mbp);
-                }
-
-                alternatives.addBodyPart(multipartAsBodyPart(related));
-            }
-
-            final var mixed = new MimeMultipart("mixed");
-            mixed.addBodyPart(multipartAsBodyPart(alternatives));
-
-            SMTPMessage msg = new SMTPMessage(emailSession);
-            msg.setFrom(toInternetAddress(from, fromDisplayName));
-
-            msg.setReplyTo(new Address[]{toInternetAddress(from, fromDisplayName)});
-            if (replyTo != null && !replyTo.isEmpty()) {
-                msg.setReplyTo(new Address[]{toInternetAddress(replyTo, replyToDisplayName)});
-            }
-            if (envelopeFrom != null && !envelopeFrom.isEmpty()) {
-                msg.setEnvelopeFrom(envelopeFrom);
-            }
-
-            msg.setHeader("To", address);
-            msg.setSubject(subject, "utf-8");
-            msg.setContent(mixed);
-            msg.saveChanges();
-            msg.setSentDate(new Date());
-
-            try (Transport transport = emailSession.getTransport("smtp")) {
-                final var selectedAuthenticator = auth
-                        ? authenticators.get(EmailAuthenticator.AuthenticatorType.valueOf(config.getOrDefault("authType", "basic").toUpperCase()))
-                        : authenticators.get(EmailAuthenticator.AuthenticatorType.NONE);
-
-                selectedAuthenticator.connect(this.session, config, transport);
-
-                transport.sendMessage(msg, new InternetAddress[]{new InternetAddress(address)});
-            }
+            transport.sendMessage(message, new InternetAddress[]{new InternetAddress(convertedAddress)});
         } catch (Exception e) {
             ServicesLogger.LOGGER.failedToSendEmail(e);
             throw new EmailException("Error when attempting to send the email to the server. More information is available in the server log.", e);
         }
     }
 
+    @Override
+    public void validate(Map<String, String> config) throws EmailException {
+        // just static configuration checking here, not really testing email
+        checkFromAddress(config.get("from"), isAllowUTF8(config));
+        String replyTo = config.get("replyTo");
+        if (isNotBlank(replyTo)) {
+            checkReplyToAddress(replyTo, isAllowUTF8(config));
+        }
+    }
+
+    Properties buildEmailProperties(Map<String, String> config, String from) throws EmailException {
+        Properties props = new Properties();
+
+        if (config.containsKey("host")) {
+            props.setProperty("mail.smtp.host", config.get("host"));
+        }
+
+        if (config.containsKey("port") && config.get("port") != null) {
+            props.setProperty("mail.smtp.port", config.get("port"));
+        }
+
+        if (isAuthConfigured(config)) {
+            props.setProperty("mail.smtp.auth", "true");
+        }
+
+        if (isAuthTypeTokenConfigured(config)) {
+            props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+        }
+
+        if (isDebugEnabled(config)) {
+            props.put("mail.debug", "true");
+        }
+
+        if (isSslConfigured(config)) {
+            props.setProperty("mail.smtp.ssl.enable", "true");
+        }
+
+        if (isStarttlsConfigured(config)) {
+            props.setProperty("mail.smtp.starttls.enable", "true");
+        }
+
+        if (isSslConfigured(config) || isStarttlsConfigured(config) || isAuthConfigured(config)) {
+            props.put("mail.smtp.ssl.protocols", SUPPORTED_SSL_PROTOCOLS);
+
+            setupTruststore(props);
+        }
+
+        props.setProperty("mail.smtp.timeout", config.getOrDefault("timeout", "10000"));
+        props.setProperty("mail.smtp.connectiontimeout", config.getOrDefault("connectionTimeout", "10000"));
+        props.setProperty("mail.smtp.writetimeout", config.getOrDefault("writeTimeout", "10000"));
+
+        String envelopeFrom = config.get("envelopeFrom");
+        if (isNotBlank(envelopeFrom)) {
+            props.setProperty("mail.smtp.from", envelopeFrom);
+        }
+
+        final boolean allowutf8 = isAllowUTF8(config);
+        if (allowutf8) {
+            props.setProperty("mail.mime.allowutf8", "true");
+        }
+
+        // Specify 'mail.from' as InternetAddress.getLocalAddress() would otherwise do a InetAddress.getCanonicalHostName
+        // and add this as a mail header. This would both be slow, and would reveal internal IP addresses that we don't want.
+        // https://jakarta.ee/specifications/mail/2.0/jakarta-mail-spec-2.0#a823
+        props.setProperty("mail.from", from);
+
+        return props;
+    }
+
+    private Message buildMessage(Session session, String address, String from, String subject, Map<String, String> config, Multipart multipart) throws EmailException {
+        String fromDisplayName = config.get("fromDisplayName");
+        String replyTo = config.get("replyTo");
+        String replyToDisplayName = config.get("replyToDisplayName");
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(toInternetAddress(from, fromDisplayName));
+            msg.setReplyTo(new Address[]{toInternetAddress(from, fromDisplayName)});
+
+            if (isNotBlank(replyTo)) {
+                final String convertedReplyTo = checkReplyToAddress(replyTo, isAllowUTF8(config));
+                msg.setReplyTo(new Address[]{toInternetAddress(convertedReplyTo, replyToDisplayName)});
+            }
+
+            msg.setHeader("To", address);
+            msg.setSubject(MimeUtility.encodeText(subject, StandardCharsets.UTF_8.name(), null));
+            msg.setContent(multipart);
+            msg.saveChanges();
+            msg.setSentDate(new Date());
+
+            return msg;
+        } catch (UnsupportedEncodingException e) {
+            throw new EmailException("Failed to encode email address", e);
+        } catch (AddressException e) {
+            throw new EmailException("Invalid email address format", e);
+        } catch (MessagingException e) {
+            throw new EmailException("MessagingException occurred", e);
+        }
+    }
+
+    private Multipart buildMultipartBody(String textBody, String htmlBody) throws EmailException {
+        try {
+            final MimeMultipart alternatives = new MimeMultipart("alternative");
+
+            if (textBody != null) {
+                MimeBodyPart textPart = new MimeBodyPart();
+                textPart.setText(textBody, "UTF-8");
+                alternatives.addBodyPart(textPart);
+            }
+
+            if (htmlBody != null) {
+                alternatives.addBodyPart(multipartAsBodyPart(cidEmbeddingRelated(htmlBody)));
+            }
+
+            // wrapped in mixed to keep the wire format this provider has always produced
+            final MimeMultipart mixed = new MimeMultipart("mixed");
+            mixed.addBodyPart(multipartAsBodyPart(alternatives));
+            return mixed;
+        } catch (MessagingException e) {
+            throw new EmailException("Error encoding email body parts", e);
+        }
+    }
+
+    /**
+     * Fork-specific: html body plus cid-referenced theme resources as related parts.
+     */
+    private MimeMultipart cidEmbeddingRelated(String htmlBody) throws EmailException {
+        try {
+            final MimeMultipart related = new MimeMultipart("related");
+
+            final MimeBodyPart htmlPart = new MimeBodyPart();
+            htmlPart.setContent(htmlBody, "text/html; charset=UTF-8");
+            related.addBodyPart(htmlPart);
+
+            final Theme emailTheme = session.theme().getTheme(Theme.Type.EMAIL);
+            for (CidSource allowedCid : new CidsProvider(emailTheme).cids(htmlBody)) {
+                final MimeBodyPart mbp = new MimeBodyPart();
+                mbp.setDataHandler(new DataHandler(new CidFromThemeDataSource(emailTheme, allowedCid)));
+                mbp.setContentID(String.format("<%s>", allowedCid.id));
+                related.addBodyPart(mbp);
+            }
+            return related;
+        } catch (MessagingException | java.io.IOException e) {
+            throw new EmailException("Error embedding cid resources from the email theme", e);
+        }
+    }
+
     private static MimeBodyPart multipartAsBodyPart(MimeMultipart part) throws MessagingException {
-        final var bp = new MimeBodyPart();
+        final MimeBodyPart bp = new MimeBodyPart();
         bp.setContent(part);
         return bp;
     }
 
-    private static String convertEmail(String email, boolean allowutf8) throws EmailException {
+    private EmailAuthenticator selectAuthenticatorBasedOnConfig(Map<String, String> config) {
+        if (isAuthConfigured(config)) {
+            String authType = config.getOrDefault("authType", "basic");
+            return authenticators.get(EmailAuthenticator.AuthenticatorType.valueOf(authType.toUpperCase()));
+        }
+
+        return authenticators.get(EmailAuthenticator.AuthenticatorType.NONE);
+    }
+
+    private static boolean isStarttlsConfigured(Map<String, String> config) {
+        return "true".equals(config.get("starttls"));
+    }
+
+    private static boolean isSslConfigured(Map<String, String> config) {
+        return "true".equals(config.get("ssl"));
+    }
+
+    private static boolean isAllowUTF8(Map<String, String> config) {
+        return "true".equals(config.get(CONFIG_ALLOW_UTF8));
+    }
+
+    private static boolean isDebugEnabled(Map<String, String> config) {
+        return "true".equals(config.get("debug"));
+    }
+
+    private static boolean isAuthConfigured(Map<String, String> config) {
+        return "true".equals(config.get("auth"));
+    }
+
+    private static boolean isAuthTypeTokenConfigured(Map<String, String> config) {
+        return "token".equals(config.get("authType"));
+    }
+
+    private static String checkUserAddress(String address, boolean allowutf8) throws EmailException {
+        final String convertedAddress = convertEmail(address, allowutf8);
+        if (convertedAddress == null) {
+            throw new EmailException(String.format("Invalid address '%s'. If the address contains UTF-8 characters in the local part please ensure the SMTP server supports the SMTPUTF8 extension and enable 'Allow UTF-8' in the email realm configuration.", address));
+        }
+        return convertedAddress;
+    }
+
+    private static String checkFromAddress(String from, boolean allowutf8) throws EmailException {
+        final String convertedFrom = convertEmail(from, allowutf8);
+        if (convertedFrom == null) {
+            throw new EmailException(String.format("Invalid sender address '%s'. If the address contains UTF-8 characters in the local part please ensure the SMTP server supports the SMTPUTF8 extension and enable 'Allow UTF-8' in the email realm configuration.", from));
+        }
+        return convertedFrom;
+    }
+
+    private static String checkReplyToAddress(String replyTo, boolean allowutf8) throws EmailException {
+        final String convertedReplyTo = convertEmail(replyTo, allowutf8);
+        if (convertedReplyTo == null) {
+            throw new EmailException(String.format("Invalid reply-to address '%s'. If the address contains UTF-8 characters in the local part please ensure the SMTP server supports the SMTPUTF8 extension and enable 'Allow UTF-8' in the email realm configuration.", replyTo));
+        }
+        return convertedReplyTo;
+    }
+
+    private static String convertEmail(String email, boolean allowutf8) {
         if (!EmailValidationUtil.isValidEmail(email)) {
             return null;
         }
@@ -227,6 +327,10 @@ public class CidEmbeddingEmailSenderProvider implements EmailSenderProvider {
             return new InternetAddress(email);
         }
         return new InternetAddress(email, displayName, "utf-8");
+    }
+
+    protected String retrieveEmailAddress(UserModel user) {
+        return user.getEmail();
     }
 
     private void setupTruststore(Properties props) {
