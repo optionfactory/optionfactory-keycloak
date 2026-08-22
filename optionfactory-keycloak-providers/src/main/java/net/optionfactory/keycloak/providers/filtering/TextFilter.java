@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.providers.filtering;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public record TextFilter(String name, String alias) implements AllowedFilter {
 
@@ -29,7 +30,7 @@ public record TextFilter(String name, String alias) implements AllowedFilter {
                     Parsers.ensure(operator == Operator.EQ || operator == Operator.NEQ, name(), "Operator %s expects a non-null value", operator);
                     yield new ConfiguredFilter(String.format("%s %s null", alias, operator == Operator.EQ ? "is" : "is not"));
                 }
-                yield new ConfiguredFilter(String.format(sensitivity == CaseSensitivity.CASE_SENSITIVE ? "%s %s ?" : "lower(%s) %s ?", alias, operator.op), sensitivity == CaseSensitivity.CASE_SENSITIVE ? value : value.toLowerCase());
+                yield new ConfiguredFilter(String.format(sensitivity == CaseSensitivity.CASE_SENSITIVE ? "%s %s ?" : "lower(%s) %s ?", alias, operator.op), sensitivity == CaseSensitivity.CASE_SENSITIVE ? value : value.toLowerCase(Locale.ROOT));
             }
             case CONTAINS, STARTS_WITH, ENDS_WITH -> {
                 Parsers.ensure(value != null, name(), "Operator %s expects a non-null value", operator);
@@ -38,8 +39,18 @@ public record TextFilter(String name, String alias) implements AllowedFilter {
         };
     }
 
+    private static final char LIKE_ESCAPE_CHAR = '\\';
+    private static final String LIKE_ESCAPE_STR = String.valueOf(LIKE_ESCAPE_CHAR);
+
+    public static String escapeForLike(String input) {
+        return input
+                .replace(LIKE_ESCAPE_STR, LIKE_ESCAPE_STR + LIKE_ESCAPE_STR)
+                .replace("%", LIKE_ESCAPE_STR + "%")
+                .replace("_", LIKE_ESCAPE_STR + "_");
+    }
+
     public static String likePattern(Operator op, String value) {
-        final var esc = value.replace("%", "\\%").replace("_", "\\_");
+        final var esc = escapeForLike(value);
         if (op == Operator.STARTS_WITH) {
             return esc + "%";
         }

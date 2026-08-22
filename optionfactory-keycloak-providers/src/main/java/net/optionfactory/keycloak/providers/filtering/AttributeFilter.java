@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.providers.filtering;
 
 import java.util.Arrays;
+import java.util.Locale;
 import net.optionfactory.keycloak.providers.filtering.TextFilter.CaseSensitivity;
 import net.optionfactory.keycloak.providers.filtering.TextFilter.Operator;
 
@@ -29,7 +30,7 @@ public record AttributeFilter(String name) implements AllowedFilter {
                 : "user_id = u.id and name = ? and lower(coalesce(long_value, value)) %s ?", operator.op)
                 ),
                 field,
-                sensitivity == CaseSensitivity.CASE_SENSITIVE ? value : value.toLowerCase()
+                sensitivity == CaseSensitivity.CASE_SENSITIVE ? value : value.toLowerCase(Locale.ROOT)
                 );
             }
             case CONTAINS, STARTS_WITH, ENDS_WITH -> {
