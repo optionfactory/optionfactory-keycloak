@@ -229,8 +229,8 @@ public class InspectionEndpoints {
                 left join user_entity ue on ue.id = ugm.user_id
             where 
                 1 = 1 {CONDITIONS}
-            {ORDER_CLAUSE}        
-            group by gp.id, gp,name, gp.path;
+            group by gp.id, gp.name, gp.path
+            {ORDER_CLAUSE}
             """)
             .filter(new TextFilter("id", "id"))
             .filter(new TextFilter("name", "name"))
