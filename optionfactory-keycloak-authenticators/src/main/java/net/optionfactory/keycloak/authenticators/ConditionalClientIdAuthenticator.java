@@ -19,10 +19,17 @@ public class ConditionalClientIdAuthenticator implements ConditionalAuthenticato
 
     @Override
     public boolean matchCondition(AuthenticationFlowContext context) {
+        final var authenticatorConfig = context.getAuthenticatorConfig();
+        if (authenticatorConfig == null || authenticatorConfig.getConfig() == null) {
+            return false;
+        }
         final var authSession = context.getAuthenticationSession();
         final var clientIdOrNull = authSession.getClient() == null ? null : authSession.getClient().getClientId();
-        final var authConfig = context.getAuthenticatorConfig().getConfig();
+        final var authConfig = authenticatorConfig.getConfig();
         final var expectedClientId = authConfig.get("clientId");
+        if (expectedClientId == null) {
+            return false;
+        }
         final var match = expectedClientId.equals(clientIdOrNull);
         final var negate = Boolean.parseBoolean(authConfig.get("negate"));
         return negate ? !match : match;

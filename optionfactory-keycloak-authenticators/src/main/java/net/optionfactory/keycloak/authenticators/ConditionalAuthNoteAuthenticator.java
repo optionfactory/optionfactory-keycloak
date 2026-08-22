@@ -19,10 +19,17 @@ public class ConditionalAuthNoteAuthenticator implements ConditionalAuthenticato
 
     @Override
     public boolean matchCondition(AuthenticationFlowContext context) {
+        final var authenticatorConfig = context.getAuthenticatorConfig();
+        if (authenticatorConfig == null || authenticatorConfig.getConfig() == null) {
+            return false;
+        }
         final var authSession = context.getAuthenticationSession();
-        final var authConfig = context.getAuthenticatorConfig().getConfig();
+        final var authConfig = authenticatorConfig.getConfig();
         final var authNoteKey = authConfig.get("key");
         final var expectedAuthNoteValue = authConfig.get("value");
+        if (authNoteKey == null || expectedAuthNoteValue == null) {
+            return false;
+        }
         final var match = expectedAuthNoteValue.equals(authSession.getAuthNote(authNoteKey));
         final var negate = Boolean.parseBoolean(authConfig.get("negate"));
         return negate ? !match : match;

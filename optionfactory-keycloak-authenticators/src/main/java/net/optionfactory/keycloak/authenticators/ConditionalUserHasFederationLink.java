@@ -28,6 +28,9 @@ public class ConditionalUserHasFederationLink implements ConditionalAuthenticato
         final var expectedFederationLink = authConfig.get("federationLink");
         final var negate = Boolean.parseBoolean(authConfig.get("negate"));
         final var user = context.getUser();
+        if (user == null) {
+            return negate;
+        }
         final var fedLinkId = user.getFederationLink();
         if (fedLinkId == null) {
             return negate;
