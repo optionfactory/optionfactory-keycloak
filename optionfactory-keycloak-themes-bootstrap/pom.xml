@@ -10,10 +10,16 @@
     <description>optionfactory-keycloak bootstrap based theme</description>
     <name>net.optionfactory.keycloak:optionfactory-keycloak-themes-bootstrap</name>
     <packaging>jar</packaging>
-    <dependencies>  
+    <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>net.optionfactory.keycloak</groupId>
+            <artifactId>optionfactory-keycloak-themes-preview</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

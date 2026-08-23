@@ -1,5 +1,7 @@
 package net.optionfactory.keycloak.login;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -15,6 +17,9 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.Urls;
 import org.keycloak.theme.Theme;
+import org.keycloak.theme.ThemeResourcesParser;
+import org.keycloak.theme.beans.AdvancedMessageFormatterMethod;
+import org.keycloak.theme.beans.MessageFormatterMethod;
 
 public class ConfigurableFreemarkerLoginFormsProvider extends FreeMarkerLoginFormsProvider {
 
@@ -30,15 +35,47 @@ public class ConfigurableFreemarkerLoginFormsProvider extends FreeMarkerLoginFor
 
     @Override
     protected Properties handleThemeResources(Theme theme, Locale locale) {
-        final var prefix = "conf.";
         final var ps = super.handleThemeResources(theme, locale);
+        // expand ${conf.*} in message bundles; super built the msg()/advancedMsg() formatters
+        // over pre-expansion copies, so rebuild them over the expanded bundle
         for (final var key : ps.stringPropertyNames()) {
-            final var value = ps.getProperty(key);
-            ps.setProperty(key, StringPropertyReplacer.replaceProperties(value, (k) -> {
-                return k.startsWith(prefix) ? this.conf.get(k.substring(prefix.length())) : null;
-            }));
+            ps.setProperty(key, expandConf(ps.getProperty(key), conf));
+        }
+        final Map<Object, Object> msgParams = new HashMap<>(attributes);
+        msgParams.putAll(ps);
+        attributes.put("msg", new MessageFormatterMethod(locale, msgParams));
+        attributes.put("advancedMsg", new AdvancedMessageFormatterMethod(locale, ps));
+        // expand ${conf.*} in theme.properties values (properties, themeResources, darkMode).
+        // theme.getProperties() may be the shared cached instance: expand a copy, never mutate
+        try {
+            final var expanded = expandProperties(theme.getProperties(), conf);
+            attributes.put("properties", expanded);
+            attributes.put("themeResources", ThemeResourcesParser.parse(expanded));
+            attributes.put("darkMode", "true".equals(expanded.getProperty("darkMode"))
+                    && realm.getAttribute("darkMode", true));
+        } catch (IOException e) {
+            // super already logged and installed fallbacks
         }
         return ps;
+    }
+
+    // package-private statics: pure functions of (input, conf), unit-tested without a keycloak runtime
+
+    static String expandConf(String value, Map<String, String> conf) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        return StringPropertyReplacer.replaceProperties(value, (k) -> {
+            return k.startsWith("conf.") ? conf.get(k.substring("conf.".length())) : null;
+        });
+    }
+
+    static Properties expandProperties(Properties raw, Map<String, String> conf) {
+        final var expanded = new Properties();
+        for (final var key : raw.stringPropertyNames()) {
+            expanded.setProperty(key, expandConf(raw.getProperty(key), conf));
+        }
+        return expanded;
     }
 
     public static class Factory implements LoginFormsProviderFactory {

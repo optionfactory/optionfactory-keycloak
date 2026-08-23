@@ -154,22 +154,113 @@ Ldap federation helpers: `caching-group-ldap-mapper` (an `LDAP_ONLY` group mappe
 
 ## optionfactory-keycloak-themes
 
-`opfa-freemarker-configurable`, a login forms provider that expands `${conf.*}` placeholders in theme properties (e.g. `theme.properties`, message bundles) from server configuration:
+`opfa-freemarker-configurable`, a login forms provider that expands `${conf.*}` placeholders from server configuration in **message bundles** (`messages_*.properties`, via `msg()`/`advancedMsg()`) and in **`theme.properties` values** (`${properties.*}`, keyed `styles.*`/`scripts.*`/`favicons.*`, `styles=`, `themeHeaders.*`/`baseHeaders.*`, `darkMode`). The `conf` map is also exposed to templates directly.
+
+Values are sourced from `keycloak.conf` via MicroProfile Config: the quarkus distro exposes each entry with a `kc.` prefix, and the provider collects every property starting with `kc.login-theme-conf--` **once at factory startup**, stripping that prefix. Consequences: changes to `keycloak.conf` require a restart to take effect, and the provider works only on the quarkus distribution (no `kc.*` config exists on the legacy wildfly adapter). Also ships the `opfablank` welcome theme.
+
+### Configuration
 
 ```properties
 # keycloak.conf
 login-theme-conf--support-mail=support@example.com
-login-theme-conf--footer-url=https://example.com
+login-theme-conf--footer-url=https://example.com/area-riservata
+login-theme-conf--analytics-id=GTM-ABC123
+login-theme-conf--assistance-path=assistenza
 ```
+
+Keys accept dashes (`analytics-id` → `${conf.analytics-id}`); the map is flat, so dotted keys read naturally in templates (`login-theme-conf--support.mail` → `${conf.support.mail}`).
+
+### Examples
+
+**Message bundles** — the typical i18n + per-environment case (support mail differs between staging and production, translations stay in the bundle):
+
+```properties
+# theme/mytheme/login/messages/messages_it.properties
+needHelpMessage=Hai bisogno di aiuto? Scrivi a ${conf.support-mail}
+privacyMessage=Leggi la <a href="${conf.footer-url}/privacy">privacy policy</a>
+```
+
+```ftl
+${msg("needHelpMessage")}
+```
+
+**Templates, direct access** — no round-trip through properties or messages; read the map from the data model:
+
+```ftl
+<a id="footer-link" href="${conf.footer-url}">${msg("backToHome")}</a>
+```
+
+**theme.properties** — per-environment styling and head tags without rebuilding the theme jar; here the analytics script and the forgot-password/assistance entry points come from `keycloak.conf`:
 
 ```properties
 # theme/mytheme/login/theme.properties
-supportMail=${conf.support-mail}
-footerUrl=${conf.footer-url}
+parent=bootstrap
+styles=css/mytheme.css
+themeHeaders.0=<script src="https://www.googletagmanager.com/gtm.js?id=${conf.analytics-id}" type="text/javascript"></script>
 ```
 
-Templates then use the theme properties as usual (`${properties.footerUrl}`). Also ships the `opfablank` welcome theme.
+```ftl
+# in a forked login.ftl: reuse the base url and append the conf-controlled path
+<a href="${url.loginResetCredentialsUrl?replace("login-actions/reset-credentials", conf.assistancePath)}">Hai bisogno di assistenza?</a>
+```
+
+`${properties.*}` inherits the expansion too, so keycloak's own plumbing picks conf values up (e.g. `kcLogoLink=${conf.footer-url}`).
+
+### Composition and fallback semantics
+
+`StringPropertyReplacer` (the expansion engine) supports defaults (`${key:fallback}`), composite keys (`${key1,key2}`, both tried as keys — **not** literal fallbacks) and **recursive** substitution (a resolved value is re-scanned for further `${...}` refs, with an infinite-recursion guard). Practical patterns:
+
+```properties
+# messages: degrade explicitly when the conf key is absent
+supportMail=${conf.support-mail:support@example.com}
+footerMessage=Vai alla <a href="${conf.footer-url}">${conf.footer-label:Area Riservata}</a>
+# theme.properties: key chain — use the env-specific id, fall back to a shared one
+themeHeaders.0=<script src="https://www.googletagmanager.com/gtm.js?id=${conf.analytics-id,conf.shared-analytics-id}"></script>
+```
+
+Ordering and interaction of the layers:
+
+1. **`${sys.*}`/`${env.*}`** — keycloak's own substitution, applied at **theme load** (before the provider runs). A resolved `${env.X}` becomes a literal before `${conf.*}` ever sees it, so the two never fight over the same placeholder. Unresolved refs stay for the next layer.
+2. **`${conf.*}`** — expanded by this provider per request, in messages and theme.properties values. Unknown conf keys resolve to `null` and the **whole `${...}` ref is left verbatim** — use `${key:fallback}` for literal defaults, `${key1,key2}` to chain keys.
+3. Plain `${someKey}` refs with no `conf.`/`sys.`/`env.` prefix also resolve to `null` here and stay verbatim — safe inside values that contain dollar-brace syntax meant for other layers.
+4. Recursion: substituted values are re-scanned, so conf values may themselves reference `${conf.*}` keys; cycles throw `IllegalStateException` ("Infinite recursion") instead of hanging.
+
+These semantics are pinned by unit tests in `optionfactory-keycloak-themes` (`ConfigurableFreemarkerLoginFormsProviderTest`).
+
+### Bootstrapping
+
+The provider registers via `META-INF/services` and wins default-provider selection over the stock freemarker factory (`order() = 1`), so deploying the jar activates it for **all** login themes of the server, including `keycloak` and `keycloak.v2` parents: stock themes are unaffected functionally (they carry no `${conf.*}` refs), but keep it in mind when reasoning about provider selection.
+
+## optionfactory-keycloak-themes-preview
+
+A harness that renders **every stock base login page** (discovered from the keycloak-themes jar, so new upstream pages are picked up automatically; transient relays like `saml-post-form` are excluded) through a login theme and writes an html gallery to `target/<name>/` — page-per-file plus an ftl-rendered `index.html` with lazy iframes. Rendering failures fail the build, so it doubles as a smoke test for template/data-model compatibility. All stock-page fixtures are preconfigured (including an automatic `login-invalid` variant); the only knobs are the theme inheritance chain, locale and naming.
+
+Theme modules reuse it by depending on this module (test scope) and configuring the generator — no subclassing:
+
+```java
+LoginThemePreviewGenerator.preview()
+        .templateResourceBases( // child-first, mirrors theme inheritance
+                "theme/mytheme/login",
+                "theme/bootstrap/login",
+                "theme/base/login")
+        .propertiesResources( // parent-first, mirrors per-key merge
+                "theme/base/login/theme.properties",
+                "theme/bootstrap/login/theme.properties",
+                "theme/mytheme/login/theme.properties")
+        .messagesResources(
+                "theme/base/login/messages/messages_it.properties",
+                "theme/mytheme/login/messages/messages_it.properties")
+        .locale(Locale.ITALIAN)
+        .title("mytheme preview")
+        .outputDirectory("theme-preview-mytheme")
+        .extraRender("my-step-page", "my-step-page", m -> { /* custom step page fixtures */ })
+        .generate();
+```
+
+The gallery must be served over http (module scripts are blocked from `file://` origins): `python3 -m http.server -d target/theme-preview-mytheme` (the hint is embedded in the generated index). Theme resources referenced by `resourcesPath` are copied next to the output (jar classpath entries included) so css/js/images load; the `rfc4648` importmap module is satisfied by a stub. Caveat: page-specific beans are fixtures, not keycloak internals — templates reading model keys the fixtures don't provide fail loudly (which is the point).
+
+In use: `optionfactory-keycloak-themes-bootstrap` previews itself this way (`BootstrapThemePreviewTest`), as do the downstream themes in the creditagricole/homeinsurance (both login themes + custom step pages) and innovabay/sygmund (custom consents/survey pages) projects.
 
 ## optionfactory-keycloak-themes-bootstrap
 
-A `bootstrap` login theme with a blank, fully overridable template for building custom login pages.
+A `bootstrap` login theme: upstream `base` templates with all `kc*Class` properties mapped to bootstrap 5 classes, CDN-loaded bootstrap (SRI-pinned), and a head-injection contract (`googleFonts`/`baseHeaders`/`themeHeaders`) for derived themes. The template is upstream plus purely additive marked hunks (byte-identical macro signature), so keycloak upgrades are a re-diff. Theming happens via CSS variables (`--theme-*`, `--keycloak-*`) with a documented specificity ladder; an optional `cards=true` two-column layout ships with an overridable `left-card.ftl` and a per-page `footerCard` section. See the [module readme](optionfactory-keycloak-themes-bootstrap/README.md) for the full contract.

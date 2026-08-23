@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.optionfactory.keycloak</groupId>
+        <artifactId>optionfactory-keycloak</artifactId>
+        <version>9.13-SNAPSHOT</version>
+    </parent>
+    <artifactId>optionfactory-keycloak-themes-preview</artifactId>
+    <description>renders every stock login page of a theme to an html gallery for visual inspection</description>
+    <name>net.optionfactory.keycloak:optionfactory-keycloak-themes-preview</name>
+    <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-themes</artifactId>
+            <version>${kc.version}</version>
+            <!-- compile + explicit scope: the parent manages keycloak artifacts as provided,
+                 which would not flow transitively to theme modules using this harness -->
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+            <version>${kc.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.32</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>

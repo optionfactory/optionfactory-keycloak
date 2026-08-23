@@ -1,3 +1,11 @@
+/* opfa: requires CSS Nesting (evergreen browsers since 2023) and :where()/:is().
+   Specificity ladder (by design, so consumers override with plain class selectors):
+     tier 0 - skin defaults:      .form-control:where(input, select)         (0,1,0)
+     tier 1 - interaction states: ... :hover / :focus / [aria-invalid]      (0,2,0+)
+     tier 2 - structural hooks:   .form-group / .input-group > .btn         (0,1,0)-(0,2,0)
+   Consumers: any selector containing the class beats tier 0 outright (later stylesheet
+   also breaks ties); match the state pseudo-class to beat tier 1. */
+
 :root {
     --keycloak-body-bg: linear-gradient(90deg, #ffffff 0, #ffffff) 0 0/cover;
 
@@ -14,7 +22,6 @@
     --keycloak-card-box-shadow: none;
     --keycloak-card-border-color: #0066CC;
 
-
     --keycloak-input-group-button-color: #0d6efd;
 
     --keycloak-form-control-invalid-border-color: #dc3545;
@@ -23,8 +30,17 @@
     --bs-body-font-family: "Open Sans", Helvetica, Arial, sans-serif;
 
     --keycloak-social-providers-box-shadow: 0 10px 18px -5px #7090b033;
-}
 
+    /* theming contract: consumers override these in their own :root */
+    --theme-border-color: var(--bs-border-color);
+    --theme-background-color: #ffffff;
+    --theme-text-color: var(--bs-body-color);
+
+    /* cards layout (cards=true): background of the left panel (full background shorthand,
+       multi-layer allowed) and side inset of the login column */
+    --keycloak-left-background: none;
+    --keycloak-cards-inset: 1.5em;
+}
 
 body {
     height: 100%;
@@ -38,7 +54,6 @@ body {
     --bs-alert-border-color: var(--keycloak-alert-border-color);
 }
 
-
 .keycloak-container {
     --bs-gutter-x: 1.5rem;
     --bs-gutter-y: 0;
@@ -48,10 +63,8 @@ body {
     margin-left: auto;
     display: flex;
     flex-direction: column;
-}
 
-@media (min-width: 576px) {
-    .keycloak-container {
+    @media (min-width: 576px) {
         max-width: 540px;
     }
 }
@@ -68,136 +81,182 @@ body {
     background: var(--keycloak-header-background);
 }
 
-.keycloak-form-header h1 {
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    line-height: 1.2em;
-    font-size: 26px;
+h1, h2, h3, h4 {
+    color: var(--keycloak-heading-color);
+}
+
+.keycloak-form-header {
+    h1 {
+        line-height: 1.2em;
+        font-size: 26px;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+}
+
+#kc-page-subtitle {
+    font-size: 1rem;
+    font-weight: 400;
     text-align: center;
     margin-bottom: 15px;
 }
 
-h1, h2, h3, h4 {
-    color: var(--keycloak-heading-color);
+#kc-page-title:empty,
+#kc-page-subtitle:empty {
+    display: none;
 }
 
 .keycloak-card {
     background-color: var(--keycloak-card-background-color);
     box-shadow: var(--keycloak-card-box-shadow);
-    max-width: 500px;
     border-top: 4px solid;
     border-color: var(--keycloak-card-border-color);
     width: 100%;
     max-width: 400px;
     padding: 15px;
     margin: 0 auto;
-
+    
 }
 
 .form-label {
     margin-bottom: 0;
 }
 
-.form-control[aria-invalid=true] {
-    border-color: var(--keycloak-form-control-invalid-border-color);
-    padding-right: calc(1.5em + .75rem);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(.375em + .1875rem) center;
-    background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+.form-control {
+    /* theming contract (tier 0, applies to every form-control) */
+    &,
+    &:focus {
+        background-color: var(--theme-background-color);
+        color: var(--theme-text-color);
+    }
+
+    /* invalid state (tier 1): feedback icon + border, survives focus */
+    &[aria-invalid="true"] {
+        border-color: var(--keycloak-form-control-invalid-border-color);
+        padding-right: calc(1.5em + .75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(.375em + .1875rem) center;
+        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+    }
+
+    /* flat input skin (tier 0): text fields and selects rendered by base pages */
+    &:where(input, select) {
+        border-color: transparent;
+        padding: 8px 12px;
+
+        &:focus {
+            box-shadow: none;
+            border-color: gray;
+        }
+
+        &:hover,
+        &:focus-visible {
+            outline: none;
+            border: 1px solid lightgray;
+        }
+
+        /* tier 1 must win over the tier-0 hover/focus skin above */
+        &[aria-invalid="true"] {
+            &:hover,
+            &:focus-visible {
+                border-color: var(--keycloak-form-control-invalid-border-color);
+            }
+        }
+    }
 }
 
-.form-group:has([aria-invalid=true]:not(:hover):not(:focus-visible)) .btn {
-    border-color: var(--keycloak-form-control-invalid-border-color);
+.form-group {
+    margin-bottom: 1rem;
+
+    /* input-group reveal button mirrors the invalid field next to it */
+    &:has(:where(input, select, textarea)[aria-invalid="true"]:not(:hover):not(:focus-visible)) {
+        .btn {
+            border-color: var(--keycloak-form-control-invalid-border-color);
+        }
+    }
+
+    /* bootstrap hides .invalid-feedback unless the input has .is-invalid;
+     keycloak marks errors with aria-invalid instead */
+    &:has([aria-invalid="true"]) {
+        .invalid-feedback,
+        .invalid-tooltip {
+            display: block;
+        }
+    }
+
+    /* AIA escape hatch: cancel stacks below the primary action */
+    &:has(> [name="cancel-aia"]) {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 }
 
-.form-group:has([aria-invalid=true]) .invalid-feedback,
-.form-group:has([aria-invalid=true]) .invalid-tooltip,
-.form-check:has([aria-invalid=true]) .invalid-feedback,
-.form-check:has([aria-invalid=true]) .invalid-tooltip
-{
-    display: block;
+.input-group {
+    > input {
+        &,
+        &:hover,
+        &:focus-visible {
+            border-right: 0 !important;
+        }
+    }
+
+    > .btn {
+        color: var(--keycloak-input-group-button-color);
+        border: 1px solid var(--theme-border-color);
+        border-left: 0;
+
+        &:active {
+            color: var(--keycloak-input-group-button-color);
+            border-color: var(--theme-border-color);
+        }
+    }
 }
 
-
-.input-group input,
-.input-group input:hover,
-.input-group input:focus-visible
-{
-    border-right: 0px !important;
-}
-
-.input-group .btn {
-    color: var(--keycloak-input-group-button-color);
-    border: 1px solid var(--theme-border-color);
-    border-left: 0px;
-}
-
-.input-group .btn:active {
-    color: var(--keycloak-input-group-button-color);
-    border-color: var(--theme-border-color);
-}
-
-
-input.form-control {
-    border-color: transparent;
-    padding: 8px 12px;
-}
-
-input.form-control:focus {
-    box-shadow: none;
-    border-color: gray;
-}
-
-input.form-control:hover,
-input.form-control:focus-visible {
-    outline: none;
-    border: 1px solid lightgray;
-}
-
-/* kcFormCheckClass does not exist and .checkbox is always used */
-.form-check, .checkbox {
+/* .checkbox is the legacy wrapper used by stock base pages (remember-me);
+   kcFormCheckClass (form-check) is the property used by custom step templates */
+.form-check,
+.checkbox {
     display: block;
     min-height: 1.5rem;
     padding-left: 1.5em;
     margin-bottom: 0.125rem;
-}
 
-.form-check input[type=checkbox],
-.checkbox input[type=checkbox] {
-    float: left;
-    margin-left: -1.5em;
-}
+    /* bootstrap hides .invalid-feedback unless the input has .is-invalid */
+    &:has([aria-invalid="true"]) {
+        .invalid-feedback,
+        .invalid-tooltip {
+            display: block;
+        }
+    }
 
-.checkbox > label > input[type=checkbox] {
-    margin-left: -20px;
-}
+    /* checkbox skin (tier 0 via :where) */
+    :where(input[type="checkbox"]) {
+        float: left;
+        margin-left: -1.5em;
+        width: 1em;
+        height: 1em;
+        margin-top: 0.25em;
+        vertical-align: top;
+        background-color: #fff;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        border: 1px solid rgba(0, 0, 0, .25);
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        -webkit-print-color-adjust: exact;
+        border-radius: 0.25em;
 
-input[type=checkbox] {
-    width: 1em;
-    height: 1em;
-    margin-top: 0.25em;
-    vertical-align: top;
-    background-color: #fff;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    border: 1px solid rgba(0,0,0,.25);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    -webkit-print-color-adjust: exact;
-    border-radius: 0.25em;
-}
-
-input[type=checkbox]:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
-    background-color: var(--keycloak-checkbox-bg-color);
-    border-color: var(--keycloak-checkbox-bg-color);
-}
-
-.form-group {
-    margin-bottom: 0.5rem;
+        /* tier 1 */
+        &:checked {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+            background-color: var(--keycloak-checkbox-bg-color);
+            border-color: var(--keycloak-checkbox-bg-color);
+        }
+    }
 }
 
 #kc-form-options {
@@ -205,44 +264,198 @@ input[type=checkbox]:checked {
     margin-bottom: 10px;
 }
 
-#kc-form-buttons {
-    margin-top: 2rem;
-}
-
-#kc-content-wrapper .btn.w-100 ~ .btn.w-100 {
-    margin-top: 10px;
-}
-
-#kc-social-providers > hr {
-    display: none;
-}
-
-#kc-social-providers > h4 {
-    text-align: center;
-    color: black;
-    margin: 22px auto;
-    font-weight: 400;
-}
-
-#kc-social-providers > ul {
-    padding: 0;
+/* page templates render subtitles in-form (direct children of #kc-content-wrapper,
+   emitted before their form markup); flex column + negative order keeps them above
+   the alert, matching the old header-rendered subtitle position */
+#kc-content-wrapper {
     display: flex;
     flex-direction: column;
+
+    > #kc-page-subtitle {
+        order: -1;
+    }
+}
+
+/* paired buttons: equal choices (accept/decline, yes/no) share a row;
+   escape hatches (name=cancel-aia) stack below the primary action.
+   :is() puts these at id specificity (1,0,0) — layout behavior, not a theming hook */
+:is(.form-actions, #kc-form-buttons, #kc-form-buttons > div) {
+    &:has(.btn ~ .btn) {
+        display: flex;
+        gap: 10px;
+    }
+
+    &:has([name="cancel-aia"]) {
+        flex-direction: column;
+    }
+}
+
+/* locale dropdown */
+.keycloak-locale-main {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#kc-locale-dropdown {
+    position: relative;
+
+    > button {
+        background: none;
+        border: 0;
+        padding: 0 0 .5rem;
+        color: var(--bs-body-color);
+        font-size: .9rem;
+        text-decoration: underline;
+    }
+
+    .keycloak-locale-list {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        z-index: 1000;
+        min-width: 8rem;
+        margin: 0;
+        padding: .5rem 0;
+        list-style: none;
+        background: #fff;
+        border: 1px solid var(--theme-border-color);
+        border-radius: .375rem;
+        box-shadow: var(--keycloak-social-providers-box-shadow);
+
+        .keycloak-locale-item {
+            display: block;
+            padding: .25rem 1rem;
+            color: var(--bs-body-color);
+            text-decoration: none;
+            white-space: nowrap;
+
+            &:hover,
+            &:focus {
+                background: var(--bs-tertiary-bg);
+            }
+        }
+    }
+
+    &:focus-within .keycloak-locale-list,
+    &:hover .keycloak-locale-list {
+        display: block;
+    }
+}
+
+/* otp credential selection: input and label are siblings */
+.keycloak-otp-tile {
+    display: flex;
     align-items: center;
+    gap: .5rem;
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+    border: 1px solid var(--theme-border-color);
+    border-radius: .375rem;
+    cursor: pointer;
+
+    .keycloak-otp-tile-title {
+        font-weight: 600;
+    }
 }
 
-#kc-social-providers ul a[id^="social-"] {
-    background: white;
-    border: none !important;
-    border-radius: 7px !important;
-    box-shadow: var(--keycloak-social-providers-box-shadow);
-    margin-bottom: 12px !important;
-    padding: 9px 13px;
-    text-align: left;
-    font-size: 18px;
+#kc-otp-login-form {
+    input[type="radio"] {
+        margin: 0;
+    }
+
+    input:checked + .keycloak-otp-tile {
+        border-color: var(--keycloak-card-border-color);
+    }
 }
 
-#kc-social-providers ul a[id^="social-"] i {
-    margin-right: 30px;
-    font-size: 23px;
+#kc-social-providers {
+    > hr {
+        display: none;
+    }
+
+    > h2 {
+        text-align: center;
+        color: black;
+        margin: 22px auto;
+        font-weight: 400;
+    }
+
+    > ul {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    ul a[id^="social-"] {
+        background: white;
+        border: none !important;
+        border-radius: 7px !important;
+        box-shadow: var(--keycloak-social-providers-box-shadow);
+        margin-bottom: 12px !important;
+        padding: 9px 13px;
+        text-align: left;
+        font-size: 18px;
+
+        i {
+            margin-right: 30px;
+            font-size: 23px;
+        }
+    }
+}
+
+#kc-registration {
+    text-align: center;
+}
+
+#kc-info {
+    margin: 1rem 0 0;
+}
+
+/* cards layout: active only when the left panel is present (cards=true emits .left
+   and .footer-card as body-level siblings of the login box; no wrapper div).
+   The body becomes a two-column grid; brand the panel via --keycloak-left-background
+   and tune the login column via --keycloak-cards-inset */
+body:has(> .left) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    align-items: stretch;
+
+    @media (max-width: 991px) {
+        display: block;
+    }
+
+    > .left {
+        grid-column: 1;
+        grid-row: 1 / 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        background: var(--keycloak-left-background);
+
+        @media (max-width: 991px) {
+            display: none;
+        }
+    }
+
+    > .keycloak-container {
+        grid-column: 2;
+        width: min(100% - 2 * var(--keycloak-cards-inset), 540px);
+
+        @media (max-width: 991px) {
+            width: min(100%, 540px);
+        }
+    }
+
+    > .footer-card {
+        grid-column: 2;
+        margin: 40px var(--keycloak-cards-inset) 0;
+
+        @media (max-width: 991px) {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    }
 }

@@ -1,20 +1,16 @@
 <#-- opfa:imported from 26.7.2 -->
 <#import "footer.ftl" as loginFooter>
 <#import "theme-resources.ftl" as themeResourceTags>
-<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false showTabs=false showFooterCard=false>
+<#-- opfa:modification start -->
+<#import "opfa-head.ftl" as opfaHead>
+<#-- opfa:modification end -->
+<#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false>
 <!DOCTYPE html>
 <html class="${properties.kcHtmlClass!}" lang="${lang}"<#if realm.internationalizationEnabled> dir="${(locale.rtl)?then('rtl','ltr')}"</#if>>
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
-    <#-- opfa:modification start -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="format-detection" content="email=no">
-    <#-- opfa:modification end -->
-    <meta name="robots" content="noindex, nofollow">
 
     <#if properties.meta?has_content>
         <#list properties.meta?split(' ') as meta>
@@ -27,6 +23,10 @@
     <#else>
         <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
     </#if>
+<#-- opfa:modification start: webfonts + library base headers so child styles= overrides bootstrap -->
+    <@opfaHead.googleFonts/>
+    <@opfaHead.baseHeaders/>
+<#-- opfa:modification end -->
     <#if themeResources?? && themeResources.stylesCommon?has_content>
         <@themeResourceTags.renderStyles themeResources.stylesCommon url.resourcesCommonPath />
     <#elseif properties.stylesCommon?has_content>
@@ -48,28 +48,9 @@
             <script src="${url.resourcesPath}/${script}" type="text/javascript"></script>
         </#list>
     </#if>
-    <#-- opfa:modification start (google fonts, baseHeaders, themeHeaders)-->
-
-    <#if properties.googleFonts?has_content>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?${properties.googleFonts}" rel="stylesheet">
-    </#if>
-
-    <#list 0..10 as index>
-        <#if properties['baseHeaders.' + index]?has_content>
-            ${properties['baseHeaders.' + index]?replace("{resources}", "${url.resourcesPath}")?replace("{commonResources}", "${url.resourcesCommonPath}")?no_esc}
-        </#if>
-    </#list>
-    <#list 0..50 as index>
-        <#if properties['themeHeaders.' + index]?has_content>
-            ${properties['themeHeaders.' + index]?replace("{resources}", "${url.resourcesPath}")?replace("{commonResources}", "${url.resourcesCommonPath}")?no_esc}
-        </#if>
-    </#list>
-
-    <#-- opfa:modification end -->
-
-
+<#-- opfa:modification start: consumer head tags: final cascade override -->
+    <@opfaHead.themeHeaders/>
+<#-- opfa:modification end -->
     <script type="importmap">
         {
             "imports": {
@@ -128,26 +109,13 @@
     </#if>
 </head>
 
-<body class="${properties.kcBodyClass!} ${bodyClass}"  data-page-id="login-${pageId}">
-    <#-- opfa:modification start -->
+<body class="${properties.kcBodyClass!}" data-page-id="login-${pageId}">
+<#-- opfa:modification start (cards): left panel, content overridable via left-card.ftl -->
     <#if (properties.cards!"false") == 'true'>
-        <div class="left">
-            <#if msg('leftCardTitle')?has_content || msg('leftCardText')?has_content>
-            <div class="card p-4">
-                <#if msg('leftCardTitle')?has_content>
-                    <div class="title">${msg("leftCardTitle")}</div>
-                </#if>
-                <#if msg('leftCardText')?has_content>
-                    <p>${msg("leftCardText")}</p>
-                </#if>
-            </div>
-            </#if>
-        </div>
-
-        <div class="right">
+        <#include "left-card.ftl"/>
     </#if>
-    <#-- opfa:modification end -->
-    <div class="${properties.kcLoginClass!}">
+<#-- opfa:modification end -->
+<div class="${properties.kcLoginClass!}">
     <div id="kc-header" class="${properties.kcHeaderClass!}">
         <div id="kc-header-wrapper"
              class="${properties.kcHeaderWrapperClass!}">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
@@ -175,19 +143,15 @@
         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
             <#if displayRequiredFields>
                 <div class="${properties.kcContentWrapperClass!}">
-                    <#-- opfa:modification start: added header2 -->
-                    <h1 id="kc-page-title"><#nested "header"></h1>
-                    <p id="kc-page-subtitle"><#nested "header2"></p>
                     <div class="${properties.kcLabelWrapperClass!} subtitle">
                         <span class="subtitle"><span class="required">*</span> ${msg("requiredFields")}</span>
                     </div>
-                    <#-- opfa:modification end -->
+                    <div class="col-md-10">
+                        <h1 id="kc-page-title"><#nested "header"></h1>
+                    </div>
                 </div>
             <#else>
-                <#-- opfa:modification start: added header2 -->
                 <h1 id="kc-page-title"><#nested "header"></h1>
-                <p id="kc-page-subtitle"><#nested "header2"></p>
-                <#-- opfa:modification end -->
             </#if>
         <#else>
             <#if displayRequiredFields>
@@ -224,14 +188,6 @@
       </header>
       <div id="kc-content">
         <div id="kc-content-wrapper">
-          <#-- opfa:modification start -->
-          <#if showTabs>
-            <div class="d-flex mb-3">
-              <a class="btn btn-info flex-grow-1 m-2 disabled">${msg("doLogIn")}</a>
-              <a class="btn btn-info flex-grow-1 m-2" href="${url.registrationUrl}">${msg("doRegister")}</a>
-            </div>
-          </#if>
-          <#-- opfa:modification end -->
 
           <#-- App-initiated actions should not see warning messages about the need to complete the action -->
           <#-- during login.                                                                               -->
@@ -280,21 +236,24 @@
           </#if>
         </div>
       </div>
+
+      <@loginFooter.content/>
     </div>
-  <#-- opfa:modification start -->
-  <#if (properties.cards!"false") == 'true'>
-        <#if showFooterCard>
+  </div>
+<#-- opfa:modification start (cards): footer card shown when the page defines a non-empty
+     footerCard section; nested output is a markup output under the html output format, hence
+     markup_string for the emptiness test; content is emitted via nested to avoid double escaping -->
+<#if (properties.cards!"false") == 'true'>
+        <#assign footerCardContent><#nested "footerCard"></#assign>
+        <#if footerCardContent?markup_string?trim?has_content>
             <div class="footer-card">
                 <div class="card p-4">
                     <#nested "footerCard">
                 </div>
             </div>
         </#if>
-  </div>
-  </#if>
-  <#-- opfa:modification end -->
-
-  </div>
+    </#if>
+<#-- opfa:modification end -->
 </body>
 </html>
 </#macro>
