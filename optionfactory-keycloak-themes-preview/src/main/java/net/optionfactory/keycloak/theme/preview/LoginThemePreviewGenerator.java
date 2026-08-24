@@ -56,6 +56,12 @@ import org.junit.jupiter.api.Assertions;
  *         .generate();
  * </pre>
  *
+ * Provider-supplied {@code theme-resources} on the classpath (templates, resources and
+ * message bundles, as contributed by any jar) are picked up automatically, with keycloak's
+ * precedence: the theme chain wins for templates and resources, and its bundles overlay
+ * the provider ones. Render a custom step page with
+ * {@code extraRender("mobile-selection-and-validation", "mobile", model -> ...)}.
+ *
  * The gallery must be served over http (module scripts are blocked from
  * file:// origins): python3 -m http.server -d target/theme-preview
  */
@@ -73,6 +79,13 @@ public class LoginThemePreviewGenerator {
     // the webauthn scripts only use base64url.parse/stringify, satisfied by the
     // rfc4648.js stub resource shipped in this module
     private static final String RFC4648_STUB_RESOURCE = "rfc4648.js";
+
+    // provider-supplied theme resources (ClasspathThemeResourceProviderFactory). Keycloak
+    // consults these *after* the whole theme chain for templates and resources, and merges
+    // their message bundles *underneath* it, so they act as a fallback layer in all three.
+    private static final String THEME_RESOURCES_TEMPLATES = "theme-resources/templates";
+    private static final String THEME_RESOURCES_RESOURCES = "theme-resources/resources";
+    private static final String THEME_RESOURCES_MESSAGES = "theme-resources/messages/messages_%s.properties";
 
     private final List<String> templateResourceBases = new ArrayList<>(List.of("theme/base/login"));
     private final List<String> propertiesResources = new ArrayList<>(List.of("theme/base/login/theme.properties"));
@@ -156,6 +169,8 @@ public class LoginThemePreviewGenerator {
         for (String base : templateResourceBases) {
             loaders.add(new ClassTemplateLoader(cl, base));
         }
+        // last: the theme chain wins, provider templates are the fallback
+        loaders.add(new ClassTemplateLoader(cl, THEME_RESOURCES_TEMPLATES));
         cfg.setTemplateLoader(new MultiTemplateLoader(loaders.toArray(TemplateLoader[]::new)));
 
         var properties = new Properties();
@@ -166,6 +181,12 @@ public class LoginThemePreviewGenerator {
             }
         }
         var messages = new Properties();
+        // provider bundles first so the theme chain overlays them
+        for (Enumeration<java.net.URL> e = cl.getResources(String.format(THEME_RESOURCES_MESSAGES, locale.getLanguage())); e.hasMoreElements();) {
+            try (InputStream is = e.nextElement().openStream()) {
+                messages.load(new InputStreamReader(is, StandardCharsets.UTF_8));
+            }
+        }
         for (String resource : messagesResources) {
             try (InputStream is = cl.getResourceAsStream(resource)) {
                 Assertions.assertNotNull(is, resource + " not on test classpath");
@@ -179,6 +200,8 @@ public class LoginThemePreviewGenerator {
         // importmap module so the webauthn scripts resolve
         var copyBases = new ArrayList<>(templateResourceBases);
         Collections.reverse(copyBases);
+        // provider resources first so theme files of the same name win
+        copyResources(cl, THEME_RESOURCES_RESOURCES, outDir.resolve("resources"));
         for (String base : copyBases) {
             copyResources(cl, base + "/resources", outDir.resolve("resources"));
         }

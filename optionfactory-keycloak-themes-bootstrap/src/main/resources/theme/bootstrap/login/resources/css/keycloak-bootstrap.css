@@ -1,57 +1,57 @@
-/* opfa: requires CSS Nesting (evergreen browsers since 2023) and :where()/:is().
-   Specificity ladder (by design, so consumers override with plain class selectors):
-     tier 0 - skin defaults:      .form-control:where(input, select)         (0,1,0)
-     tier 1 - interaction states: ... :hover / :focus / [aria-invalid]      (0,2,0+)
-     tier 2 - structural hooks:   .form-group / .input-group > .btn         (0,1,0)-(0,2,0)
-   Consumers: any selector containing the class beats tier 0 outright (later stylesheet
-   also breaks ties); match the state pseudo-class to beat tier 1. */
-
 :root {
-    --keycloak-body-bg: linear-gradient(90deg, #ffffff 0, #ffffff) 0 0/cover;
+    --opfa-accent: #0d6efd;
+    --opfa-accent-contrast: #ffffff;
 
-    --keycloak-alert-color: #842029;
-    --keycloak-alert-bg: #f8d7da;
-    --keycloak-alert-border-color: #f5c2c7;
+    --opfa-danger: #dc3545;
+    /* the %23 hex below is baked into the svg: restate it when --opfa-danger changes */
+    --opfa-icon-invalid: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
 
-    --keycloak-header-color: #333333;
-    --keycloak-header-background: none;
+    /* white, like bootstrap's own glyph: restate the whole url to recolour it */
+    --opfa-icon-check: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
 
-    --keycloak-heading-color: var(--keycloak-header-color);
+    --opfa-elevation: 0 10px 18px -5px #7090b033;
 
-    --keycloak-card-background-color: transparent;
-    --keycloak-card-box-shadow: none;
-    --keycloak-card-border-color: #0066CC;
+    /* checkbox/radio control; the gutter and the vertical offset derive from it */
+    --opfa-checkbox-size: 1.25em;
+    --opfa-checkbox-gap: 0.5em;
 
-    --keycloak-input-group-button-color: #0d6efd;
+    --opfa-font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    --opfa-heading-color: #333333;
 
-    --keycloak-form-control-invalid-border-color: #dc3545;
+    /* brand header: the logo goes in the background, and themes that use one normally
+       hide the realm name that would sit on top of it (--opfa-header-text: none) */
+    --opfa-header-background: none;
+    --opfa-header-text: block;
 
-    --keycloak-checkbox-bg-color: #0d6efd;
-    --bs-body-font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    --opfa-body-bg: var(--bs-body-bg);
+    --opfa-card-border-color: var(--opfa-accent);
 
-    --keycloak-social-providers-box-shadow: 0 10px 18px -5px #7090b033;
+    /* primary button: every state derives from --opfa-accent, so a theme happy with the
+       derived shades sets nothing here. Bootstrap compiles .btn-primary as literal hexes
+       and reads --bs-primary nowhere, which is why the palette has to be restated at all. */
+    --opfa-primary: var(--opfa-accent);
+    --opfa-primary-contrast: var(--opfa-accent-contrast);
+    --opfa-primary-border: var(--opfa-primary);
+    --opfa-primary-hover: color-mix(in srgb, var(--opfa-primary) 85%, #000);
+    --opfa-primary-active: color-mix(in srgb, var(--opfa-primary) 80%, #000);
+    --opfa-primary-disabled: var(--opfa-primary);
 
-    /* theming contract: consumers override these in their own :root */
-    --theme-border-color: var(--bs-border-color);
-    --theme-background-color: #ffffff;
-    --theme-text-color: var(--bs-body-color);
+    /* cards=true */
+    --opfa-left-background: none;
+    --opfa-cards-inset: 1.5em;
 
-    /* cards layout (cards=true): background of the left panel (full background shorthand,
-       multi-layer allowed) and side inset of the login column */
-    --keycloak-left-background: none;
-    --keycloak-cards-inset: 1.5em;
+    /* the only two bootstrap variables this theme sets, both driven by tokens above.
+       Every other --bs-* is consumed but never declared here: a colour in :root would
+       out-specify bootstrap's [data-bs-theme=dark] block and pin the theme to light. */
+    --bs-body-font-family: var(--opfa-font-family);
+    --bs-heading-color: var(--opfa-heading-color);
 }
+
 
 body {
     height: 100%;
     width: 100%;
-    background: var(--keycloak-body-bg);
-}
-
-.alert-error {
-    --bs-alert-color: var(--keycloak-alert-color);
-    --bs-alert-bg: var(--keycloak-alert-bg);
-    --bs-alert-border-color: var(--keycloak-alert-border-color);
+    background: var(--opfa-body-bg);
 }
 
 .keycloak-container {
@@ -75,14 +75,15 @@ body {
     text-transform: uppercase;
     letter-spacing: 3px;
     line-height: 1.2em;
-    color: var(--keycloak-header-color);
+    color: var(--bs-heading-color);
     text-align: center;
     margin: 0 auto;
-    background: var(--keycloak-header-background);
+    background: var(--opfa-header-background);
 }
 
-h1, h2, h3, h4 {
-    color: var(--keycloak-heading-color);
+/* the realm name; themes using a header logo set --opfa-header-text: none */
+#kc-header-wrapper {
+    display: var(--opfa-header-text);
 }
 
 .keycloak-form-header {
@@ -91,6 +92,15 @@ h1, h2, h3, h4 {
         font-size: 26px;
         text-align: center;
         margin-bottom: 15px;
+    }
+}
+
+#kc-content-wrapper {
+    display: flex;
+    flex-direction: column;
+
+    > #kc-page-subtitle {
+        order: -1;
     }
 }
 
@@ -106,18 +116,27 @@ h1, h2, h3, h4 {
     display: none;
 }
 
+/* the "* required fields" hint on displayRequiredFields pages. Both the wrapper div and
+   the span inside it carry .subtitle, so size and colour go on the span or they compound. */
+.subtitle {
+    text-align: right;
+}
+
+span.subtitle {
+    font-size: 0.875em;
+    color: var(--bs-secondary-color);
+}
+
 .keycloak-card {
-    background-color: var(--keycloak-card-background-color);
-    box-shadow: var(--keycloak-card-box-shadow);
     border-top: 4px solid;
-    border-color: var(--keycloak-card-border-color);
+    border-color: var(--opfa-card-border-color);
     width: 100%;
     max-width: 400px;
     padding: 15px;
     margin: 0 auto;
     position: relative;
-    
-    /* mobile/touch: stretch the card chain so the submit button anchors to the bottom */
+
+    /* mobile/touch: the wrapper chain stretches so the action row pins to the bottom */
     @media (hover: none), (max-width: 767.98px) {
         &,
         #kc-content,
@@ -127,13 +146,12 @@ h1, h2, h3, h4 {
         #kc-form-webauthn,
         .content-area,
         form,
-        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button))
-            {
+        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)) {
             display: flex;
             flex-direction: column;
             flex: 1;
         }
-        
+
         .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)),
         .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)),
         #kc-form-buttons {
@@ -141,7 +159,6 @@ h1, h2, h3, h4 {
             margin-top: auto;
         }
     }
-    
 }
 
 .form-label {
@@ -149,71 +166,33 @@ h1, h2, h3, h4 {
 }
 
 .form-control {
-    /* theming contract (tier 0, applies to every form-control) */
-    &,
+    padding: 8px 12px;
+
     &:focus {
-        background-color: var(--theme-background-color);
-        color: var(--theme-text-color);
-    }
-
-    /* invalid state (tier 1): feedback icon + border, survives focus */
-    &[aria-invalid="true"] {
-        border-color: var(--keycloak-form-control-invalid-border-color);
-        padding-right: calc(1.5em + .75rem);
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right calc(.375em + .1875rem) center;
-        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
-    }
-
-    /* flat input skin (tier 0): text fields and selects rendered by base pages */
-    &:where(input, select) {
         border-color: var(--bs-border-color);
-        padding: 8px 12px;
+        box-shadow: none;
+    }
+}
 
-        &:focus {
-            box-shadow: none;
+.input-group {
+    > input {
+        border-right: 0;
+    }
+
+    > .btn {
+        color: var(--opfa-accent);
+        border: 1px solid var(--bs-border-color);
+        border-left: 0;
+
+        &:active {
+            color: var(--opfa-accent);
             border-color: var(--bs-border-color);
-        }
-
-        &:hover,
-            &:focus-visible {
-            outline: none;
-            border: 1px solid var(--bs-border-color);
-        }
-
-        /* tier 1 must win over the tier-0 hover/focus skin above */
-        &[aria-invalid="true"] {
-            &:hover,
-                &:focus-visible {
-                border-color: var(--keycloak-form-control-invalid-border-color);
-            }
         }
     }
 }
 
 .form-group {
     margin-bottom: 1rem;
-
-    /* input-group reveal button mirrors the invalid field next to it */
-    &:has(:where(input, select, textarea)[aria-invalid="true"]) {
-        .input-group > .btn {
-            &,
-            &:hover,
-            &:active {
-                border-color: var(--keycloak-form-control-invalid-border-color);
-            }
-        }
-    }
-
-    /* bootstrap hides .invalid-feedback unless the input has .is-invalid;
-     keycloak marks errors with aria-invalid instead */
-    &:has([aria-invalid="true"]) {
-        .invalid-feedback,
-        .invalid-tooltip {
-            display: block;
-        }
-    }
 
     /* AIA escape hatch: cancel stacks below the primary action */
     &:has(> [name="cancel-aia"]) {
@@ -223,85 +202,108 @@ h1, h2, h3, h4 {
     }
 }
 
-.input-group {
-    > input {
-        &,
-        &:hover,
-            &:focus-visible {
-            border-right: 0 !important;
-        }
+.form-group:has([aria-invalid="true"]) {
+
+    :is(.form-control[aria-invalid="true"], .input-group > .btn) {
+        border-color: var(--opfa-danger);
     }
 
-    > .btn {
-        color: var(--keycloak-input-group-button-color);
-        border: 1px solid var(--theme-border-color);
-        border-left: 0;
+    .form-control[aria-invalid="true"] {
+        padding-right: calc(1.5em + .75rem);
+        background-image: var(--opfa-icon-invalid);
+        background-repeat: no-repeat;
+        background-position: right calc(.375em + .1875rem) center;
+        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+    }
 
-        &:active {
-            color: var(--keycloak-input-group-button-color);
-            border-color: var(--theme-border-color);
-        }
+    .invalid-feedback {
+        --bs-form-invalid-color: var(--opfa-danger);
+        display: block;
     }
 }
 
-/* .checkbox is the legacy wrapper used by stock base pages (remember-me);
-   kcFormCheckClass (form-check) is the property used by custom step templates */
+/* Control geometry, both flavours. Bootstrap locks its 1em control, 1.5em gutter and .25em
+   top offset together, so scaling the control alone leaves it hanging below its own line -
+   derive all three from the size instead. At size 1em these formulas reproduce bootstrap. */
 .form-check,
 .checkbox {
     display: block;
-    min-height: 1.5rem;
-    padding-left: 1.5em;
+    min-height: max(1.5rem, var(--opfa-checkbox-size));
+    padding-left: calc(var(--opfa-checkbox-size) + var(--opfa-checkbox-gap));
     margin-bottom: 0.125rem;
+}
 
-    /* bootstrap hides .invalid-feedback unless the input has .is-invalid */
-    &:has([aria-invalid="true"]) {
-        .invalid-feedback,
-        .invalid-tooltip {
-            display: block;
-        }
-    }
+/* (0,2,1): bootstrap's own `.form-check .form-check-input` is (0,2,0) */
+:is(.form-check, .checkbox) :is(input[type="checkbox"], input[type="radio"]) {
+    float: left;
+    width: var(--opfa-checkbox-size);
+    height: var(--opfa-checkbox-size);
+    margin-left: calc(-1 * (var(--opfa-checkbox-size) + var(--opfa-checkbox-gap)));
+    /* centre the control on the first line of 1.5 line-height text */
+    margin-top: calc((1.5em - var(--opfa-checkbox-size)) / 2);
+}
 
-    /* checkbox skin (tier 0 via :where) */
-    :where(input[type="checkbox"]) {
-        float: left;
-        margin-left: -1.5em;
-        width: 1em;
-        height: 1em;
-        margin-top: 0.25em;
-        vertical-align: top;
-        background-color: #fff;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: contain;
-        border: 1px solid rgba(0, 0, 0, .25);
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        -webkit-print-color-adjust: exact;
-        border-radius: 0.25em;
+/* base pages hardcode a classless <input type=checkbox> inside .checkbox, and a derived
+   theme's own macro can just as easily forget .form-check-input - bootstrap's skin reaches
+   neither. Skin every checkbox in either wrapper: it is byte-identical to bootstrap's, so
+   applying it to classed inputs too costs nothing and a missing class stops being a bug. */
+:is(.form-check, .checkbox) :where(input[type="checkbox"]) {
+    appearance: none;
+    vertical-align: top;
+    background-color: var(--bs-body-bg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25em;
+    print-color-adjust: exact;
 
-        /* tier 1 */
-        &:checked {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
-            background-color: var(--keycloak-checkbox-bg-color);
-            border-color: var(--keycloak-checkbox-bg-color);
-        }
+    &:checked {
+        background-color: var(--opfa-accent);
+        border-color: var(--opfa-accent);
+        background-image: var(--opfa-icon-check);
     }
 }
 
-/* page templates render subtitles in-form (direct children of #kc-content-wrapper,
-   emitted before their form markup); flex column + negative order keeps them above
-   the alert, matching the old header-rendered subtitle position */
-#kc-content-wrapper {
+.btn-primary {
+    --bs-btn-color: var(--opfa-primary-contrast);
+    --bs-btn-bg: var(--opfa-primary);
+    --bs-btn-border-color: var(--opfa-primary-border);
+    --bs-btn-hover-color: var(--opfa-primary-contrast);
+    --bs-btn-hover-bg: var(--opfa-primary-hover);
+    --bs-btn-hover-border-color: var(--opfa-primary-hover);
+    --bs-btn-active-color: var(--opfa-primary-contrast);
+    --bs-btn-active-bg: var(--opfa-primary-active);
+    --bs-btn-active-border-color: var(--opfa-primary-active);
+    --bs-btn-disabled-color: var(--opfa-primary-contrast);
+    --bs-btn-disabled-bg: var(--opfa-primary-disabled);
+    --bs-btn-disabled-border-color: var(--opfa-primary-disabled);
+}
+
+#kc-form-buttons,
+.form-actions {
     display: flex;
-    flex-direction: column;
+    gap: 1rem;
 
-    > #kc-page-subtitle {
-        order: -1;
+    > * {
+        flex: 1;
     }
 }
 
-/* locale dropdown */
+#kc-username {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+#kc-registration {
+    text-align: center;
+}
+
+#kc-info {
+    margin: 1rem 0 0;
+}
+
 .keycloak-locale-main {
     display: flex;
     justify-content: flex-end;
@@ -329,10 +331,10 @@ h1, h2, h3, h4 {
         margin: 0;
         padding: .5rem 0;
         list-style: none;
-        background: #fff;
-        border: 1px solid var(--theme-border-color);
-        border-radius: .375rem;
-        box-shadow: var(--keycloak-social-providers-box-shadow);
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--bs-border-radius);
+        box-shadow: var(--opfa-elevation);
 
         .keycloak-locale-item {
             display: block;
@@ -342,27 +344,28 @@ h1, h2, h3, h4 {
             white-space: nowrap;
 
             &:hover,
-                &:focus {
+            &:focus {
                 background: var(--bs-tertiary-bg);
             }
         }
     }
 
     &:focus-within .keycloak-locale-list,
-        &:hover .keycloak-locale-list {
+    &:hover .keycloak-locale-list {
         display: block;
     }
 }
 
-/* otp credential selection: input and label are siblings */
+/* otp tiles */
+
 .keycloak-otp-tile {
     display: flex;
     align-items: center;
     gap: .5rem;
     padding: .75rem 1rem;
     margin-bottom: .5rem;
-    border: 1px solid var(--theme-border-color);
-    border-radius: .375rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
     cursor: pointer;
 
     .keycloak-otp-tile-title {
@@ -378,7 +381,7 @@ h1, h2, h3, h4 {
     }
 
     input:checked + .keycloak-otp-tile {
-        border-color: var(--keycloak-card-border-color);
+        border-color: var(--opfa-accent);
     }
 }
 
@@ -389,7 +392,6 @@ h1, h2, h3, h4 {
 
     > h2 {
         text-align: center;
-        color: black;
         margin: 22px auto;
         font-weight: 400;
     }
@@ -399,58 +401,36 @@ h1, h2, h3, h4 {
         display: flex;
         flex-direction: column;
         align-items: center;
-    }
 
-    ul li {
-        display: contents;
-    }
+        li {
+            display: contents;
+        }
 
-    ul a[id^="social-"] {
-        background: white;
-        border: none !important;
-        border-radius: 7px !important;
-        box-shadow: var(--keycloak-social-providers-box-shadow);
-        margin-bottom: 12px !important;
-        padding: 9px 13px;
-        text-align: left;
-        font-size: 18px;
+        a {
+            background: var(--bs-body-bg);
+            border: none;
+            border-radius: 7px;
+            box-shadow: var(--opfa-elevation);
+            margin-bottom: 12px;
+            padding: 9px 13px;
+            text-align: left;
+            font-size: 18px;
 
-        i {
-            margin-right: 30px;
-            font-size: 23px;
+            i {
+                margin-right: 30px;
+                font-size: 23px;
+            }
         }
     }
 }
 
-#kc-registration {
-    text-align: center;
+.alert-error {
+    --bs-alert-color: var(--bs-danger-text-emphasis);
+    --bs-alert-bg: var(--bs-danger-bg-subtle);
+    --bs-alert-border-color: var(--bs-danger-border-subtle);
+    --bs-alert-link-color: var(--bs-danger-text-emphasis);
 }
 
-#kc-info {
-    margin: 1rem 0 0;
-}
-
-#kc-username {
-    display: flex;
-    gap: 1rem;
-    justify-content: space-between;
-}
-
-#kc-form-buttons,
-#kc-form-buttons > div[class=""],
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    & > * {
-        flex: 1;
-    }
-}
-
-
-/* cards layout: active only when the left panel is present (cards=true emits .left
-   and .footer-card as body-level siblings of the login box; no wrapper div).
-   The body becomes a two-column grid; brand the panel via --keycloak-left-background
-   and tune the login column via --keycloak-cards-inset */
 body:has(> .left) {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -467,7 +447,7 @@ body:has(> .left) {
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        background: var(--keycloak-left-background);
+        background: var(--opfa-left-background);
 
         @media (max-width: 991px) {
             display: none;
@@ -476,7 +456,7 @@ body:has(> .left) {
 
     > .keycloak-container {
         grid-column: 2;
-        width: min(100% - 2 * var(--keycloak-cards-inset), 540px);
+        width: min(100% - 2 * var(--opfa-cards-inset), 540px);
 
         @media (max-width: 991px) {
             width: min(100%, 540px);
@@ -485,7 +465,7 @@ body:has(> .left) {
 
     > .footer-card {
         grid-column: 2;
-        margin: 40px var(--keycloak-cards-inset) 0;
+        margin: 40px var(--opfa-cards-inset) 0;
 
         @media (max-width: 991px) {
             margin-left: 0;
@@ -494,13 +474,12 @@ body:has(> .left) {
     }
 }
 
-
 [data-page-id=login-login-recovery-authn-code-config] {
     .alert-warning {
         flex-direction: column;
+
         h4 {
             font-size: 1.2rem;
         }
-
     }
 }
