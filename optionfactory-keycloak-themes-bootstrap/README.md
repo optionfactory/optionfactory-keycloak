@@ -197,7 +197,7 @@ leftCardText=...
 - **Subtitles** render in-form: `<p id="kc-page-subtitle">${msg("someTitle2")}</p>` at the top of the form section. The library styles it, collapses it when empty (`:empty`), and keeps it above alerts (`order: -1`). Empty message values collapse cleanly — define `...Title2=` (empty) or omit.
 - The `* required fields` hint on `displayRequiredFields` pages (`.subtitle`) ships styled: right-aligned, 0.875em, muted. Both the wrapper div and the inner span carry `.subtitle`, so override size/colour on `span.subtitle` to avoid compounding.
 - Per-page CSS: `body[data-page-id=login-<pageId>]` (stock attribute; the library does not render `bodyClass`).
-- Custom step templates should use `kc*Class` properties (`kcFormCheckClass`, `kcCheckboxClass`/`kcCheckboxLabelClass`, `kcInputClass`, `kcFormGroupClass`, ...) rather than hardcoded classes, so they stay themable across theme families — the `kcCheckbox*` family resolves under both this theme (`form-check`) and stock `keycloak.v2` (`pf-v5-c-check`).
+- Custom step templates should use `kc*Class` properties (`kcFormCheckClass`, `kcCheckboxClass`/`kcCheckboxLabelClass`, `kcInputClass`, `kcFormGroupClass`, ...) rather than hardcoded classes, so they stay themable across theme families — the `kcCheckbox*` family resolves under both this theme (`form-check`) and stock `keycloak.v2` (`pf-v5-c-check`). Put the class on the **input** too (`kcCheckboxInputClass`), not just the wrapper: bootstrap skins the control through `.form-check-input`, and a classless input renders as a native widget.
 - Missing message keys render as the key itself — define them per theme/locale.
 
 ## Upgrading keycloak

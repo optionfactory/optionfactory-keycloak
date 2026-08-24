@@ -233,7 +233,7 @@ The provider registers via `META-INF/services` and wins default-provider selecti
 
 ## optionfactory-keycloak-themes-preview
 
-A harness that renders **every stock base login page** (discovered from the keycloak-themes jar, so new upstream pages are picked up automatically; transient relays like `saml-post-form` are excluded) through a login theme and writes an html gallery to `target/<name>/` — page-per-file plus an ftl-rendered `index.html` with lazy iframes. Rendering failures fail the build, so it doubles as a smoke test for template/data-model compatibility. All stock-page fixtures are preconfigured (including an automatic `login-invalid` variant); the only knobs are the theme inheritance chain, locale and naming.
+A harness that renders **every stock base login page** (discovered from the keycloak-themes jar, so new upstream pages are picked up automatically; transient relays like `saml-post-form` are excluded) through a login theme and writes an html gallery to `target/<name>/` — page-per-file plus an ftl-rendered `index.html` with lazy iframes. Rendering failures fail the build, so it doubles as a smoke test for template/data-model compatibility. All stock-page fixtures are preconfigured (including an automatic `login-invalid` variant); the only knobs are the theme inheritance chain, locale and naming. Provider-supplied `theme-resources` on the classpath (templates, resources and message bundles) are picked up with keycloak's precedence, so a derived theme's custom step pages preview with their own css, js and messages — render them with `extraRender`.
 
 Theme modules reuse it by depending on this module (test scope) and configuring the generator — no subclassing:
 
