@@ -13,10 +13,10 @@
     --keycloak-alert-bg: #f8d7da;
     --keycloak-alert-border-color: #f5c2c7;
 
-    --keycloak-header-color: #ededed;
+    --keycloak-header-color: #333333;
     --keycloak-header-background: none;
 
-    --keycloak-heading-color: #b3b3b3;
+    --keycloak-heading-color: var(--keycloak-header-color);
 
     --keycloak-card-background-color: transparent;
     --keycloak-card-box-shadow: none;
@@ -115,6 +115,32 @@ h1, h2, h3, h4 {
     max-width: 400px;
     padding: 15px;
     margin: 0 auto;
+    position: relative;
+    
+    /* mobile/touch: stretch the card chain so the submit button anchors to the bottom */
+    @media (hover: none), (max-width: 767.98px) {
+        &,
+        #kc-content,
+        #kc-content-wrapper,
+        #kc-form,
+        #kc-form-wrapper,
+        #kc-form-webauthn,
+        .content-area,
+        form,
+        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button))
+            {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)),
+        .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)),
+        #kc-form-buttons {
+            flex: 0;
+            margin-top: auto;
+        }
+    }
     
 }
 
@@ -142,24 +168,24 @@ h1, h2, h3, h4 {
 
     /* flat input skin (tier 0): text fields and selects rendered by base pages */
     &:where(input, select) {
-        border-color: transparent;
+        border-color: var(--bs-border-color);
         padding: 8px 12px;
 
         &:focus {
             box-shadow: none;
-            border-color: gray;
+            border-color: var(--bs-border-color);
         }
 
         &:hover,
-        &:focus-visible {
+            &:focus-visible {
             outline: none;
-            border: 1px solid lightgray;
+            border: 1px solid var(--bs-border-color);
         }
 
         /* tier 1 must win over the tier-0 hover/focus skin above */
         &[aria-invalid="true"] {
             &:hover,
-            &:focus-visible {
+                &:focus-visible {
                 border-color: var(--keycloak-form-control-invalid-border-color);
             }
         }
@@ -170,9 +196,13 @@ h1, h2, h3, h4 {
     margin-bottom: 1rem;
 
     /* input-group reveal button mirrors the invalid field next to it */
-    &:has(:where(input, select, textarea)[aria-invalid="true"]:not(:hover):not(:focus-visible)) {
-        .btn {
-            border-color: var(--keycloak-form-control-invalid-border-color);
+    &:has(:where(input, select, textarea)[aria-invalid="true"]) {
+        .input-group > .btn {
+            &,
+            &:hover,
+            &:active {
+                border-color: var(--keycloak-form-control-invalid-border-color);
+            }
         }
     }
 
@@ -197,7 +227,7 @@ h1, h2, h3, h4 {
     > input {
         &,
         &:hover,
-        &:focus-visible {
+            &:focus-visible {
             border-right: 0 !important;
         }
     }
@@ -259,11 +289,6 @@ h1, h2, h3, h4 {
     }
 }
 
-#kc-form-options {
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
 /* page templates render subtitles in-form (direct children of #kc-content-wrapper,
    emitted before their form markup); flex column + negative order keeps them above
    the alert, matching the old header-rendered subtitle position */
@@ -273,20 +298,6 @@ h1, h2, h3, h4 {
 
     > #kc-page-subtitle {
         order: -1;
-    }
-}
-
-/* paired buttons: equal choices (accept/decline, yes/no) share a row;
-   escape hatches (name=cancel-aia) stack below the primary action.
-   :is() puts these at id specificity (1,0,0) — layout behavior, not a theming hook */
-:is(.form-actions, #kc-form-buttons, #kc-form-buttons > div) {
-    &:has(.btn ~ .btn) {
-        display: flex;
-        gap: 10px;
-    }
-
-    &:has([name="cancel-aia"]) {
-        flex-direction: column;
     }
 }
 
@@ -331,14 +342,14 @@ h1, h2, h3, h4 {
             white-space: nowrap;
 
             &:hover,
-            &:focus {
+                &:focus {
                 background: var(--bs-tertiary-bg);
             }
         }
     }
 
     &:focus-within .keycloak-locale-list,
-    &:hover .keycloak-locale-list {
+        &:hover .keycloak-locale-list {
         display: block;
     }
 }
@@ -359,9 +370,11 @@ h1, h2, h3, h4 {
     }
 }
 
+#kc-otp-reset-form,
 #kc-otp-login-form {
     input[type="radio"] {
         margin: 0;
+        display: none;
     }
 
     input:checked + .keycloak-otp-tile {
@@ -388,6 +401,10 @@ h1, h2, h3, h4 {
         align-items: center;
     }
 
+    ul li {
+        display: contents;
+    }
+
     ul a[id^="social-"] {
         background: white;
         border: none !important;
@@ -412,6 +429,23 @@ h1, h2, h3, h4 {
 #kc-info {
     margin: 1rem 0 0;
 }
+
+#kc-username {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+#kc-form-buttons,
+#kc-form-buttons > div[class=""],
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    & > * {
+        flex: 1;
+    }
+}
+
 
 /* cards layout: active only when the left panel is present (cards=true emits .left
    and .footer-card as body-level siblings of the login box; no wrapper div).
@@ -457,5 +491,16 @@ body:has(> .left) {
             margin-left: 0;
             margin-right: 0;
         }
+    }
+}
+
+
+[data-page-id=login-login-recovery-authn-code-config] {
+    .alert-warning {
+        flex-direction: column;
+        h4 {
+            font-size: 1.2rem;
+        }
+
     }
 }

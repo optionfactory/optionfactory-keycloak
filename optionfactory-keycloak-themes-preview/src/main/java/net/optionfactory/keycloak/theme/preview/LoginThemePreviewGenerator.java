@@ -462,7 +462,7 @@ public class LoginThemePreviewGenerator {
         var github = new Fixtures.SocialProvider();
         github.alias = "github";
         github.displayName = "GitHub";
-        github.iconClasses = "fa fa-github";
+        github.iconClasses = "bi bi-github";
         social.providers = List.of(google, github);
         return social;
     }

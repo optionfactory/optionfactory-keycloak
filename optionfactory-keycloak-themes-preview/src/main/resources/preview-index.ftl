@@ -4,10 +4,28 @@
     <meta charset="utf-8">
     <title>${title}</title>
     <style>
-        body{font-family:sans-serif;margin:2rem}
-        iframe{width:420px;height:640px;border:1px solid #ccc;background:#fff}
-        .cell{display:inline-block;margin:1rem;text-align:center;vertical-align:top}
-        .hint{background:#fff3cd;border:1px solid #ffe69c;padding:.5rem 1rem;display:inline-block}
+        body{
+            font-family:sans-serif;
+            margin:2rem
+        }
+        iframe{
+            width:420px;
+            height:640px;
+            border:1px solid #ccc;
+            background:#fff
+        }
+        .cell{
+            display:inline-block;
+            margin:1rem;
+            text-align:center;
+            vertical-align:top
+        }
+        .hint{
+            background:#fff3cd;
+            border:1px solid #ffe69c;
+            padding:.5rem 1rem;
+            display:inline-block
+        }
     </style>
 </head>
 <body>

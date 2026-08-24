@@ -104,7 +104,7 @@ public class Fixtures {
         public String alias = "google";
         public String loginUrl = "#";
         public String displayName = "Google";
-        public String iconClasses = "fa fa-google";
+        public String iconClasses = "bi bi-google";
     }
 
     public static class Group {
