@@ -193,13 +193,6 @@ span.subtitle {
 
 .form-group {
     margin-bottom: 1rem;
-
-    /* AIA escape hatch: cancel stacks below the primary action */
-    &:has(> [name="cancel-aia"]) {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
 }
 
 .form-group:has([aria-invalid="true"]) {
@@ -375,13 +368,29 @@ span.subtitle {
 
 #kc-otp-reset-form,
 #kc-otp-login-form {
+
+    /* visually hidden, not display:none: the tiles are label-siblings, and the
+       radio must stay focusable and arrow-key operable */
     input[type="radio"] {
-        margin: 0;
-        display: none;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
     }
 
     input:checked + .keycloak-otp-tile {
         border-color: var(--opfa-accent);
+    }
+
+    input:focus-visible + .keycloak-otp-tile {
+        border-color: var(--opfa-accent);
+        outline: 2px solid var(--opfa-accent);
+        outline-offset: 1px;
     }
 }
 

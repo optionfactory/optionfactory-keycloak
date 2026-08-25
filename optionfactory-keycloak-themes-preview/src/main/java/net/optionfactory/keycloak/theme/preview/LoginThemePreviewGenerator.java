@@ -350,13 +350,18 @@ public class LoginThemePreviewGenerator {
                     auth.usernameShown = true;
                     auth.resetCredentialsShown = true;
                 };
-            case "login-update-password", "login-verify-email", "delete-account-confirm", "delete-credential", "login-recovery-authn-code-config" ->
+            case "login-update-password", "login-verify-email", "delete-account-confirm", "delete-credential", "login-recovery-authn-code-config",
+                 "login-update-profile", "update-email", "webauthn-error" ->
                 m -> {
                     m.put("isAppInitiatedAction", Boolean.TRUE);
                     var auth = (Fixtures.Auth) m.get("auth");
                     auth.usernameShown = true;
                     if (page.equals("delete-credential")) {
                         m.put("credentialLabel", "YubiKey 5");
+                    }
+                    if (page.equals("delete-account-confirm")) {
+                        // renders the aia cancel button (this page guards on triggered_from_aia)
+                        m.put("triggered_from_aia", Boolean.TRUE);
                     }
                 };
             case "login-reset-password" ->
@@ -370,7 +375,13 @@ public class LoginThemePreviewGenerator {
             case "login-oauth2-device-verify-user-code", "code" ->
                 m -> m.put("code", deviceCode());
             case "login-idp-link-confirm", "login-idp-link-confirm-override", "login-idp-link-email", "link-idp-action" ->
-                m -> m.put("idpDisplayName", "Google");
+                m -> {
+                    m.put("idpDisplayName", "Google");
+                    if (page.equals("link-idp-action")) {
+                        // renders the aia cancel button
+                        m.put("isAppInitiatedAction", Boolean.TRUE);
+                    }
+                };
             case "select-authenticator" ->
                 m -> m.put("auth", authenticationSelectionsFixture());
             case "select-organization" ->
@@ -394,7 +405,9 @@ public class LoginThemePreviewGenerator {
                 m -> m.put("message", invalidMessage());
             case "webauthn-register" ->
                 m -> {
-                    m.put("isSetRetry", Boolean.FALSE);
+                    // isSetRetry stays unset: the aia cancel form renders only when it is missing
+                    // render the AIA branch (cancel below the register button)
+                    m.put("isAppInitiatedAction", Boolean.TRUE);
                     m.put("username", "jdoe");
                     m.put("challenge", "\"reg-challenge\"");
                     m.put("userid", "\"dXNlci1pZA==\"");
@@ -423,7 +436,12 @@ public class LoginThemePreviewGenerator {
                     }
                 };
             case "login-config-totp" ->
-                m -> m.put("mode", "manual");
+                m -> {
+                    m.put("mode", "manual");
+                    // renders the aia cancel button
+                    m.put("isAppInitiatedAction", Boolean.TRUE);
+                    ((Fixtures.Auth) m.get("auth")).usernameShown = true;
+                };
             default ->
                 m -> {
                 };

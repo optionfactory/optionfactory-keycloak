@@ -14,7 +14,7 @@ parent=bootstrap
 locales=it
 ```
 
-You get: bootstrap + bootstrap-icons + `keycloak-bootstrap.css` (head order below), styled stock pages (login, register, reset/update password, otp, select-authenticator, recovery codes, webauthn, terms, oauth grant, device code...), a styled locale dropdown, the optionfactory.net `img/favicon.ico` fallback, and sane button-pair layouts (equal choices side-by-side, `name="cancel-aia"` escape hatches stacked below the primary action).
+You get: bootstrap + bootstrap-icons + `keycloak-bootstrap.css` (head order below), styled stock pages (login, register, reset/update password, otp, select-authenticator, recovery codes, webauthn, terms, oauth grant, device code...), a styled locale dropdown, the optionfactory.net `img/favicon.ico` fallback, and button rows by default (`#kc-form-buttons`/`.form-actions` render equal-width side-by-side actions; add `flex-column` to a wrapper when a page wants stacking).
 
 **Inheritance trap**: `theme.properties` merges **per key** — setting a key in a child theme replaces the parent's whole value (no merging of lists). This applies to `meta=` too: the library ships `meta=viewport==... format-detection==telephone==no format-detection==email==no`; if your theme sets `meta=`, restate the viewport or mobile scaling breaks. Same for `styles=`/`scripts=`/`stylesCommon=` (use keyed `styles.<id>=` entries, which merge per id, or `themeHeaders` links).
 
@@ -176,7 +176,7 @@ leftCardTitle=Area Clienti
 leftCardText=...
 ```
 
-- Left panel markup lives in `left-card.ftl` — **override the file in your theme** to customize it; brand it via `--keycloak-left-background`.
+- Left panel markup lives in `left-card.ftl` — **override the file in your theme** to customize it; brand it via `--opfa-left-background`.
 - The **footer card** is per-page: define a `footerCard` section in a page template and it renders below the login box (non-empty section = shown; property gates the layout, section gates the page):
 
 ```ftl
