@@ -15,20 +15,17 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-themes</artifactId>
             <version>${kc.version}</version>
-            <!-- compile + explicit scope: the parent manages keycloak artifacts as provided,
-                 which would not flow transitively to theme modules using this harness -->
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>${kc.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.32</version>
+            <version>2.3.34</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
