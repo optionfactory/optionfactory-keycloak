@@ -9,26 +9,27 @@
     /* white, like bootstrap's own glyph: restate the whole url to recolour it */
     --opfa-icon-check: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
 
-    --opfa-elevation: 0 10px 18px -5px #7090b033;
+    --opfa-accent-hover: color-mix(in srgb, var(--opfa-accent) 85%, #000);
+    --opfa-accent-subtle: color-mix(in srgb, var(--opfa-accent) 10%, transparent);
 
-    /* checkbox/radio control; the gutter and the vertical offset derive from it */
+    --opfa-elevation: 0 10px 18px -5px #7090b033;
+    /* the raised rows of the social list and the organization chooser */
+    --opfa-social-bg: #ffffff;
+
     --opfa-checkbox-size: 1.25em;
     --opfa-checkbox-gap: 0.5em;
 
     --opfa-font-family: "Open Sans", Helvetica, Arial, sans-serif;
     --opfa-heading-color: #333333;
 
-    /* brand header: the logo goes in the background, and themes that use one normally
-       hide the realm name that would sit on top of it (--opfa-header-text: none) */
+    /* the logo goes in the background; themes using one hide the realm name over it */
     --opfa-header-background: none;
     --opfa-header-text: block;
 
     --opfa-body-bg: var(--bs-body-bg);
     --opfa-card-border-color: var(--opfa-accent);
 
-    /* primary button: every state derives from --opfa-accent, so a theme happy with the
-       derived shades sets nothing here. Bootstrap compiles .btn-primary as literal hexes
-       and reads --bs-primary nowhere, which is why the palette has to be restated at all. */
+    /* bootstrap compiles .btn-primary as literal hexes and reads --bs-primary nowhere */
     --opfa-primary: var(--opfa-accent);
     --opfa-primary-contrast: var(--opfa-accent-contrast);
     --opfa-primary-border: var(--opfa-primary);
@@ -40,9 +41,8 @@
     --opfa-left-background: none;
     --opfa-cards-inset: 1.5em;
 
-    /* the only two bootstrap variables this theme sets, both driven by tokens above.
-       Every other --bs-* is consumed but never declared here: a colour in :root would
-       out-specify bootstrap's [data-bs-theme=dark] block and pin the theme to light. */
+    /* no --bs-* colour here: it would out-specify bootstrap's [data-bs-theme=dark] block
+       and pin the theme to light */
     --bs-body-font-family: var(--opfa-font-family);
     --bs-heading-color: var(--opfa-heading-color);
 }
@@ -81,7 +81,6 @@ body {
     background: var(--opfa-header-background);
 }
 
-/* the realm name; themes using a header logo set --opfa-header-text: none */
 #kc-header-wrapper {
     display: var(--opfa-header-text);
 }
@@ -116,8 +115,7 @@ body {
     display: none;
 }
 
-/* the "* required fields" hint on displayRequiredFields pages. Both the wrapper div and
-   the span inside it carry .subtitle, so size and colour go on the span or they compound. */
+/* wrapper div and inner span both carry .subtitle: size and colour go on the span */
 .subtitle {
     text-align: right;
 }
@@ -146,16 +144,34 @@ span.subtitle {
         #kc-form-webauthn,
         .content-area,
         form,
-        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)) {
+        /* a group wrapping a list of buttons is a chooser, not an action row */
+        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)) {
             display: flex;
             flex-direction: column;
             flex: 1;
         }
 
-        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)),
-        .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)),
+        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)),
+        .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(> *:not(.btn, input[type="hidden"]))),
+        /* a button-only container claiming free space floats a split pair mid-card */
+        form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))),
         #kc-form-buttons {
             flex: 0;
+            margin-top: auto;
+            /* the auto margin has no slack left on a page taller than the viewport */
+            padding-top: 1rem;
+        }
+
+        /* ...unless what sits above is the other half of a split pair */
+        .btn + form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
+            padding-top: 0;
+        }
+
+        /* the chain above would make a column of an action row; the margin is restated
+           because :has(> .btn ~ .btn) out-specifies the pin */
+        form.form-actions:not(:has(> *:not(.btn, input[type="hidden"]))),
+        :is(form, .form-group):has(> .btn ~ .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
+            flex-direction: row;
             margin-top: auto;
         }
     }
@@ -215,9 +231,8 @@ span.subtitle {
     }
 }
 
-/* Control geometry, both flavours. Bootstrap locks its 1em control, 1.5em gutter and .25em
-   top offset together, so scaling the control alone leaves it hanging below its own line -
-   derive all three from the size instead. At size 1em these formulas reproduce bootstrap. */
+/* bootstrap locks control, gutter and offset together: derive all three from the size
+   (at 1em these reproduce bootstrap) */
 .form-check,
 .checkbox {
     display: block;
@@ -232,15 +247,30 @@ span.subtitle {
     width: var(--opfa-checkbox-size);
     height: var(--opfa-checkbox-size);
     margin-left: calc(-1 * (var(--opfa-checkbox-size) + var(--opfa-checkbox-gap)));
-    /* centre the control on the first line of 1.5 line-height text */
     margin-top: calc((1.5em - var(--opfa-checkbox-size)) / 2);
 }
 
-/* base pages hardcode a classless <input type=checkbox> inside .checkbox, and a derived
-   theme's own macro can just as easily forget .form-check-input - bootstrap's skin reaches
-   neither. Skin every checkbox in either wrapper: it is byte-identical to bootstrap's, so
-   applying it to classed inputs too costs nothing and a missing class stops being a bug. */
-:is(.form-check, .checkbox) :where(input[type="checkbox"]) {
+/* register's terms box and the recovery-codes confirmation ship no wrapper for the gutter */
+input.form-check-input[type="checkbox"]:not(:is(.form-check, .checkbox) *) {
+    float: left;
+    width: var(--opfa-checkbox-size);
+    height: var(--opfa-checkbox-size);
+    margin-top: calc((1.5em - var(--opfa-checkbox-size)) / 2);
+    margin-right: var(--opfa-checkbox-gap);
+
+    /* its own block beside the float, so the box sits on the first line and a second line
+       indents - the geometry the wrapped flavours get from padding */
+    + label {
+        display: block;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* base pages hardcode a classless <input type=checkbox> in .checkbox, and a macro can forget
+   .form-check-input: skin both, the rule is byte-identical to bootstrap's */
+:is(.form-check, .checkbox) :where(input[type="checkbox"]),
+input.form-check-input[type="checkbox"] {
     appearance: none;
     vertical-align: top;
     background-color: var(--bs-body-bg);
@@ -273,13 +303,59 @@ span.subtitle {
     --bs-btn-disabled-border-color: var(--opfa-primary-disabled);
 }
 
+/* an action row, in the four shapes upstream builds one; the gate keeps a container that
+   also holds fields out of it. flex-column opts a row out. */
+/* upstream hardcodes patternfly classes here, so no kc*Class reaches them */
+.keycloak-recovery-codes-actions > button {
+    padding: 0.375rem 0.75rem;
+    border: 0;
+    background: none;
+    color: var(--bs-link-color);
+    text-decoration: underline;
+
+    > i[class^="pficon"] {
+        display: none;
+    }
+}
+
+/* upstream's section divider inside a field group; a floated label would land on it */
+.form-group > hr {
+    display: none;
+}
+
+/* not an mt-2 in kcButtonBlockClass: utilities carry !important, and the row rule below
+   could not take the margin back off a pair sharing a line */
+.keycloak-button-block {
+    margin-top: 0.5rem;
+}
+
+/* upstream does not always give a stacked pair the block class */
+.btn + .btn {
+    margin-top: 0.5rem;
+}
+
+/* a container mixing fields in with its buttons cannot be a row: a line each instead */
+:is(form, .form-group):has(> .btn ~ .btn):has(> *:not(.btn, input[type="hidden"])) > .btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
 #kc-form-buttons,
-.form-actions {
+.form-actions:not(:has(> *:not(.btn, input[type="hidden"]))),
+:is(form, .form-group):has(> .btn ~ .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
     display: flex;
+    flex-direction: row;
     gap: 1rem;
+    margin-top: 1rem;
 
     > * {
         flex: 1;
+    }
+
+    /* the row owns the gap above, and a pair must not be offset against itself */
+    > .btn {
+        margin-top: 0;
     }
 }
 
@@ -309,9 +385,14 @@ span.subtitle {
         background: none;
         border: 0;
         padding: 0 0 .5rem;
-        color: var(--bs-body-color);
+        color: var(--opfa-accent);
         font-size: .9rem;
         text-decoration: underline;
+
+        &:hover,
+        &:focus-visible {
+            color: var(--opfa-accent-hover);
+        }
     }
 
     .keycloak-locale-list {
@@ -338,7 +419,8 @@ span.subtitle {
 
             &:hover,
             &:focus {
-                background: var(--bs-tertiary-bg);
+                background: var(--opfa-accent-subtle);
+                color: var(--opfa-accent-hover);
             }
         }
     }
@@ -369,8 +451,7 @@ span.subtitle {
 #kc-otp-reset-form,
 #kc-otp-login-form {
 
-    /* visually hidden, not display:none: the tiles are label-siblings, and the
-       radio must stay focusable and arrow-key operable */
+    /* not display:none: the radio must stay focusable and arrow-key operable */
     input[type="radio"] {
         position: absolute;
         width: 1px;
@@ -394,7 +475,9 @@ span.subtitle {
     }
 }
 
-#kc-social-providers {
+/* select-organization builds its buttons from the same kcFormSocialAccount* properties */
+#kc-social-providers,
+#kc-user-organizations {
     > hr {
         display: none;
     }
@@ -415,8 +498,8 @@ span.subtitle {
             display: contents;
         }
 
-        a {
-            background: var(--bs-body-bg);
+        :is(a, button) {
+            background: var(--opfa-social-bg);
             border: none;
             border-radius: 7px;
             box-shadow: var(--opfa-elevation);

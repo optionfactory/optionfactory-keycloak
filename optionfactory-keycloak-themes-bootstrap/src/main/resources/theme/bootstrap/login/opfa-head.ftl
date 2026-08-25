@@ -14,6 +14,14 @@
     </#list>
 </#macro>
 
+<#-- opt-in floating labels: after baseHeaders so it overrides the base skin, before the
+     consumer styles= / themeHeaders so a derived theme still gets the last word -->
+<#macro floatingLabels>
+    <#if (properties.floatingLabels!"false") == 'true'>
+        <link rel="stylesheet" href="${url.resourcesPath}/css/keycloak-floating-labels.css">
+    </#if>
+</#macro>
+
 <#macro themeHeaders>
     <#list 0..50 as index>
         <#if properties['themeHeaders.' + index]?has_content>

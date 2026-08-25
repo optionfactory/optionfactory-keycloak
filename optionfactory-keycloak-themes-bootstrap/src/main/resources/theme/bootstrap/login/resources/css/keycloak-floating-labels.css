@@ -1,0 +1,87 @@
+/* Floating labels, opt-in via floatingLabels=true. Bootstrap's .form-floating wants control
+   and label as direct siblings, control first, which keycloak emits in neither of its two shapes
+   (a bare .form-label, the .keycloak-label-wrapper div) - what themes reparent the dom for.
+   :has() reads the control's state from the .form-group instead, and the empty state comes from
+   :placeholder-shown, hence the placeholder template.ftl injects. */
+
+:root {
+    --opfa-floating-field-height: 3.5rem;
+    --opfa-floating-padding-x: 0.75rem;
+
+    /* the value's padding at rest and once the label has floated: equal values never shift it */
+    --opfa-floating-padding-block: 1rem;
+    --opfa-floating-padding-block-floated: 1.625rem 0.625rem;
+
+    --opfa-floating-label-color: var(--bs-secondary-color);
+    --opfa-floating-label-transform: scale(0.85) translateY(-0.5rem);
+    /* a page-background colour here notches the border under a label parked astride it */
+    --opfa-floating-label-background: transparent;
+}
+
+/* one with inputHelperTextBefore keeps the stock layout: the label would land on the helper */
+.form-group:has(> :is(.form-label, .keycloak-label-wrapper)):has(.form-control):not(:has([id^="form-help-text-before"])) {
+    position: relative;
+
+    .form-control {
+        height: calc(var(--opfa-floating-field-height) + 2 * var(--bs-border-width));
+        padding: var(--opfa-floating-padding-block) var(--opfa-floating-padding-x);
+        line-height: 1.25;
+    }
+
+    /* a textarea keeps the room at all times: its padding scrolls with the content */
+    .form-control:is(:focus, :not(:placeholder-shown), :autofill),
+    textarea.form-control {
+        padding-block: var(--opfa-floating-padding-block-floated);
+    }
+
+    textarea.form-control {
+        height: auto;
+        min-height: calc(var(--opfa-floating-field-height) + 2 * var(--bs-border-width));
+    }
+
+    /* the injected placeholder is the mechanism, not content */
+    .form-control::placeholder {
+        color: transparent;
+    }
+
+    > :is(.form-label, .keycloak-label-wrapper) {
+        position: absolute;
+        /* insets, not padding: they stay out of the transform, so a theme's translate values
+           are plain offsets of the text rather than padding seen through scale() */
+        inset-block-start: var(--opfa-floating-padding-block);
+        inset-inline-start: var(--opfa-floating-padding-x);
+        /* bootstrap raises a focused .input-group control to 5, and it is opaque */
+        z-index: 6;
+        max-width: calc(100% - 2 * var(--opfa-floating-padding-x));
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: var(--opfa-floating-label-color);
+        /* clicks fall through to the control underneath; for= keeps the association */
+        pointer-events: none;
+        transform-origin: 0 0;
+        transition: transform .1s ease-in-out;
+
+        &:dir(rtl) {
+            transform-origin: 100% 0;
+        }
+
+        .form-label {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    /* a select is never :placeholder-shown, so its label floats for good - as in bootstrap */
+    &:has(.form-control:is(:focus, :not(:placeholder-shown), :autofill)) > :is(.form-label, .keycloak-label-wrapper) {
+        background: var(--opfa-floating-label-background);
+        transform: var(--opfa-floating-label-transform);
+    }
+
+    /* the invalid glyph's gutter: the shorthand above ties the base rule and wins on order */
+    &:has([aria-invalid="true"]) .form-control[aria-invalid="true"] {
+        padding-inline-end: calc(1.5em + 0.75rem);
+    }
+}

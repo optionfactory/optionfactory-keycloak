@@ -2,7 +2,7 @@
 
 A `bootstrap` login theme: keycloak's `base` templates with every `kc*Class` property mapped to bootstrap 5 classes, bootstrap css/js/icons loaded from CDN (SRI-pinned), and a small head-injection contract for derived themes.
 
-For visual inspection of every stock page rendered through this theme (and through derived themes), see [optionfactory-keycloak-themes-preview](../optionfactory-keycloak-themes-preview).
+For visual inspection of every stock page rendered through this theme (and through derived themes), see [optionfactory-keycloak-themes-preview](../optionfactory-keycloak-themes-preview): `mvn test` writes the gallery, a `@Disabled` test serves it, and its aside edits this theme's `:root` tokens live in every frame at any viewport.
 
 `template.ftl` is upstream's `base/login/template.ftl` (26.7.2) plus a few **purely additive, marker-wrapped hunks** — the macro signature is byte-identical to upstream, so keycloak upgrades are a re-diff, not a merge. All hunks are wrapped in `<#-- opfa:modification start/end -->` comments.
 
@@ -14,7 +14,7 @@ parent=bootstrap
 locales=it
 ```
 
-You get: bootstrap + bootstrap-icons + `keycloak-bootstrap.css` (head order below), styled stock pages (login, register, reset/update password, otp, select-authenticator, recovery codes, webauthn, terms, oauth grant, device code...), a styled locale dropdown, the optionfactory.net `img/favicon.ico` fallback, and button rows by default (`#kc-form-buttons`/`.form-actions` render equal-width side-by-side actions; add `flex-column` to a wrapper when a page wants stacking).
+You get: bootstrap + bootstrap-icons + `keycloak-bootstrap.css` (head order below), styled stock pages (login, register, reset/update password, otp, select-authenticator, recovery codes, webauthn, terms, oauth grant, device code...), a styled locale dropdown, the optionfactory.net `img/favicon.ico` fallback, and button rows by default: any container holding nothing but a pair of buttons renders them equal-width side by side, whichever of the four shapes upstream used (`<form class="form-actions">`, `#kc-form-buttons`, a `kcFormButtonsWrapperClass` div, a bare `.form-group`). Add `flex-column` to opt a row out. Three pages stay stacked because upstream splits the pair across two forms (`webauthn-register`, `webauthn-error`) or mixes it in with other content (`login-recovery-authn-code-config`) — no selector reaches across that.
 
 **Inheritance trap**: `theme.properties` merges **per key** — setting a key in a child theme replaces the parent's whole value (no merging of lists). This applies to `meta=` too: the library ships `meta=viewport==... format-detection==telephone==no format-detection==email==no`; if your theme sets `meta=`, restate the viewport or mobile scaling breaks. Same for `styles=`/`scripts=`/`stylesCommon=` (use keyed `styles.<id>=` entries, which merge per id, or `themeHeaders` links).
 
@@ -32,8 +32,9 @@ Emitted in this order (the cascade is the contract):
 
 1. `googleFonts` property → preconnects + stylesheet
 2. `baseHeaders.0..10` — **library-level** tags (bootstrap, icons, `keycloak-bootstrap.css`)
-3. `styles=` / `stylesCommon=` / `scripts=` — standard keycloak properties, load **after** bootstrap so they override it at equal specificity
-4. `themeHeaders.0..50` — **consumer-level** arbitrary tags, last word in the cascade
+3. `keycloak-floating-labels.css`, when `floatingLabels=true` (see below)
+4. `styles=` / `stylesCommon=` / `scripts=` — standard keycloak properties, load **after** bootstrap so they override it at equal specificity
+5. `themeHeaders.0..50` — **consumer-level** arbitrary tags, last word in the cascade
 
 `baseHeaders`/`themeHeaders` values are raw HTML; `{resources}` and `{commonResources}` placeholders expand to the theme resource paths.
 
@@ -82,7 +83,9 @@ block is the API reference, so this table lists names only and cannot drift out 
 
 | token | controls |
 |---|---|
-| `--opfa-accent` | primary button, password-reveal icon, card top border, checked checkbox, selected otp tile |
+| `--opfa-accent` | primary button, password-reveal icon, card top border, checked checkbox, selected otp tile, locale switcher |
+| `--opfa-accent-hover` | the accent one shade down — hover/focus text of accent-coloured controls; defaults to a derived shade |
+| `--opfa-accent-subtle` | a tint of the accent behind a highlighted row (the locale menu); defaults to a derived mix |
 | `--opfa-accent-contrast` | text/glyph drawn on top of `--opfa-accent` (set to `#000` for a light accent) |
 | `--opfa-danger` | invalid field border and error message |
 | `--opfa-icon-invalid` | the glyph inside an invalid field — restate it when you change `--opfa-danger`, the hex is baked into the svg |
@@ -96,6 +99,7 @@ block is the API reference, so this table lists names only and cannot drift out 
 | `--opfa-checkbox-size` | checkbox/radio control size; the gutter and vertical offset derive from it |
 | `--opfa-checkbox-gap` | space between the control and its label |
 | `--opfa-elevation` | raised surfaces: social buttons, locale menu |
+| `--opfa-social-bg` | background of the social buttons and the organization chooser rows (white by default) |
 | `--opfa-font-family` | page font (drives `--bs-body-font-family`) |
 | `--opfa-heading-color` | h1–h6 and the brand header (drives `--bs-heading-color`) |
 | `--opfa-header-background` | brand header background, e.g. `url(logo.svg) center/contain no-repeat` |
@@ -192,17 +196,84 @@ leftCardText=...
 - Below 992px the layout collapses to a single column (left panel hidden).
 - `cards` unset/false: the layout blocks don't render at all — stock DOM.
 
+## Floating labels (opt-in)
+
+```properties
+floatingLabels=true
+```
+
+The label starts inside the field and floats to its top edge once the field is focused or
+filled — with **no javascript moving nodes around**. Bootstrap's own `.form-floating` wants the
+control and its label as direct siblings, control first; keycloak emits neither order, in two
+shapes (a bare `.form-label` on `login`, `login-password`, `update-email`...; the
+`.keycloak-label-wrapper` div on the user-profile pages), which is why themes have historically
+reparented the DOM in a script. `keycloak-floating-labels.css` reads the control's state through
+`:has()` on the `.form-group` instead: both shapes work untouched, and a page that loses its
+wrappers in a keycloak upgrade keeps working.
+
+The flag emits two things: the stylesheet (right after `baseHeaders`, so your `styles=` sheet
+still wins) and a parser-blocking one-liner right after the fields that sets `placeholder=" "`
+on every field without one — CSS reads the empty state from `:placeholder-shown`, which never
+toggles unless a placeholder attribute exists. It runs before the first paint, so there is no
+flash.
+
+| token | controls |
+|---|---|
+| `--opfa-floating-field-height` | field height (default `3.5rem`, bootstrap's own) |
+| `--opfa-floating-padding-x` | horizontal inset shared by the value and its label |
+| `--opfa-floating-padding-block` | vertical inset of both, at rest — the label sits on the value's own line |
+| `--opfa-floating-padding-block-floated` | the value's vertical padding once the label has floated; set it equal to the one above when the label leaves the field entirely and the value should not move |
+| `--opfa-floating-label-color` | label colour |
+| `--opfa-floating-label-transform` | how the label moves when it floats |
+| `--opfa-floating-label-background` | painted behind the floated label — a flat page-background colour notches the field's top border |
+
+The label's resting position comes from `inset`, not padding, so it stays out of the transform:
+`--opfa-floating-label-transform` values are plain offsets of the label text itself, unscaled.
+A label parked astride the field's top border — the notched-outline look — is therefore just:
+
+```css
+:root {
+    --opfa-floating-field-height: 52px;
+    --opfa-floating-padding-x: 16px;
+    --opfa-floating-padding-block: 15px;
+    --opfa-floating-padding-block-floated: 15px;   /* the value never shifts */
+    --opfa-floating-label-transform: scale(.85) translateY(-30px);
+    --opfa-floating-label-background: var(--bs-body-bg);
+}
+```
+
+Worth knowing:
+
+- A field with a real placeholder (`inputTypePlaceholder` annotation) keeps it, and its label
+  then floats permanently — placeholder and floating label compete for the same pixels, so pick
+  one per field.
+- `<select>` and `html5-date`/`html5-time` inputs never match `:placeholder-shown`, so their
+  labels float permanently. Same as bootstrap.
+- A group with `inputHelperTextBefore` keeps the stock stacked layout: the helper renders above
+  the control, where the hoisted label would land on it instead of on the field.
+- A multivalued user-profile attribute renders several controls under one label; the label
+  floats over the first.
+- Chrome's autofill *preview* (before the user picks an entry) does not float the label —
+  `:autofill` only matches a committed value. Bootstrap has the same gap.
+- Browser floor: `:has()` and `:dir()`, i.e. Firefox 121 / Chrome 120 / Safari 16.4 — the floor
+  `keycloak-bootstrap.css` already sets with `:has()` for the invalid state.
+
+`mvn test` renders the opt-in variant to `target/theme-preview-floating-labels/` next to the
+default gallery, so both paths stay visually checkable.
+
 ## Page template conventions
 
 - **Subtitles** render in-form: `<p id="kc-page-subtitle">${msg("someTitle2")}</p>` at the top of the form section. The library styles it, collapses it when empty (`:empty`), and keeps it above alerts (`order: -1`). Empty message values collapse cleanly — define `...Title2=` (empty) or omit.
 - The `* required fields` hint on `displayRequiredFields` pages (`.subtitle`) ships styled: right-aligned, 0.875em, muted. Both the wrapper div and the inner span carry `.subtitle`, so override size/colour on `span.subtitle` to avoid compounding.
+- **Block buttons** (`kcButtonBlockClass`) are `w-100 keycloak-button-block`: full width plus the 0.5rem gap to whatever sits above them. The gap is a
+  library rule rather than a `mt-2` utility, so an action row can take it back off a pair sharing a line — utilities carry `!important` and no rule could.
 - Per-page CSS: `body[data-page-id=login-<pageId>]` (stock attribute; the library does not render `bodyClass`).
 - Custom step templates should use `kc*Class` properties (`kcFormCheckClass`, `kcCheckboxClass`/`kcCheckboxLabelClass`, `kcInputClass`, `kcFormGroupClass`, ...) rather than hardcoded classes, so they stay themable across theme families — the `kcCheckbox*` family resolves under both this theme (`form-check`) and stock `keycloak.v2` (`pf-v5-c-check`). Put the class on the **input** too (`kcCheckboxInputClass`), not just the wrapper: bootstrap skins the control through `.form-check-input`, and a classless input renders as a native widget.
 - Missing message keys render as the key itself — define them per theme/locale.
 
 ## Upgrading keycloak
 
-1. Re-diff `template.ftl` against the new upstream `base/login/template.ftl`; re-apply the marked `opfa:modification` hunks (import, two macro calls, left-card include, footer-card block). The signature line must stay stock.
+1. Re-diff `template.ftl` against the new upstream `base/login/template.ftl`; re-apply the marked `opfa:modification` hunks (import, three macro calls, left-card include, footer-card block, floating-label placeholder shim). The signature line must stay stock.
 2. Re-check `theme.properties` for new/renamed `kc*Class` properties used by base pages.
 3. Review `keycloak-bootstrap.css` against upstream markup changes.
 4. `${conf.*}` placeholders (server-config values) are expanded by `opfa-freemarker-configurable` in [optionfactory-keycloak-themes](../optionfactory-keycloak-themes) — in both message bundles and `theme.properties` values (including `styles=`, `themeHeaders.*`, keyed resources). Unknown `${...}` refs stay verbatim; `${sys.*}`/`${env.*}` substitution happens earlier at theme load.

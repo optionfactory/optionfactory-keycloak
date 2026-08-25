@@ -26,6 +26,7 @@
 <#-- opfa:modification start: webfonts + library base headers so child styles= overrides bootstrap -->
     <@opfaHead.googleFonts/>
     <@opfaHead.baseHeaders/>
+    <@opfaHead.floatingLabels/>
 <#-- opfa:modification end -->
     <#if themeResources?? && themeResources.stylesCommon?has_content>
         <@themeResourceTags.renderStyles themeResources.stylesCommon url.resourcesCommonPath />
@@ -204,6 +205,17 @@
           </#if>
 
           <#nested "form">
+<#-- opfa:modification start (floatingLabels): the stylesheet reads the empty state from
+     :placeholder-shown, which needs a placeholder attribute to exist. Parser-blocking and
+     placed right after the fields, so it runs before the first paint. -->
+          <#if (properties.floatingLabels!"false") == 'true'>
+              <script>
+                  for (const e of document.querySelectorAll(":is(input, textarea).form-control:not([placeholder])")) {
+                      e.placeholder = " ";
+                  }
+              </script>
+          </#if>
+<#-- opfa:modification end -->
 
           <#if auth?has_content && auth.showTryAnotherWayLink()>
               <form id="kc-select-try-another-way-form" action="${url.loginAction}" method="post">
