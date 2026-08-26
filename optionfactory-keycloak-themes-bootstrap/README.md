@@ -4,7 +4,7 @@ A `bootstrap` login theme: keycloak's `base` templates with every `kc*Class` pro
 
 For visual inspection of every stock page rendered through this theme (and through derived themes), see [optionfactory-keycloak-themes-preview](../optionfactory-keycloak-themes-preview): `mvn test` writes the gallery, a `@Disabled` test serves it, and its aside edits this theme's `:root` tokens live in every frame at any viewport.
 
-`template.ftl` is upstream's `base/login/template.ftl` (26.7.2) plus a few **purely additive, marker-wrapped hunks** — the macro signature is byte-identical to upstream, so keycloak upgrades are a re-diff, not a merge. All hunks are wrapped in `<#-- opfa:modification start/end -->` comments.
+`template.ftl` is upstream's `base/login/template.ftl` (26.7.2) plus a few **marker-wrapped hunks** — the macro signature is byte-identical to upstream, so keycloak upgrades are a re-diff, not a merge. All hunks are wrapped in `<#-- opfa:modification start/end -->` comments; all but one only add, the exception dropping upstream's `col-md-10` grid wrapper around the title of `displayRequiredFields` pages.
 
 ## Quick start
 
@@ -287,7 +287,7 @@ default gallery, so both paths stay visually checkable.
 
 ## Upgrading keycloak
 
-1. Re-diff `template.ftl` against the new upstream `base/login/template.ftl`; re-apply the marked `opfa:modification` hunks (import, three macro calls, left-card include, footer-card block, floating-label placeholder shim). The signature line must stay stock.
+1. Re-diff `template.ftl` against the new upstream `base/login/template.ftl`; re-apply the marked `opfa:modification` hunks (import, three macro calls, left-card include, footer-card block, floating-label placeholder shim, and the two that drop the `col-md-10` wrapper). The signature line must stay stock.
 2. Re-check `theme.properties` for new/renamed `kc*Class` properties used by base pages.
 3. Review `keycloak-bootstrap.css` against upstream markup changes.
 4. `${conf.*}` placeholders (server-config values) are expanded by `opfa-freemarker-configurable` in [optionfactory-keycloak-themes](../optionfactory-keycloak-themes) — in both message bundles and `theme.properties` values (including `styles=`, `themeHeaders.*`, keyed resources). Unknown `${...}` refs stay verbatim; `${sys.*}`/`${env.*}` substitution happens earlier at theme load.

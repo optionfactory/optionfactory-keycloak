@@ -147,9 +147,9 @@
                     <div class="${properties.kcLabelWrapperClass!} subtitle">
                         <span class="subtitle"><span class="required">*</span> ${msg("requiredFields")}</span>
                     </div>
-                    <div class="col-md-10">
+<#-- opfa:modification start: removed col-md-10 from the base theme -->
                         <h1 id="kc-page-title"><#nested "header"></h1>
-                    </div>
+<#-- opfa:modification end -->
                 </div>
             <#else>
                 <h1 id="kc-page-title"><#nested "header"></h1>
@@ -160,8 +160,9 @@
                     <div class="${properties.kcLabelWrapperClass!} subtitle">
                         <span class="subtitle"><span class="required">*</span> ${msg("requiredFields")}</span>
                     </div>
-                    <div class="col-md-10">
+<#-- opfa:modification start: removed col-md-10 from the base theme -->
                         <#nested "show-username">
+<#-- opfa:modification end -->
                         <div id="kc-username" class="${properties.kcFormGroupClass!}">
                             <label id="kc-attempted-username">${auth.attemptedUsername}</label>
                             <a id="reset-login" href="${url.loginRestartFlowUrl}" aria-label="${msg("restartLoginTooltip")}">
@@ -171,7 +172,6 @@
                                 </div>
                             </a>
                         </div>
-                    </div>
                 </div>
             <#else>
                 <#nested "show-username">
@@ -205,9 +205,7 @@
           </#if>
 
           <#nested "form">
-<#-- opfa:modification start (floatingLabels): the stylesheet reads the empty state from
-     :placeholder-shown, which needs a placeholder attribute to exist. Parser-blocking and
-     placed right after the fields, so it runs before the first paint. -->
+<#-- opfa:modification start (floatingLabels) -->
           <#if (properties.floatingLabels!"false") == 'true'>
               <script>
                   for (const e of document.querySelectorAll(":is(input, textarea).form-control:not([placeholder])")) {
@@ -252,9 +250,7 @@
       <@loginFooter.content/>
     </div>
   </div>
-<#-- opfa:modification start (cards): footer card shown when the page defines a non-empty
-     footerCard section; nested output is a markup output under the html output format, hence
-     markup_string for the emptiness test; content is emitted via nested to avoid double escaping -->
+<#-- opfa:modification start (cards) -->
 <#if (properties.cards!"false") == 'true'>
         <#assign footerCardContent><#nested "footerCard"></#assign>
         <#if footerCardContent?markup_string?trim?has_content>

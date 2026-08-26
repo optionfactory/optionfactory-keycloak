@@ -145,12 +145,6 @@ body {
     display: none;
 }
 
-/* upstream wraps the title of a displayRequiredFields page in a bootstrap-3 grid column, which
-   bootstrap 5 still honours: the title would sit in 83% of the card, off its centre */
-.keycloak-card .col-md-10 {
-    width: 100%;
-}
-
 /* wrapper div and inner span both carry .subtitle: size and colour go on the span */
 .subtitle {
     text-align: right;
@@ -365,6 +359,7 @@ input.form-check-input[type="checkbox"] {
         font-size: 1rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
+        color: var(--bs-warning-text-emphasis);        
     }
 
     p:last-child {
