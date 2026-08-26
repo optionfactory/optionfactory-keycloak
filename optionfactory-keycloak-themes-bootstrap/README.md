@@ -96,6 +96,14 @@ block is the API reference, so this table lists names only and cannot drift out 
 | `--opfa-primary-hover` | primary button bg+border on hover; defaults to a derived darker shade |
 | `--opfa-primary-active` | primary button bg+border when active; defaults to a derived darker shade |
 | `--opfa-primary-disabled` | primary button bg+border when disabled; defaults to `--opfa-primary` |
+| `--opfa-secondary` | secondary and outline-secondary buttons (`kcButtonDefaultClass`/`kcButtonSecondaryClass`); defaults to bootstrap's own grey |
+| `--opfa-secondary-contrast` | text on the secondary button, and its text when an outline one fills |
+| `--opfa-secondary-border` | secondary/outline border at rest; defaults to `--opfa-secondary` |
+| `--opfa-secondary-hover` | secondary bg+border on hover; defaults to a derived darker shade |
+| `--opfa-secondary-active` | secondary bg+border when active; defaults to a derived darker shade |
+| `--opfa-secondary-disabled` | secondary bg+border when disabled; defaults to `--opfa-secondary` |
+| `--opfa-surface-bg` | what bootstrap paints fields, menus and raised rows with (drives `--bs-body-bg`) |
+| `--opfa-body-color` | body and field text (drives `--bs-body-color`) |
 | `--opfa-checkbox-size` | checkbox/radio control size; the gutter and vertical offset derive from it |
 | `--opfa-checkbox-gap` | space between the control and its label |
 | `--opfa-elevation` | raised surfaces: social buttons, locale menu |
@@ -106,21 +114,27 @@ block is the API reference, so this table lists names only and cannot drift out 
 | `--opfa-header-text` | set to `none` to hide the realm name that would sit on top of a header logo |
 | `--opfa-body-bg` | page background; defaults to `--bs-body-bg`, set it separately when inputs and page differ |
 | `--opfa-card-border-color` | login card top border; defaults to `--opfa-accent` |
+| `--opfa-card-bg` | card surface; `transparent` by default, so the page shows through as it does on the stock pages |
+| `--opfa-card-radius` | card corner radius (`0`) |
+| `--opfa-card-shadow` | card shadow (`none`) |
+| `--opfa-card-max-width` | card width cap (`400px`) |
+| `--opfa-card-padding` | card padding (`15px`) |
+| `--opfa-card-min-height` | card floor (`auto`). Anything taller than the content pins the action row to the card's bottom — the same mechanism the viewport triggers on a phone. Set it inside a media query to pin on one viewport only |
 | `--opfa-left-background` | cards layout: left panel background (multi-layer ok) |
 | `--opfa-cards-inset` | cards layout: side inset of the login column |
 
 The theme also **consumes** these bootstrap variables. Override them the way you would in
 any bootstrap app — one value moves every component that reads it, this theme's included:
 
-`--bs-body-bg` (input/menu/social surfaces) · `--bs-body-color` (body and input text) ·
 `--bs-border-color` (inputs, reveal button, otp tiles, locale menu, checkbox) ·
 `--bs-border-radius` · `--bs-tertiary-bg` (menu row hover) ·
 `--bs-danger-{text-emphasis,bg-subtle,border-subtle}` (the error alert).
 
-The library sets only two bootstrap variables itself, both colour-scheme independent:
-`--bs-body-font-family` and `--bs-heading-color`. It deliberately declares **no bootstrap
-colour** in `:root` — doing so out-specifies bootstrap's own `[data-bs-theme=dark]` block
-and would pin the theme to light mode for good. Keep that rule if you add tokens.
+`--bs-body-bg` and `--bs-body-color` are driven by `--opfa-surface-bg`/`--opfa-body-color`, so
+set those instead. The library declares **no bootstrap colour in a bare `:root`** — that
+out-specifies bootstrap's own `[data-bs-theme=dark]` block and pins the theme to light mode for
+good; the two above are declared under `:root:not([data-bs-theme="dark"])` so dark mode still
+reaches them. Keep that rule if you add tokens.
 
 A whole rebrand is usually four lines:
 

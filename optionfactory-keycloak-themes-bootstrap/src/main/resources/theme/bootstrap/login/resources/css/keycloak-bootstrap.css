@@ -14,7 +14,7 @@
 
     --opfa-elevation: 0 10px 18px -5px #7090b033;
     /* the raised rows of the social list and the organization chooser */
-    --opfa-social-bg: #ffffff;
+    --opfa-social-bg: var(--opfa-surface-bg);
 
     --opfa-checkbox-size: 1.25em;
     --opfa-checkbox-gap: 0.5em;
@@ -27,7 +27,18 @@
     --opfa-header-text: block;
 
     --opfa-body-bg: var(--bs-body-bg);
+
+    /* the login card. Transparent and square by default, which is the stock look; a theme gives
+       it a surface with these, and a min-height when it wants the actions pinned to its bottom
+       rather than sitting under the content (on a phone the viewport already does that). Set
+       them inside a media query to have any of it apply on one viewport only. */
     --opfa-card-border-color: var(--opfa-accent);
+    --opfa-card-bg: transparent;
+    --opfa-card-radius: 0;
+    --opfa-card-shadow: none;
+    --opfa-card-max-width: 400px;
+    --opfa-card-padding: 15px;
+    --opfa-card-min-height: auto;
 
     /* bootstrap compiles .btn-primary as literal hexes and reads --bs-primary nowhere */
     --opfa-primary: var(--opfa-accent);
@@ -37,14 +48,33 @@
     --opfa-primary-active: color-mix(in srgb, var(--opfa-primary) 80%, #000);
     --opfa-primary-disabled: var(--opfa-primary);
 
+    /* secondary button: bootstrap's own grey by default, and the same derivation, so a theme
+       that sets nothing here renders exactly as bootstrap does */
+    --opfa-secondary: #6c757d;
+    --opfa-secondary-contrast: #ffffff;
+    --opfa-secondary-border: var(--opfa-secondary);
+    --opfa-secondary-hover: color-mix(in srgb, var(--opfa-secondary) 85%, #000);
+    --opfa-secondary-active: color-mix(in srgb, var(--opfa-secondary) 80%, #000);
+    --opfa-secondary-disabled: var(--opfa-secondary);
+
+    /* what bootstrap paints its fields, menus and raised rows with, and the text on them */
+    --opfa-surface-bg: #ffffff;
+    --opfa-body-color: #212529;
+
     /* cards=true */
     --opfa-left-background: none;
     --opfa-cards-inset: 1.5em;
 
-    /* no --bs-* colour here: it would out-specify bootstrap's [data-bs-theme=dark] block
-       and pin the theme to light */
     --bs-body-font-family: var(--opfa-font-family);
     --bs-heading-color: var(--opfa-heading-color);
+}
+
+/* the two bootstrap colours the tokens above drive. Guarded rather than declared in :root,
+   which would out-specify bootstrap's own [data-bs-theme=dark] block and pin the theme to
+   light: this way dark mode still reaches them. */
+:root:not([data-bs-theme="dark"]) {
+    --bs-body-bg: var(--opfa-surface-bg);
+    --bs-body-color: var(--opfa-body-color);
 }
 
 
@@ -128,52 +158,63 @@ span.subtitle {
 .keycloak-card {
     border-top: 4px solid;
     border-color: var(--opfa-card-border-color);
+    border-radius: var(--opfa-card-radius);
+    background: var(--opfa-card-bg);
+    box-shadow: var(--opfa-card-shadow);
     width: 100%;
-    max-width: 400px;
-    padding: 15px;
+    max-width: var(--opfa-card-max-width);
+    min-height: var(--opfa-card-min-height);
+    padding: var(--opfa-card-padding);
     margin: 0 auto;
     position: relative;
+    display: flex;
+    flex-direction: column;
 
-    /* mobile/touch: the wrapper chain stretches so the action row pins to the bottom */
+    /* the chain that leaves the slack above the action row, so the actions sit at the bottom of
+       a card taller than its content: the viewport on a phone, a min-height on a desktop. With
+       neither there is no slack and nothing moves - except that flex does not collapse margins,
+       so the gap above a row grows by its own padding on the pages that had one. */
+    #kc-content,
+    #kc-content-wrapper,
+    #kc-form,
+    #kc-form-wrapper,
+    #kc-form-webauthn,
+    .content-area,
+    form,
+    /* a group wrapping a list of buttons is a chooser, not an action row */
+    .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)) {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)),
+    .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(> *:not(.btn, input[type="hidden"]))),
+    /* a button-only container claiming free space floats a split pair mid-card */
+    form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))),
+    #kc-form-buttons {
+        flex: 0;
+        margin-top: auto;
+        /* the gap to the block above, which an auto margin cannot give once the slack is gone */
+        padding-top: 1rem;
+    }
+
+    /* ...unless what sits above is the other half of a split pair */
+    .btn + form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
+        padding-top: 0;
+    }
+
+    /* the chain above would make a column of an action row; the margin is restated because
+       :has(> .btn ~ .btn) out-specifies the pin */
+    form.form-actions:not(:has(> *:not(.btn, input[type="hidden"]))),
+    :is(form, .form-group):has(> .btn ~ .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
+        flex-direction: row;
+        margin-top: auto;
+    }
+
+    /* the card fills a phone: there the viewport is the card */
     @media (hover: none), (max-width: 767.98px) {
-        &,
-        #kc-content,
-        #kc-content-wrapper,
-        #kc-form,
-        #kc-form-wrapper,
-        #kc-form-webauthn,
-        .content-area,
-        form,
-        /* a group wrapping a list of buttons is a chooser, not an action row */
-        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)) {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .form-group:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(ul)),
-        .form-actions:has(input[type=submit], input[type=button], button:not(.input-group > button)):not(:has(> *:not(.btn, input[type="hidden"]))),
-        /* a button-only container claiming free space floats a split pair mid-card */
-        form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))),
-        #kc-form-buttons {
-            flex: 0;
-            margin-top: auto;
-            /* the auto margin has no slack left on a page taller than the viewport */
-            padding-top: 1rem;
-        }
-
-        /* ...unless what sits above is the other half of a split pair */
-        .btn + form:has(> .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
-            padding-top: 0;
-        }
-
-        /* the chain above would make a column of an action row; the margin is restated
-           because :has(> .btn ~ .btn) out-specifies the pin */
-        form.form-actions:not(:has(> *:not(.btn, input[type="hidden"]))),
-        :is(form, .form-group):has(> .btn ~ .btn):not(:has(> *:not(.btn, input[type="hidden"]))) {
-            flex-direction: row;
-            margin-top: auto;
-        }
+        flex: 1;
     }
 }
 
@@ -303,18 +344,58 @@ input.form-check-input[type="checkbox"] {
     --bs-btn-disabled-border-color: var(--opfa-primary-disabled);
 }
 
-/* an action row, in the four shapes upstream builds one; the gate keeps a container that
-   also holds fields out of it. flex-column opts a row out. */
-/* upstream hardcodes patternfly classes here, so no kc*Class reaches them */
-.keycloak-recovery-codes-actions > button {
-    padding: 0.375rem 0.75rem;
-    border: 0;
-    background: none;
-    color: var(--bs-link-color);
-    text-decoration: underline;
-
-    > i[class^="pficon"] {
+/* 
+   an action row, in the four shapes upstream builds one; the gate keeps a container that
+   also holds fields out of it. flex-column opts a row out. the recovery-codes warning 
+   is patternfly markup: an icon that resolves to nothing, and a heading that is an 
+   h4 inside an alert 
+*/
+.alert:has(.pf-c-alert__description) {
+    > .pf-c-alert__icon {
         display: none;
+    }
+
+    > .pf-c-alert__title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.keycloak-recovery-codes-list {
+    font-family: var(--bs-font-monospace);
+    font-size: 0.8125rem;
+    > li > span:first-child {
+        color: var(--bs-secondary-color);
+    }
+}
+
+/* upstream hardcodes patternfly classes here, so no kc*Class reaches them */
+.keycloak-recovery-codes-actions {
+    justify-content: center;
+    gap: 1rem;
+    margin: 0.75rem 0 1.25rem;
+
+    > button {
+        padding: 0.25rem 0.5rem;
+        border: 0;
+        background: none;
+        color: var(--opfa-accent);
+        text-decoration: none;
+
+        &:hover,
+        &:focus-visible {
+            color: var(--opfa-accent-hover);
+            text-decoration: underline;
+        }
+
+        > i[class^="pficon"] {
+            display: none;
+        }
     }
 }
 
@@ -335,10 +416,48 @@ input.form-check-input[type="checkbox"] {
 }
 
 /* a container mixing fields in with its buttons cannot be a row: a line each instead */
-:is(form, .form-group):has(> .btn ~ .btn):has(> *:not(.btn, input[type="hidden"])) > .btn {
-    display: block;
-    width: 100%;
-    margin-top: 0.5rem;
+:is(form, .form-group):has(> .btn ~ .btn):has(> *:not(.btn, input[type="hidden"])) {
+    /* the pin's floor belongs above the buttons, not above the field this box happens to start
+       with, where it only spaces that field off whatever precedes the box */
+    padding-top: 0;
+
+    > .btn {
+        display: block;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    > .btn:not(.btn + .btn) {
+        margin-top: 1rem;
+    }
+}
+
+.btn-secondary {
+    --bs-btn-color: var(--opfa-secondary-contrast);
+    --bs-btn-bg: var(--opfa-secondary);
+    --bs-btn-border-color: var(--opfa-secondary-border);
+    --bs-btn-hover-color: var(--opfa-secondary-contrast);
+    --bs-btn-hover-bg: var(--opfa-secondary-hover);
+    --bs-btn-hover-border-color: var(--opfa-secondary-hover);
+    --bs-btn-active-color: var(--opfa-secondary-contrast);
+    --bs-btn-active-bg: var(--opfa-secondary-active);
+    --bs-btn-active-border-color: var(--opfa-secondary-active);
+    --bs-btn-disabled-color: var(--opfa-secondary-contrast);
+    --bs-btn-disabled-bg: var(--opfa-secondary-disabled);
+    --bs-btn-disabled-border-color: var(--opfa-secondary-disabled);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--opfa-secondary);
+    --bs-btn-border-color: var(--opfa-secondary-border);
+    --bs-btn-hover-color: var(--opfa-secondary-contrast);
+    --bs-btn-hover-bg: var(--opfa-secondary);
+    --bs-btn-hover-border-color: var(--opfa-secondary-border);
+    --bs-btn-active-color: var(--opfa-secondary-contrast);
+    --bs-btn-active-bg: var(--opfa-secondary-active);
+    --bs-btn-active-border-color: var(--opfa-secondary-active);
+    --bs-btn-disabled-color: var(--opfa-secondary);
+    --bs-btn-disabled-border-color: var(--opfa-secondary-disabled);
 }
 
 #kc-form-buttons,
@@ -347,7 +466,6 @@ input.form-check-input[type="checkbox"] {
     display: flex;
     flex-direction: row;
     gap: 1rem;
-    margin-top: 1rem;
 
     > * {
         flex: 1;
