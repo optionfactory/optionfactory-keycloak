@@ -4,7 +4,7 @@ A `bootstrap` login theme: keycloak's `base` templates with every `kc*Class` pro
 
 For visual inspection of every stock page rendered through this theme (and through derived themes), see [optionfactory-keycloak-themes-preview](../optionfactory-keycloak-themes-preview): `mvn test` writes the gallery, a `@Disabled` test serves it, and its aside edits this theme's `:root` tokens live in every frame at any viewport.
 
-`template.ftl` is upstream's `base/login/template.ftl` (26.7.2) plus a few **marker-wrapped hunks** — the macro signature is byte-identical to upstream, so keycloak upgrades are a re-diff, not a merge. All hunks are wrapped in `<#-- opfa:modification start/end -->` comments; all but one only add, the exception dropping upstream's `col-md-10` grid wrapper around the title of `displayRequiredFields` pages.
+`template.ftl` is upstream's `base/login/template.ftl` (26.7.2) plus a few **marker-wrapped hunks** — the macro signature is byte-identical to upstream, so keycloak upgrades are a re-diff, not a merge. All hunks are wrapped in `<#-- opfa:modification start/end -->` comments; all but two only add, the exceptions dropping upstream's two `col-md-10` grid wrappers on `displayRequiredFields` pages.
 
 ## Quick start
 
