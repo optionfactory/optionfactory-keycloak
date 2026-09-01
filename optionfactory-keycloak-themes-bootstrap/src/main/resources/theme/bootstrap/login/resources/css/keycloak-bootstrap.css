@@ -676,7 +676,7 @@ body:has(> .left) {
 
     > .footer-card {
         grid-column: 2;
-        margin: 40px var(--opfa-cards-inset) 0;
+        margin: auto var(--opfa-cards-inset) 40px var(--opfa-cards-inset);
 
         @media (max-width: 991px) {
             margin-left: 0;
