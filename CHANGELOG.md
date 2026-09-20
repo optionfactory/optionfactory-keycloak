@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.17
+
+- [NEW] authenticators: `opfa-verify-email-otp`, a required action replacing the built-in `VERIFY_EMAIL` where the magic link is a liability (mobile custom tabs: the link opens the default browser and the parked tab never resumes): the email carries a numeric code the user types into the still-open login tab. Codes are sha-256-hashed in the single-use object store, single-use, expire after `codeLifespanSeconds` (900), are invalidated after `maxAttempts` (5) failed submissions and resends are rate-limited by `resendCooldownSeconds` (30), with `codeLength` (6) rounding the config; a closed tab needs no recovery path, the action lives on the user so the next login re-prompts and accepts a still-valid code. The code protocol (hashed single-use codes in the single-use object store, attempts atomically claimed so the cap cannot be raced, putIfAbsent-claimed resend cooldown) is extracted into `otp.OtpCodes` for reuse by other one-time code flows
+
 ## 9.15
 
 - [FIX] themes-bootstrap: on the `displayRequiredFields` pages the page title sat 31px left of the card's centre from 768px up (register, idp-review-user-profile): upstream wraps it in a hardcoded `col-md-10`, a bootstrap-3 grid leftover that bootstrap 5 still reads as an 83% column, while the required-fields hint it used to sit beside is right-aligned above the title here. Both wrappers (title and show-username) are gone from `template.ftl`, making that fork's diff subtractive for the first time - two marked hunks to re-apply on a keycloak bump rather than a css workaround
