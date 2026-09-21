@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -95,8 +96,10 @@ import org.junit.jupiter.api.Assertions;
  * tablet or desktop viewport (which is what drives the theme's own media queries). Nothing is
  * written to a file - the panel hands back the css to paste into a stylesheet.
  *
- * The gallery must be served over http (module scripts are blocked from file:// origins):
- * {@link #serve()}, or python3 -m http.server -d target/theme-preview
+ * The gallery opens from the file system (target/&lt;output&gt;/index.html) as it is: module
+ * scripts - the one thing no browser loads from a {@code file://} origin - are rewritten away
+ * as pages are generated, and the editor reaches its frames over postMessage, which crosses
+ * those origins. {@link #serve()} still puts an url on it, for who prefers one.
  */
 public class LoginThemePreviewGenerator {
 
@@ -108,10 +111,32 @@ public class LoginThemePreviewGenerator {
             "passkeys", "saml-post-form"
     );
 
-    // the stock template's importmap points at keycloak's common theme for rfc4648;
-    // the webauthn scripts only use base64url.parse/stringify, satisfied by the
-    // rfc4648.js stub resource shipped in this module
-    private static final String RFC4648_STUB_RESOURCE = "rfc4648.js";
+    // module syntax at a glance: a line-level import/export or a dynamic import(
+    private static final Pattern MODULE_SYNTAX = Pattern.compile("(?m)^\\s*(import|export)\\b|\\bimport\\s*\\(");
+    private static final Pattern SCRIPT_TAG = Pattern.compile("(?s)<script\\b([^>]*)>(.*?)</script>");
+    private static final Pattern SRC_ATTRIBUTE = Pattern.compile("src=\"([^\"]+)\"");
+
+    // what the gallery's editor talks to: postMessage is the one channel that crosses
+    // file:// origins, where a parent cannot reach into its frames. The load-time blur
+    // is the page-side half of the gallery's scroll guard: an autofocused field would
+    // scroll the gallery to whichever frame loaded last.
+    private static final String EDITOR_BRIDGE = """
+            <script>
+            window.addEventListener("message", (event) => {
+                if (!event.data || event.data.type !== "preview-overrides") {
+                    return;
+                }
+                let style = document.getElementById("preview-overrides");
+                if (!style) {
+                    style = document.createElement("style");
+                    style.id = "preview-overrides";
+                    document.head.appendChild(style);
+                }
+                style.textContent = event.data.css;
+            });
+            window.addEventListener("load", () => document.activeElement && document.activeElement.blur());
+            </script>
+            """;
 
     // provider-supplied theme resources (ClasspathThemeResourceProviderFactory). Keycloak
     // consults these *after* the whole theme chain for templates and resources, and merges
@@ -325,10 +350,10 @@ public class LoginThemePreviewGenerator {
     }
 
     /**
-     * Generates the gallery, then serves it on port 8000 until the run is stopped. The frames are
-     * pages carrying module scripts, which no browser loads from a {@code file://} origin, so the
-     * gallery needs a server; this is that server, so nothing outside the build is needed to look
-     * at a theme. It blocks, which is what a {@code @Disabled} test is for:
+     * Generates the gallery, then serves it on port 8000 until the run is stopped. The gallery
+     * opens from the file system too, so this is a convenience rather than a requirement - an
+     * url for who prefers one, with nothing outside the build needed either way. It blocks,
+     * which is what a {@code @Disabled} test is for:
      *
      * <pre>
      * &#64;Test
@@ -447,20 +472,13 @@ public class LoginThemePreviewGenerator {
 
         var outDir = Path.of("target", outputDirectory != null ? outputDirectory : "theme-preview");
         Files.createDirectories(outDir);
-        // copy parent resources first so child theme files win; then stub the
-        // importmap module so the webauthn scripts resolve
+        // copy parent resources first so child theme files win
         var copyBases = new ArrayList<>(templateBases());
         Collections.reverse(copyBases);
         // provider resources first so theme files of the same name win
         copyResources(cl, THEME_RESOURCES_RESOURCES, outDir.resolve("resources"));
         for (String base : copyBases) {
             copyResources(cl, base + "/resources", outDir.resolve("resources"));
-        }
-        var rfc4648 = outDir.resolve(Path.of("resources", "vendor", "rfc4648", "rfc4648.js"));
-        Files.createDirectories(rfc4648.getParent());
-        try (InputStream is = cl.getResourceAsStream(RFC4648_STUB_RESOURCE)) {
-            Assertions.assertNotNull(is, RFC4648_STUB_RESOURCE + " not on classpath");
-            Files.copy(is, rfc4648, StandardCopyOption.REPLACE_EXISTING);
         }
 
         var pages = discoverPages(cl);
@@ -878,7 +896,49 @@ public class LoginThemePreviewGenerator {
         var html = sw.toString();
         Assertions.assertTrue(!html.isEmpty(), page + " rendered empty");
         Assertions.assertTrue(html.contains("data-page-id"), page + " missing layout wrapper");
-        Files.writeString(outDir.resolve(outputName + ".html"), html, StandardCharsets.UTF_8);
+        Files.writeString(outDir.resolve(outputName + ".html"), openableFromTheFileSystem(html, outDir), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Rewrites the module scripts of a rendered page so it opens from the file system:
+     * no browser loads modules from a {@code file://} origin, inline ones included when
+     * they import, which is why the gallery used to need a server. The import map goes
+     * first - nothing is left to import - then an importing script is dropped (the stock
+     * ones are behavioral: session polling, webauthn, passkeys; a preview is a still)
+     * while a module-free one keeps running, as a deferred classic script when external
+     * (the locale dropdown, the password toggle) or a plain inline one when not - and a
+     * module-free inline script stops being deferred, so one that touches the dom must
+     * sit at the end of the body, where keycloak emits page scripts, to keep working.
+     * The editor bridge ({@link #EDITOR_BRIDGE}) is injected before {@code </head>}.
+     */
+    private static String openableFromTheFileSystem(String html, Path outDir) throws IOException {
+        var rewritten = new StringBuilder();
+        var tags = SCRIPT_TAG.matcher(html);
+        while (tags.find()) {
+            var attrs = tags.group(1);
+            var body = tags.group(2);
+            if (attrs.contains("type=\"importmap\"")) {
+                tags.appendReplacement(rewritten, "");
+                continue;
+            }
+            if (!attrs.contains("type=\"module\"")) {
+                continue;
+            }
+            var src = SRC_ATTRIBUTE.matcher(attrs);
+            if (!src.find()) {
+                var replacement = MODULE_SYNTAX.matcher(body).find() ? "" : "<script>" + body + "</script>";
+                tags.appendReplacement(rewritten, Matcher.quoteReplacement(replacement));
+                continue;
+            }
+            var file = outDir.resolve(src.group(1).replaceFirst("^[.]/", "")).normalize();
+            var moduleFree = Files.isRegularFile(file) && !MODULE_SYNTAX.matcher(Files.readString(file, StandardCharsets.UTF_8)).find();
+            var replacement = moduleFree ? "<script src=\"" + src.group(1) + "\" defer></script>" : "";
+            tags.appendReplacement(rewritten, Matcher.quoteReplacement(replacement));
+        }
+        tags.appendTail(rewritten);
+        var openable = rewritten.toString();
+        var head = openable.indexOf("</head>");
+        return head < 0 ? EDITOR_BRIDGE + openable : openable.substring(0, head) + EDITOR_BRIDGE + openable.substring(head);
     }
 
     /**

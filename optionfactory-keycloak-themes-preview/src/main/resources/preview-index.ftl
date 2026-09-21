@@ -219,20 +219,10 @@
         return root + custom.value;
     };
 
-    /* same origin, so the frame's own document takes the override as a last stylesheet */
-    const paint = (frame) => {
-        const doc = frame.contentDocument;
-        if (!doc || !doc.body) {
-            return;
-        }
-        let style = doc.getElementById("preview-overrides");
-        if (!style) {
-            style = doc.createElement("style");
-            style.id = "preview-overrides";
-            doc.body.appendChild(style);
-        }
-        style.textContent = css();
-    };
+    /* the frames may be file:// documents, which a parent cannot reach into: each page
+       carries a listener (injected at generation time) that takes the css as a message
+       and adds it as a last stylesheet - postMessage crosses file:// origins */
+    const paint = (frame) => frame.contentWindow.postMessage({type: "preview-overrides", css: css()}, "*");
 
     const apply = () => {
         const [w, h] = viewport.value.split("x");
@@ -249,11 +239,15 @@
                 swatch.value = input.value.trim();
             }
         }
-        localStorage.setItem(KEY, JSON.stringify({
-            vars: Object.fromEntries(overrides()),
-            custom: custom.value,
-            viewport: viewport.value
-        }));
+        /* a file:// origin that refuses storage just loses the session */
+        try {
+            localStorage.setItem(KEY, JSON.stringify({
+                vars: Object.fromEntries(overrides()),
+                custom: custom.value,
+                viewport: viewport.value
+            }));
+        } catch (e) {
+        }
     };
 
     for (const row of rows) {
@@ -269,7 +263,20 @@
     }
     custom.addEventListener("input", apply);
     viewport.addEventListener("change", apply);
-    document.getElementById("copy").addEventListener("click", () => navigator.clipboard.writeText(css()));
+    /* the clipboard api is not there from every file:// origin: fall back to a
+       selected textarea, which works everywhere */
+    document.getElementById("copy").addEventListener("click", () => {
+        const text = css();
+        const select = () => {
+            const field = document.createElement("textarea");
+            field.value = text;
+            document.body.appendChild(field);
+            field.select();
+            document.execCommand("copy");
+            field.remove();
+        };
+        navigator.clipboard ? navigator.clipboard.writeText(text).catch(select) : select();
+    });
     document.getElementById("reset").addEventListener("click", () => {
         for (const row of rows) {
             row.querySelector("[data-role=value]").value = defaults.get(row.dataset.var);
@@ -279,22 +286,17 @@
     });
 
     /* frames are lazy: paint each as it arrives, and re-paint the whole wall on every edit.
-       Their autofocused fields would scroll the gallery to whichever frame loaded last, so the
-       focus is dropped and the page stays put until the reader moves it themselves. */
-    let readerMoved = false;
-    for (const event of ["wheel", "keydown", "mousedown", "touchstart"]) {
-        addEventListener(event, () => readerMoved = true, {passive: true});
-    }
+       The pages blur their own autofocus on load (the gallery cannot reach into a file://
+       frame to do it), so it stays put without help. */
     for (const frame of frames()) {
-        frame.addEventListener("load", () => {
-            const top = readerMoved ? window.scrollY : 0;
-            frame.contentDocument?.activeElement?.blur();
-            window.scrollTo(0, top);
-            paint(frame);
-        });
+        frame.addEventListener("load", () => paint(frame));
     }
 
-    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    let saved = {};
+    try {
+        saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    } catch (e) {
+    }
     for (const [name, value] of Object.entries(saved.vars || {})) {
         const input = document.getElementById("in-" + name);
         if (input) {
