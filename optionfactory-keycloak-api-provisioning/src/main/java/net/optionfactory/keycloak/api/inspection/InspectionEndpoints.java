@@ -3,6 +3,7 @@ package net.optionfactory.keycloak.api.inspection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -57,10 +59,10 @@ public class InspectionEndpoints {
     private static final QueryBuilder USERS_QUERY_TEMPLATE = new QueryBuilder(
             """
         with recursive group_path as (
-              select id, name, '/' || name as path from keycloak_group where parent_group = ' '
+              select id, name, '/' || name as path from keycloak_group where parent_group = ' ' and realm_id = ?
               union all
               select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id
-        )            
+        )
         select 
             id, username, email, first_name, last_name, 
             enabled, email_verified, created_timestamp, 
@@ -128,7 +130,7 @@ public class InspectionEndpoints {
     public Optional<UserResponse> user(@PathParam("id") String id) {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("id", new String[]{"EQ", "CASE_SENSITIVE", id}), List.of(), false, 0, 1, realmId);
+        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("id", new String[]{"EQ", "CASE_SENSITIVE", id}), List.of(), false, 0, 1, realmId, realmId);
         try {
             final var row = (Object[]) query.getSingleResult();
             return Optional.of(userFromRow(om, row));
@@ -145,7 +147,10 @@ public class InspectionEndpoints {
     public Optional<UserResponse> userByUsername(@QueryParam("username") String username) {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("username", new String[]{"EQ", "CASE_SENSITIVE", username}), List.of(), false, 0, 1, realmId);
+        // keycloak stores usernames lowercased: lowering the needle rather than the column keeps
+        // the (realm_id, username) unique index usable
+        final var needle = username == null ? null : username.toLowerCase(Locale.ROOT);
+        final var query = USERS_QUERY_TEMPLATE.create(em, Map.of("username", new String[]{"EQ", "CASE_SENSITIVE", needle}), List.of(), false, 0, 1, realmId, realmId);
         try {
             final var row = (Object[]) query.getSingleResult();
             return Optional.of(userFromRow(om, row));
@@ -172,11 +177,14 @@ public class InspectionEndpoints {
         final var realmId = session.getContext().getRealm().getId();
         final var em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
 
-        final var query = USERS_QUERY_TEMPLATE.create(em, filters, sort, !slice, offset, limit == 0 ? 0 : limit + 1, realmId);
+        // only a slice needs the extra row, to tell whether another page follows; a page knows its
+        // total from count(*) over() and must return exactly what was asked for
+        final var fetch = slice && limit != 0 ? limit + 1 : limit;
+        final var query = USERS_QUERY_TEMPLATE.create(em, filters, sort, !slice, offset, fetch, realmId, realmId);
         final AtomicInteger totalAcc = new AtomicInteger();
-        final List<UserResponse> chunk;
+        final List<UserResponse> rows;
         try (final var ress = ((Stream<Object[]>) query.getResultStream())) {
-            chunk = ress.map(row -> {
+            rows = ress.map(row -> {
                 if (!slice) {
                     totalAcc.set(((Number) row[11]).intValue());
                 }
@@ -187,14 +195,35 @@ public class InspectionEndpoints {
         final var rb = Response.ok()
                 .type(slice ? "application/slice+json" : "application/page+json");
 
-        if (!slice) {
-            return rb.entity(new PageResponse(chunk, totalAcc.get())).build();
+        if (slice) {
+            final var window = Window.of(rows.size(), limit);
+            return rb.entity(new SliceResponse(rows.subList(0, window.size()), window.last())).build();
         }
-        if (limit == 0) {
-            return rb.entity(new SliceResponse(chunk, false)).build();
+        // count(*) over() yields no row at all past the last page, which would report a total of
+        // zero: ask the first page for it instead
+        final var total = !rows.isEmpty() || offset == 0 ? totalAcc.get() : total(em, filters, realmId);
+        return rb.entity(new PageResponse(rows, total)).build();
+    }
+
+    private int total(EntityManager em, Map<String, String[]> filters, String realmId) {
+        final var query = USERS_QUERY_TEMPLATE.create(em, filters, List.of(), true, 0, 1, realmId, realmId);
+        try {
+            return ((Number) ((Object[]) query.getSingleResult())[11]).intValue();
+        } catch (NoResultException ex) {
+            return 0;
         }
-        final var sliceData = chunk.subList(0, Math.min(chunk.size(), limit));
-        return rb.entity(new SliceResponse(sliceData, sliceData.size() < limit)).build();
+    }
+
+    /// How many of the fetched rows belong to the response, and whether any follow. A slice
+    /// fetches one row more than asked for precisely so this can be answered; a limit of zero
+    /// means unbounded, so everything was returned.
+    record Window(int size, boolean last) {
+
+        static Window of(int fetched, int limit) {
+            final var last = limit == 0 || fetched <= limit;
+            return new Window(last ? fetched : limit, last);
+        }
+
     }
 
     private static UserResponse userFromRow(ObjectMapper om, Object[] row) {
@@ -281,29 +310,24 @@ public class InspectionEndpoints {
         final var realm = session.getContext().getRealm();
         final var group = Groups.search(session, realm, path);
         if (group == null) {
-            if (slice) {
-                rb.entity(new SliceResponse(List.of(), false));
-            }
-            return rb.entity(new PageResponse(List.of(), 0)).build();
+            return rb.entity(slice ? new SliceResponse(List.of(), true) : new PageResponse(List.of(), 0)).build();
         }
-        final List<GroupMember> chunk;
+        // one row more than asked for, the only way to know whether another page follows: the user
+        // provider offers no count
+        final List<GroupMember> rows;
         try (final var gms = session.users().getGroupMembersStream(realm, group, offset, limit == 0 ? null : limit + 1)) {
-            chunk = gms
+            rows = gms
                     .map(u -> new GroupMember(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()))
                     .toList();
         }
 
-        if (!slice) {
-            final var fakeSize = limit == 0
-                    ? chunk.size()
-                    : offset + limit + (chunk.size() > limit ? 1 : 0);
-            return rb.entity(new PageResponse(chunk, fakeSize)).build();
+        final var window = Window.of(rows.size(), limit);
+        final var data = rows.subList(0, window.size());
+        if (slice) {
+            return rb.entity(new SliceResponse(data, window.last())).build();
         }
-        if (limit == 0) {
-            return rb.entity(new SliceResponse(chunk, false)).build();
-        }
-        final var sliceData = chunk.subList(0, Math.min(chunk.size(), limit));
-        return rb.entity(new SliceResponse(sliceData, sliceData.size() < limit)).build();
+        // not a real total, just enough for a pager to offer the next page
+        return rb.entity(new PageResponse(data, offset + data.size() + (window.last() ? 0 : 1))).build();
     }
 
     @POST
