@@ -66,6 +66,26 @@ The libphonenumber jar is a `provided` dependency: keycloak does not ship it, so
 A search and provisioning api: `/admin/realms/{realm}/inspection/...` (filterable user/group queries) and `/admin/realms/{realm}/provisioning/...` (user provide/patch/wipe, group by-path management). Access is gated by the admin permission evaluator (`users().requireView()` / `requireManage()`).
 
 
+### Passwords
+
+`PUT`/`PATCH /provisioning/users` accept an optional `password`, in one of two forms - clear text, or a hash produced somewhere else:
+
+```json
+{
+    "id": "...", "username": "alice", "...": "...",
+    "password": {"value": "s3cret"}
+}
+```
+
+```json
+{
+    "id": "...", "username": "alice", "...": "...",
+    "password": {"algorithm": "pbkdf2-sha512", "hashIterations": 210000, "salt": "<base64>", "hash": "<base64>"}
+}
+```
+
+Exactly one form must be present, or the request is a `400` naming the offending field. Clear text is hashed with the realm's own algorithm and cost but is **not** checked against the realm's password policy: provisioning has to be able to carry over a password the policy would refuse to set today. A hash is stored as it arrives, so its algorithm and cost stay those of the source system until the user's first login, when keycloak re-hashes it under the realm policy. Setting a password replaces the existing one. To force a change at next login, add `UPDATE_PASSWORD` to `requiredActions`.
+
 ## optionfactory-keycloak-email-sender
 
 A replacement email sender allowing CID attachments.

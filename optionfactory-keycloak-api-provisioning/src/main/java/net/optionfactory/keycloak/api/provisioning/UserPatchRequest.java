@@ -16,6 +16,7 @@ public record UserPatchRequest(
         @Nullable List<String> groups,
         @Nullable PatchMode requiredActionsPatchMode,
         @Nullable List<String> requiredActions,
+        @Nullable PasswordRequest password,
         @Nullable Boolean enabled,
         @Nullable Boolean emailVerified) {
 

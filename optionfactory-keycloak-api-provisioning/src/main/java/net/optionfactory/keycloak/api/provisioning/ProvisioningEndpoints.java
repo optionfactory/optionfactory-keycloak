@@ -15,15 +15,19 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import net.optionfactory.keycloak.api.provisioning.UserPatchRequest.PatchMode;
 import net.optionfactory.keycloak.providers.model.Models;
 import net.optionfactory.keycloak.providers.validation.Problem;
 import org.keycloak.Config;
+import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
+import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.services.ErrorResponse;
@@ -40,8 +44,50 @@ public class ProvisioningEndpoints {
 
     private final KeycloakSession session;
 
+    /// keycloak reports these as attributes of the user alongside the custom ones, so a REPLACE patch
+    /// of unrelated attributes would list them as removals - and removing a root attribute nulls the
+    /// field itself, taking the name and the email with it.
+    private static final List<String> ROOT_ATTRIBUTES = List.of(
+            UserModel.USERNAME, UserModel.FIRST_NAME, UserModel.LAST_NAME, UserModel.EMAIL);
+
     public ProvisioningEndpoints(KeycloakSession session) {
         this.session = session;
+    }
+
+    /// A `BadRequestException` carrying an entity is returned by resteasy as it is and never reaches
+    /// keycloak's error handler, which is what would otherwise mark the transaction for rollback. Without
+    /// this the request answers 400 and still commits whatever it wrote before the rejection.
+    private BadRequestException badRequest(List<Problem> problems) {
+        session.getTransactionManager().setRollbackOnly();
+        return new BadRequestException(Response.status(Response.Status.BAD_REQUEST)
+                .type("application/failures+json")
+                .entity(problems)
+                .build());
+    }
+
+    /// The attributes a patch may add or remove: everything keycloak reports except the root ones.
+    static Map<String, List<String>> patchableAttributes(Map<String, List<String>> actual) {
+        final var attributes = new HashMap<>(actual);
+        ROOT_ATTRIBUTES.forEach(attributes::remove);
+        return attributes;
+    }
+
+    private void setPassword(RealmModel realm, UserModel user, PasswordRequest password) {
+        final var credential = password.encoded()
+                ? PasswordCredentialModel.createFromValues(password.algorithm(), password.decodedSalt(), password.hashIterations(), password.hash())
+                : hashed(realm, password.value());
+        user.credentialManager().createCredentialThroughProvider(credential);
+    }
+
+    /// The realm's policy picks the algorithm and the cost here, but never decides whether the password
+    /// is acceptable: that check belongs to the flows a person goes through, not to provisioning.
+    private PasswordCredentialModel hashed(RealmModel realm, String clearText) {
+        final var policy = realm.getPasswordPolicy();
+        final var configured = policy == null || policy.getHashAlgorithm() == null
+                ? null
+                : session.getProvider(PasswordHashProvider.class, policy.getHashAlgorithm());
+        final var hasher = configured == null ? session.getProvider(PasswordHashProvider.class) : configured;
+        return hasher.encodedCredential(clearText, policy == null ? -1 : policy.getHashIterations());
     }
 
     @DELETE
@@ -50,11 +96,7 @@ public class ProvisioningEndpoints {
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void wipe(List<String> ids) {
         if (ids == null) {
-            final var response = Response.status(Response.Status.BAD_REQUEST)
-                    .type("application/failures+json")
-                    .entity(List.of(new Problem("FIELD_ERROR", "ids", "must not be null")))
-                    .build();
-            throw new BadRequestException(response);
+            throw badRequest(List.of(new Problem("FIELD_ERROR", "ids", "must not be null")));
         }
 
         final RealmModel realm = session.getContext().getRealm();
@@ -72,7 +114,7 @@ public class ProvisioningEndpoints {
     @Consumes(MediaType.APPLICATION_JSON)
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void provide(UserProvisioningRequest req) {
-        final var problems = new ArrayList<>();
+        final var problems = new ArrayList<Problem>();
         if (req.id() == null || req.id().isBlank()) {
             problems.add(new Problem("FIELD_ERROR", "id", "must not be blank"));
         }
@@ -97,13 +139,17 @@ public class ProvisioningEndpoints {
         if (req.requiredActions() == null) {
             problems.add(new Problem("FIELD_ERROR", "requiredActions", "must not be null"));
         }
+        if (req.enabled() == null) {
+            problems.add(new Problem("FIELD_ERROR", "enabled", "must not be null"));
+        }
+        if (req.emailVerified() == null) {
+            problems.add(new Problem("FIELD_ERROR", "emailVerified", "must not be null"));
+        }
+        if (req.password() != null) {
+            problems.addAll(req.password().problems("password"));
+        }
         if (!problems.isEmpty()) {
-            final var response = Response.status(Response.Status.BAD_REQUEST)
-                    .type("application/failures+json")
-                    .entity(problems)
-                    .build();
-            throw new BadRequestException(response);
-
+            throw badRequest(problems);
         }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -111,11 +157,15 @@ public class ProvisioningEndpoints {
         final UserModel user = Optional.ofNullable(users.getUserById(realm, req.id()))
                 .orElseGet(() -> users.addUser(realm, req.id(), req.username(), true, true));
 
+        user.setUsername(req.username());
         user.setFirstName(req.firstName());
         user.setLastName(req.lastName());
         user.setEnabled(req.enabled());
         user.setEmail(req.email());
         user.setEmailVerified(req.emailVerified());
+        if (req.password() != null) {
+            setPassword(realm, user, req.password());
+        }
         for (final var entry : req.attributes().entrySet()) {
             user.setAttribute(entry.getKey(), entry.getValue());
         }
@@ -133,11 +183,10 @@ public class ProvisioningEndpoints {
     // mapped to be http://localhost:8080/admin/realms/{realm}/provisioning/users
     public void patch(UserPatchRequest req) {
         if (req.id() == null || req.id().isBlank()) {
-            final var response = Response.status(Response.Status.BAD_REQUEST)
-                    .type("application/failures+json")
-                    .entity(List.of(new Problem("FIELD_ERROR", "id", "must not be blank")))
-                    .build();
-            throw new BadRequestException(response);
+            throw badRequest(List.of(new Problem("FIELD_ERROR", "id", "must not be blank")));
+        }
+        if (req.password() != null && !req.password().problems("password").isEmpty()) {
+            throw badRequest(req.password().problems("password"));
         }
         final RealmModel realm = session.getContext().getRealm();
         final UserProvider users = session.users();
@@ -163,9 +212,12 @@ public class ProvisioningEndpoints {
         if (req.emailVerified() != null) {
             user.setEmailVerified(req.emailVerified());
         }
+        if (req.password() != null) {
+            setPassword(realm, user, req.password());
+        }
         if (req.attributes() != null) {
             final var mode = req.attributesPatchMode() == null ? PatchMode.REPLACE : req.attributesPatchMode();
-            final var actual = user.getAttributes();
+            final var actual = patchableAttributes(user.getAttributes());
             final var desired = req.attributes();
             final var attributes = Patch.ofMap(mode, actual, desired);
 

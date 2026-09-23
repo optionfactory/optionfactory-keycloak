@@ -1,5 +1,6 @@
 package net.optionfactory.keycloak.api.provisioning;
 
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,9 @@ public record UserProvisioningRequest(
         /*@NotNull*/ Map<String, List<String>> attributes,
         /*@NotNull*/ List<String> groups,
         /*@NotNull*/ List<String> requiredActions,
-        boolean enabled,
-        boolean emailVerified) {
+        @Nullable PasswordRequest password,
+        // boxed on purpose: a primitive would silently default a missing field to false and disable the user
+        /*@NotNull*/ Boolean enabled,
+        /*@NotNull*/ Boolean emailVerified) {
 
 }
