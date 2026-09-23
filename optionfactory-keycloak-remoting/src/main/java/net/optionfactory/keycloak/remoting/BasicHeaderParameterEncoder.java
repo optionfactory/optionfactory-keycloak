@@ -16,7 +16,9 @@ public class BasicHeaderParameterEncoder {
     );
 
     public static String encode(String source) {
-        if (SEPARATORS.stream().noneMatch(k -> source.contains("" + k))) {
+        // a value is a token or a quoted string, and a token has at least one character: nothing is the
+        // one value that has to be quoted despite carrying no separator
+        if (!source.isEmpty() && SEPARATORS.stream().noneMatch(k -> source.contains("" + k))) {
             return source;
         }
         String translated = source;

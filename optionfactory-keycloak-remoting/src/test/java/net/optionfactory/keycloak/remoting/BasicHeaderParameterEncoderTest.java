@@ -1,5 +1,8 @@
 package net.optionfactory.keycloak.remoting;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicHeaderElement;
+import org.apache.http.message.BasicNameValuePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -44,5 +47,20 @@ public class BasicHeaderParameterEncoderTest {
     public void attackerCannotBreakOutOfTheQuotedString() {
         final var encoded = BasicHeaderParameterEncoder.encode("a\"\r\nX-Injected: 1");
         Assertions.assertEquals("\"a\\\"\\r\\nX-Injected: 1\"", encoded);
+    }
+    @Test
+    public void nothingIsEncodedAsAnEmptyQuotedString() {
+        // bare 'filename=' is not a legal parameter: a token cannot be empty
+        Assertions.assertEquals("\"\"", BasicHeaderParameterEncoder.encode(""));
+    }
+
+    @Test
+    public void anEmptyValueSurvivesIntoTheHeader() {
+        final var element = new BasicHeaderElement("form-data", null, new NameValuePair[]{
+            new BasicNameValuePair("name", BasicHeaderParameterEncoder.encode("field")),
+            new BasicNameValuePair("filename", BasicHeaderParameterEncoder.encode(""))
+        });
+
+        Assertions.assertEquals("form-data; name=field; filename=\"\"", element.toString());
     }
 }
