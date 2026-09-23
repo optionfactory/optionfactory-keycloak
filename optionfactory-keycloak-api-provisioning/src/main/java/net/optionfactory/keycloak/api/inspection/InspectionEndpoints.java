@@ -59,9 +59,9 @@ public class InspectionEndpoints {
     private static final QueryBuilder USERS_QUERY_TEMPLATE = new QueryBuilder(
             """
         with recursive group_path as (
-              select id, name, '/' || name as path from keycloak_group where parent_group = ' ' and realm_id = ?
+              select id, name, '/' || name as path from keycloak_group where parent_group = ' ' and realm_id = ? and type = 0
               union all
-              select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id
+              select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id where g.type = 0
         )
         select 
             id, username, email, first_name, last_name, 
@@ -89,8 +89,8 @@ public class InspectionEndpoints {
             {CONDITIONS}
         {ORDER_CLAUSE}
         """)
-            // qualified: user_entity is joined in and exposes an id of its own
-            .filter(new TextFilter("id", "gp.id"))
+            .orderedBy("id")
+            .filter(new TextFilter("id", "id"))
             .filter(new TextFilter("username", "username"))
             .filter(new TextFilter("email", "email"))
             .filter(new TextFilter("firstName", "first_name"))
@@ -253,9 +253,9 @@ public class InspectionEndpoints {
     private static final QueryBuilder GROUPS_QUERY_TEMPLATE = new QueryBuilder(
             """
             with recursive group_path as (
-                select id, name, '/' || name as path from keycloak_group where parent_group = ' ' and realm_id = ?
+                select id, name, '/' || name as path from keycloak_group where parent_group = ' ' and realm_id = ? and type = 0
                 union all
-                select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id
+                select g.id, g.name, gp.path || '/' || g.name as path from keycloak_group g inner join group_path gp on g.parent_group = gp.id where g.type = 0
             )            
             select gp.id, gp.name, gp.path, coalesce(jsonb_object_agg(ue.username, ue.id) filter (where ue.id is not null), '{}'::jsonb) as members
             from group_path gp
@@ -266,7 +266,8 @@ public class InspectionEndpoints {
             group by gp.id, gp.name, gp.path
             {ORDER_CLAUSE}
             """)
-            .filter(new TextFilter("id", "id"))
+            // qualified: this query joins user_entity, which exposes an id of its own
+            .filter(new TextFilter("id", "gp.id"))
             .filter(new TextFilter("name", "name"))
             .filter(new TextFilter("path", "path"))
             .sorter("id", "id")

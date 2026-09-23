@@ -15,7 +15,8 @@ public class Groups {
         if (groupPath == null || groupPath.isBlank() || groupPath.equals("/")) {
             throw badPath("must not be blank");
         }
-        final var groupNames = KeycloakModelUtils.splitPath(groupPath, true);
+        // the same convention findGroupByPath uses, so a path that creates a group also finds it again
+        final var groupNames = KeycloakModelUtils.splitPath(groupPath, KeycloakModelUtils.escapeSlashesInGroupPath(session));
         if (groupNames.length == 0) {
             // e.g. '//': both slashes are stripped and nothing remains
             throw badPath("must not be blank");

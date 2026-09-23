@@ -23,6 +23,9 @@ public record GroupFilter(String name, String alias) implements AllowedFilter {
         Parsers.ensure(values.length >= 2, name(), "Expected at least 2 values: [OP,...VALUES], got %s", Arrays.toString(values));
         final var operator = Parsers.enumeration(Operator.class, values[0], name());
         final var params = Arrays.copyOfRange(values, 1, values.length);
+        // the others all branch on null; here a null would bind as an untyped null inside array[...],
+        // which postgres cannot assign a type to
+        Parsers.ensure(Stream.of(params).allMatch(v -> v != null), name(), "values must not be null, got %s", Arrays.toString(values));
         // ?| array['b', 'd'] (any) jsonb_exists_any
         // ?& array['a', 'b'] (all) jsonb_exists_all
         return new ConfiguredFilter(

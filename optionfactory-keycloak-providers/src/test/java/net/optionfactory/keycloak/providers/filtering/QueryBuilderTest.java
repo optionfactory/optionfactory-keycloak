@@ -70,6 +70,10 @@ public class QueryBuilderTest {
         }
     }
 
+    private static final QueryBuilder ORDERED = new QueryBuilder("select id from user_entity u where realm_id = ? {CONDITIONS} {ORDER_CLAUSE} {COUNT_OVER_TOTAL}")
+            .orderedBy("id")
+            .sorter("username", "u.username");
+
     private static final QueryBuilder USERS = new QueryBuilder("select id from user_entity u where realm_id = ? {CONDITIONS} {ORDER_CLAUSE} {COUNT_OVER_TOTAL}")
             .filter(new TextFilter("username", "u.username"))
             .filter(new BooleanFilter("enabled", "u.enabled"))
@@ -172,5 +176,34 @@ public class QueryBuilderTest {
         USERS.create(em.proxy(), requested, List.of(), false, 0, 0, "realm-x");
 
         Assertions.assertFalse(em.query.sql.contains("hacker"));
+    }
+    @Test
+    public void aWindowWithoutASortGetsTheDefaultOrder() {
+        // offset and limit over an unordered scan can repeat a row on two pages, or skip it
+        final var em = new RecordedEm();
+
+        ORDERED.create(em.proxy(), Map.of(), List.of(), false, 0, 25, "realm-x");
+
+        Assertions.assertTrue(em.query.sql.contains("order by id"), em.query.sql);
+    }
+
+    @Test
+    public void anExplicitSortWins() {
+        final var em = new RecordedEm();
+
+        ORDERED.create(em.proxy(), Map.of(), List.of("username,DESC"), false, 0, 25, "realm-x");
+
+        Assertions.assertTrue(em.query.sql.contains("order by u.username DESC"), em.query.sql);
+        Assertions.assertFalse(em.query.sql.contains("order by id"), em.query.sql);
+    }
+
+    @Test
+    public void anUnwindowedQueryIsLeftUnordered() {
+        // nothing is paged over, so imposing a sort would only cost time and change what callers see
+        final var em = new RecordedEm();
+
+        ORDERED.create(em.proxy(), Map.of(), List.of(), false, 0, 0, "realm-x");
+
+        Assertions.assertFalse(em.query.sql.contains("order by"), em.query.sql);
     }
 }

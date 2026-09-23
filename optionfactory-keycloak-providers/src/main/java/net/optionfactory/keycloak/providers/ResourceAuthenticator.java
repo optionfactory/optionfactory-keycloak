@@ -33,10 +33,9 @@ public interface ResourceAuthenticator {
         authorized(roleClient != null, "Required client '%s' does not exist", clientName);
         final var role = session.roles().getClientRole(roleClient, roleName);
         authorized(role != null, "Required realm role '%s' does not exist", roleName);
-        try (var clientRoleMappings = sa.getClientRoleMappingsStream(roleClient)) {
-            final var hasRole = RoleUtils.hasRole(clientRoleMappings, role);
-            authorized(hasRole, "Service account does not have required realm role '%s'", roleName);
-        }
+        // hasRole answers the question actually being asked: keycloak expands composites and walks group
+        // membership, where getClientRoleMappingsStream reports only what is assigned directly
+        authorized(sa.hasRole(role), "Service account does not have required realm role '%s'", roleName);
     }
 
     public static void authenticated(boolean test, String message, Object... args) {

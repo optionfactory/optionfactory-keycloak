@@ -14,9 +14,18 @@ public class QueryBuilder {
     private final Map<String, AllowedFilter> allowedFilters = new HashMap<>();
     private final Map<String, String> allowedSorters = new HashMap<>();
     private final String template;
+    private String defaultOrder;
 
     public QueryBuilder(String template) {
         this.template = template;
+    }
+
+    /// The order to impose when a caller asks for a window without saying how to sort it. Offset and limit
+    /// over an unordered scan are free to return a row on two pages, or on none: postgres makes no promise
+    /// about the order of rows it has not been asked to sort.
+    public QueryBuilder orderedBy(String alias) {
+        this.defaultOrder = alias;
+        return this;
     }
 
     public QueryBuilder filter(AllowedFilter allowedFilter) {
@@ -55,7 +64,10 @@ public class QueryBuilder {
 
         final var sorters = Parsers.sorters(allowedSorters, requestedSorters);
 
-        final var orderClause = sorters.isEmpty() ? "" : String.format("order by %s", sorters.stream().map(s -> String.format("%s %s", s.alias(), s.dir())).collect(Collectors.joining(",")));
+        final var paginated = offset != 0 || limit != 0;
+        final var orderClause = sorters.isEmpty()
+                ? (paginated && defaultOrder != null ? String.format("order by %s", defaultOrder) : "")
+                : String.format("order by %s", sorters.stream().map(s -> String.format("%s %s", s.alias(), s.dir())).collect(Collectors.joining(",")));
 
         final var qs = template
                 .replace("{COUNT_OVER_TOTAL}", countOverTotal ? ", count(*) over() as total" : "")
