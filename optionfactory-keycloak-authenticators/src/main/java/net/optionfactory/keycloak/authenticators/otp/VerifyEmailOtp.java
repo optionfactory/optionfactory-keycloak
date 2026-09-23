@@ -133,7 +133,6 @@ public class VerifyEmailOtp implements RequiredActionProvider {
                     .createForm(FORM_TEMPLATE);
         }
         final var code = OtpGenerator.of(OtpGenerator.Mode.RANDOM, null, settings.codeLength()).generate();
-        OtpCodes.put(store, codeKey(context.getUser().getId(), context.getUser().getEmail()), code, settings.codeLifespanSeconds(), now);
         final var event = context.getEvent().clone().event(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, context.getUser().getEmail());
         try {
             context.getSession().getProvider(EmailTemplateProvider.class)
@@ -141,8 +140,6 @@ public class VerifyEmailOtp implements RequiredActionProvider {
                     .setRealm(context.getRealm())
                     .setUser(context.getUser())
                     .send("emailVerificationSubject", "opfa-email-verification.ftl", Map.of("code", code));
-            event.success();
-            return null;
         } catch (EmailException e) {
             event.clone().detail(Details.REASON, e.getMessage()).user(context.getUser()).error(Errors.EMAIL_SEND_FAILED);
             logger.error("failed to send email verification code", e);
@@ -151,6 +148,12 @@ public class VerifyEmailOtp implements RequiredActionProvider {
                     .setError(Messages.EMAIL_SENT_ERROR)
                     .createErrorPage(Response.Status.INTERNAL_SERVER_ERROR);
         }
+        // stored only once the mail is on its way. Storing first would let a failed send destroy the code
+        // the user already has in their inbox - still valid, still the only one they were ever sent - and
+        // leave them waiting out the cooldown for a replacement that never arrived
+        OtpCodes.put(store, codeKey(context.getUser().getId(), context.getUser().getEmail()), code, settings.codeLifespanSeconds(), now);
+        event.success();
+        return null;
     }
 
     private void verifyCode(RequiredActionContext context, String submitted) {
