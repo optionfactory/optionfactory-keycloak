@@ -75,6 +75,7 @@ public class HttpClients {
         private HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
         private Duration connectTimeout = Duration.ofSeconds(3);
         private Duration socketTimeout = Duration.ofSeconds(30);
+        private Duration connectionRequestTimeout = Duration.ofMinutes(2);
         private boolean followRedirects = false;
         private CookieStore cookieStore;
 
@@ -154,14 +155,28 @@ public class HttpClients {
         }
 
         public Builder timeouts(Duration connectTimeout, Duration socketTimeout) {
+            return timeouts(connectTimeout, socketTimeout, this.connectionRequestTimeout);
+        }
+
+        /**
+         * The third timeout bounds the wait for a connection from the pool, which
+         * the other two never reach: a thread queued for a slot has no socket yet.
+         * Left unset it is -1, which the pool reads as "wait forever", so a route
+         * whose connections are all leaked never fails, it stops answering.
+         */
+        public Builder timeouts(Duration connectTimeout, Duration socketTimeout, Duration connectionRequestTimeout) {
             if (connectTimeout == null || connectTimeout.isNegative() || connectTimeout.isZero()) {
                 throw new IllegalArgumentException("connectTimeout must be positive");
             }
             if (socketTimeout == null || socketTimeout.isNegative() || socketTimeout.isZero()) {
                 throw new IllegalArgumentException("socketTimeout must be positive");
             }
+            if (connectionRequestTimeout == null || connectionRequestTimeout.isNegative() || connectionRequestTimeout.isZero()) {
+                throw new IllegalArgumentException("connectionRequestTimeout must be positive");
+            }
             this.connectTimeout = connectTimeout;
             this.socketTimeout = socketTimeout;
+            this.connectionRequestTimeout = connectionRequestTimeout;
             return this;
         }
 
@@ -210,6 +225,7 @@ public class HttpClients {
                         .setDefaultRequestConfig(RequestConfig.custom()
                                 .setConnectTimeout((int) connectTimeout.toMillis())
                                 .setSocketTimeout((int) socketTimeout.toMillis())
+                                .setConnectionRequestTimeout((int) connectionRequestTimeout.toMillis())
                                 .build())
                         .setDefaultSocketConfig(SocketConfig.custom().setSoKeepAlive(true).build())
                         .addInterceptorLast((HttpRequest hr, HttpContext hc) -> {
