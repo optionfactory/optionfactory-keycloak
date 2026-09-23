@@ -50,6 +50,19 @@ public class OnlineAccessEndpoints {
         this.tokenDurationInSeconds = tokenDurationInSeconds;
     }
 
+    /// Where a link may send the browser: the issuing client's own redirect uris, plus whatever the calling
+    /// client's `online-access` role lists in its `redirect_uri` attribute. The calling client's id does not
+    /// belong here - it names a client, it is not a uri - and only ever sat in the set because the block that
+    /// collects *authorized clients* is built the same way, where the id does belong.
+    static Set<String> validRedirects(ClientModel caller, ClientModel issuer) {
+        return Stream.concat(
+                issuer.getRedirectUris().stream(),
+                Optional.ofNullable(caller.getRole(REQUIRED_ROLE))
+                        .map(r -> Models.attribute(r, "redirect_uri").stream())
+                        .orElse(Stream.of()))
+                .collect(Collectors.toSet());
+    }
+
     public static class IssuedForContainsAuthorizedClient implements Predicate<JsonWebToken> {
 
         private final Set<String> authorizedClients;
@@ -148,13 +161,7 @@ public class OnlineAccessEndpoints {
             if (otherClient == null) {
                 throw new ForbiddenException("invalid at client");
             }
-            final var validRedirectsFromClient = otherClient.getRedirectUris();
-            final var validRedirectsFromRole = Stream.concat(Stream.of(client.getClientId()), Optional.ofNullable(client.getRole(REQUIRED_ROLE))
-                    .map(r -> Models.attribute(r, "redirect_uri").stream())
-                    .orElse(Stream.of()))
-                    .toList();
-
-            final var validRedirects = Stream.concat(validRedirectsFromClient.stream(), validRedirectsFromRole.stream()).collect(Collectors.toSet());
+            final var validRedirects = validRedirects(client, otherClient);
 
             final var verifiedRedirectUri = RedirectUtils.verifyRedirectUri(session, otherClient.getRootUrl(), redirectUri, validRedirects, true);
             if (verifiedRedirectUri == null) {
