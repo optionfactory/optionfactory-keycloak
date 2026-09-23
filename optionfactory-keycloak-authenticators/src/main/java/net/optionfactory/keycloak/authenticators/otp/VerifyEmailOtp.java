@@ -29,15 +29,10 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
-/// Replaces the built-in `VERIFY_EMAIL` required action. To switch a realm over:
-///
-/// - disable the built-in "Verify Email" action and turn the realm's "Verify email" login toggle off: the toggle
-///   makes `RegistrationPassword` defer the password until the email is verified, a mode that expects the built-in
-///   link flow and would leave users verified here without a password
-/// - enable this action and set it as a default action so it is attached to users at registration;
-///   `evaluateTriggers` re-attaches it at every login while the email is unverified, brokered users included
-/// - strip any pending `VERIFY_EMAIL` from existing unverified users first: a required action without a provider
-///   fails the login
+/// Replaces the built-in `VERIFY_EMAIL` required action with a code typed into the login tab. Switching a realm
+/// over takes three steps, in the readme: disable the built-in action, turn the realm's "Verify email" toggle off
+/// (it expects the link flow), and strip any pending `VERIFY_EMAIL` from existing users, since a required action
+/// without a provider fails the login.
 public class VerifyEmailOtp implements RequiredActionProvider {
 
     public static VerifyEmailOtp SINGLETON = new VerifyEmailOtp();

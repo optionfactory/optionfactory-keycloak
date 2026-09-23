@@ -7,15 +7,11 @@ import java.util.List;
 import net.optionfactory.keycloak.providers.validation.Problem;
 
 /// A password to set on a user, in one of two forms: `value` alone carries clear text, while `algorithm`,
-/// `hashIterations` and `hash` carry one already hashed somewhere else, with `salt` where the algorithm
-/// keeps it apart from the hash. Bcrypt and the like embed cost and salt in the hash itself and are sent
-/// without a salt, exactly as keycloak's own export writes them.
+/// `hashIterations` and `hash` carry one already hashed elsewhere, with `salt` only where the algorithm keeps
+/// it apart from the hash - bcrypt and the like embed their own and send none, as keycloak's own export does.
 ///
-/// Clear text is hashed with the realm's own algorithm and cost, but is deliberately not checked
-/// against the realm's password policy: provisioning has to be able to carry over a password the
-/// policy would refuse to accept today. An already hashed password is stored as it arrives, so its
-/// algorithm and cost are whatever the source system used; keycloak re-hashes it with the realm's
-/// policy the first time the user logs in with it.
+/// Clear text is hashed with the realm's algorithm and cost but never measured against its password policy:
+/// provisioning has to carry over passwords the policy would refuse today.
 public record PasswordRequest(
         @Nullable String value,
         @Nullable String algorithm,

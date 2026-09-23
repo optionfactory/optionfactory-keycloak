@@ -27,21 +27,17 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.validation.Validation;
 
 /// Swaps the browser identity when the authorization request carries `impersonate=<userId>`, and restores the
-/// operator when it carries `deimpersonate`. Configure as the first `ALTERNATIVE` of a cloned browser flow bound to
-/// the target client: with neither parameter the execution is `attempted()` and the normal flow is untouched.
+/// operator when it carries `deimpersonate`. Configure as the first `ALTERNATIVE` of a cloned browser flow bound
+/// to the target client: with neither parameter the execution is `attempted()` and the normal flow is untouched.
 ///
-/// The operator is proven by the identity cookie, validated independently of flow ordering (the same call the built-in
-/// cookie authenticator makes): a parameter without a valid session is a no-op, never a bypass. A role-less holder of
-/// the parameter also falls through to a normal login (typically the impersonated customer after a refresh with a
-/// lingering parameter), so the flow degrades gracefully instead of dead-ending. Holders of the operator role are never
-/// impersonable themselves, nor are targets holding the optional `forbiddenRole`.
+/// The operator is proven by the identity cookie, validated independently of flow ordering, so a parameter
+/// without a valid session is a no-op rather than a bypass; a role-less holder falls through to a normal login
+/// instead of dead-ending, which is what a lingering parameter after a refresh looks like.
 ///
-/// While impersonating, the browser SSO cookie belongs to the target: any other tab in that browser doing a silent SSO
-/// check resolves to the target until `deimpersonate` runs. The swap removes the current session server-side (the
-/// operator's, or a previous impersonation's when chaining) so nothing is left orphaned; an inline backchannel logout is
-/// impossible mid-flow because the root authentication session the flow executes in shares its id with the cookie user
-/// session and would be deleted underneath it, so the old session's access tokens live out their expiry (its refresh
-/// tokens die with the session) and clients receive no backchannel notification.
+/// While impersonating, the browser's SSO cookie belongs to the target: any other tab doing a silent SSO check
+/// resolves to the target until `deimpersonate` runs. The swap hands the cookie's session to the target in place
+/// rather than replacing it - see `restart` for why the obvious removal cannot work - so nothing is orphaned and
+/// the previous holder's refresh tokens die with it, while its access tokens live out their expiry.
 public class ImpersonationAuthenticator implements Authenticator {
 
     public static ImpersonationAuthenticator SINGLETON = new ImpersonationAuthenticator();
