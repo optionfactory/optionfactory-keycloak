@@ -48,16 +48,15 @@ A user profile validator backed by libphonenumber, configured on an attribute's 
     "name": "phone",
     "validations": {
         "phonenumber": {
-            "default-region": "IT",
             "allowed-types": ["MOBILE", "FIXED_LINE_OR_MOBILE"]
         }
     }
 }
 ```
 
-Numbers in international `+CC` format always parse; national formats need `default-region`, an ISO 3166-1 alpha-2 code. `allowed-types` narrows the accepted `PhoneNumberType`s and defaults to `MOBILE` and `FIXED_LINE_OR_MOBILE`. Blank values are skipped, so whether the attribute is mandatory stays the user profile's business.
+Only the canonical E.164 form is accepted: `+`, country code, digits, nothing else. A national number, a `00` prefix, spaces or separators are all refused, and the `error-phone-number-not-canonical` error carries the canonical spelling so the form can show it. A validator cannot rewrite what it validates, so refusing is what makes the stored value canonical - for the admin api and provisioning as much as for a login form. `allowed-types` narrows the accepted `PhoneNumberType`s and defaults to `MOBILE` and `FIXED_LINE_OR_MOBILE`. Blank values are skipped, so whether the attribute is mandatory stays the user profile's business.
 
-An unknown region or type name is reported when the configuration is saved, as a plain `400` naming the offending value - keycloak never localizes validator config errors, its own validators included. At validation time an unknown type name matches nothing rather than throwing, so a configuration that slipped in unvalidated (a partial import, say) cannot turn a login form into a 500. The `error-invalid-phone-number` and `error-invalid-phone-number-type` messages ship as `theme-resources/messages/`, so every login theme resolves them, this project's themes or not.
+An unknown type name is reported when the configuration is saved, as a plain `400` naming the offending value - keycloak never localizes validator config errors, its own validators included. At validation time an unknown type name matches nothing rather than throwing, so a configuration that slipped in unvalidated (a partial import, say) cannot turn a login form into a 500. The `error-invalid-phone-number`, `error-invalid-phone-number-type` and `error-phone-number-not-canonical` messages ship as `theme-resources/messages/`, so every login theme resolves them, this project's themes or not.
 
 The libphonenumber jar is a `provided` dependency: keycloak does not ship it, so it has to sit next to the provider jar in `providers/` - the docker image stages it there, reading the version out of this project's pom so the two cannot drift.
 
