@@ -180,7 +180,7 @@ public class InspectionEndpoints {
 
         // only a slice needs the extra row, to tell whether another page follows; a page knows its
         // total from count(*) over() and must return exactly what was asked for
-        // at the maximum there is no room for the extra row, and no page beyond it either
+        // limit + 1 overflows at the maximum, where there is no page beyond anyway
         final var fetch = slice && limit != 0 && limit != Integer.MAX_VALUE ? limit + 1 : limit;
         final var query = USERS_QUERY_TEMPLATE.create(em, filters, sort, !slice, offset, fetch, realmId, realmId);
         final AtomicInteger totalAcc = new AtomicInteger();
@@ -315,8 +315,7 @@ public class InspectionEndpoints {
         if (group == null) {
             return rb.entity(slice ? new SliceResponse(List.of(), true) : new PageResponse(List.of(), 0)).build();
         }
-        // one row more than asked for, the only way to know whether another page follows: the user
-        // provider offers no count
+        // one row more than asked for: the user provider offers no count to tell us otherwise
         final List<GroupMember> rows;
         try (final var gms = session.users().getGroupMembersStream(realm, group, offset, limit == 0 || limit == Integer.MAX_VALUE ? null : limit + 1)) {
             rows = gms

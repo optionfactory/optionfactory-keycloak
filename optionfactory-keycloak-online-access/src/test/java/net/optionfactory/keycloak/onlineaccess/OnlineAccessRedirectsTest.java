@@ -43,7 +43,6 @@ public class OnlineAccessRedirectsTest {
 
     @Test
     public void theCallingClientsIdIsNotARedirectUri() {
-        // it names a client; the block that collects authorized *clients* is what the id belongs to
         final var caller = client("backend", Set.of(), null);
         final var issuer = client("spa", Set.of("https://spa.example/callback"), null);
 

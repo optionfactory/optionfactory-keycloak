@@ -47,7 +47,6 @@ public class GroupFilterTest {
     }
     @Test
     public void aNullGroupValueIsRejected() {
-        // it would bind as an untyped null inside array[...], which postgres cannot assign a type to
         Assertions.assertThrows(BadRequestException.class,
                 () -> new GroupFilter("groups", "u.groups").configure(new String[]{"ANY", null}));
         Assertions.assertThrows(BadRequestException.class,

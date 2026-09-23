@@ -64,9 +64,8 @@ public class ImpersonationAuthenticator implements Authenticator {
         }
         final var cookie = AuthenticationManager.authenticateIdentityCookie(context.getSession(), context.getRealm(), true);
         if (cookie == null) {
-            // the request is a no-op either way, but it is the one shape an outsider can produce at will:
-            // without the event, probing the impersonation surface from an unauthenticated browser leaves
-            // nothing behind for whoever watches IMPERSONATE_ERROR
+            // a no-op, but the one attempt an outsider can make at will: unaudited, probing the
+            // impersonation surface from an unauthenticated browser would leave nothing behind
             audit(context).event(EventType.IMPERSONATE_ERROR)
                     .detail(Details.REASON, impersonate != null ? "no-session-to-impersonate-from" : "no-session-to-restore")
                     .error(Errors.NOT_LOGGED_IN);
@@ -163,12 +162,10 @@ public class ImpersonationAuthenticator implements Authenticator {
         context.success();
     }
 
-    /// Hands the cookie's user session to another user, in place. Removing it and letting the flow create a
-    /// replacement cannot work: the authorize endpoint gives the root authentication session the same id as the
-    /// user session, so `attachSession` re-creates under that id in this very transaction and the create discards
-    /// the pending removal, committing a session whose stored user no longer matches. `restartSession` is what
-    /// `attachSession` itself uses for that case: one update, new start time (so the previous holder's refresh
-    /// tokens are rejected), notes and client sessions cleared.
+    /// Hands the cookie's user session to another user, in place. Removing it and letting the flow create the
+    /// replacement cannot work: the root authentication session carries the same id, so `attachSession` re-creates
+    /// under it in this very transaction and the create discards the pending removal. `restartSession` is what
+    /// `attachSession` itself uses here: one update, new start time, notes and client sessions cleared.
     private static void restart(AuthenticationFlowContext context, UserSessionModel session, UserModel user) {
         final var authSession = context.getAuthenticationSession();
         final var rememberMe = authSession.getAuthNote(Details.REMEMBER_ME);

@@ -74,7 +74,6 @@ public class ProvisioningEndpointsTest {
 
     @Test
     public void rootAttributesAreNotPatchable() {
-        // keycloak reports them among the attributes, and removing one nulls the field itself
         final var reported = Map.of(
                 "username", List.of("alice"),
                 "firstName", List.of("Alice"),

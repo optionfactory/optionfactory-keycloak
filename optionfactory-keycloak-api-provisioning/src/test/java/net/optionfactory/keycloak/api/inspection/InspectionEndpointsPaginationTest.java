@@ -51,7 +51,6 @@ public class InspectionEndpointsPaginationTest {
 
     @Test
     public void aPageFilledExactlyIsTheLastOne() {
-        // nothing was fetched beyond the limit, so there is no further page to offer
         final var window = InspectionEndpoints.Window.of(5, 5);
 
         Assertions.assertEquals(5, window.size());

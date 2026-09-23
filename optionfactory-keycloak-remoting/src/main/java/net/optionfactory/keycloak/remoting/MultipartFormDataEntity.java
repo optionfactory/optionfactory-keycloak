@@ -74,7 +74,12 @@ public class MultipartFormDataEntity implements HttpEntity {
 
     @Override
     public void writeTo(OutputStream os) throws IOException {
-        getContent().transferTo(os);
+        // a completed transfer closes each part as the sequence advances past it; one that throws half way
+        // leaves the rest open, and a file part holds a stream the caller cannot get back. Closing the
+        // sequence drains the enumeration, closing the parts never read from too.
+        try (final var content = getContent()) {
+            content.transferTo(os);
+        }
     }
 
 }

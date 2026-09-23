@@ -146,7 +146,6 @@ public class QueryBuilderTest {
     }
     @Test
     public void anAbsentFilterMapIsTreatedAsNoFilters() {
-        // an empty request body deserializes to null, and every filter reads values[0] straight away
         final var em = new RecordedEm();
 
         USERS.create(em.proxy(), null, List.of(), false, 0, 0, "realm-x");
@@ -179,7 +178,6 @@ public class QueryBuilderTest {
     }
     @Test
     public void aWindowWithoutASortGetsTheDefaultOrder() {
-        // offset and limit over an unordered scan can repeat a row on two pages, or skip it
         final var em = new RecordedEm();
 
         ORDERED.create(em.proxy(), Map.of(), List.of(), false, 0, 25, "realm-x");
@@ -199,7 +197,6 @@ public class QueryBuilderTest {
 
     @Test
     public void anUnwindowedQueryIsLeftUnordered() {
-        // nothing is paged over, so imposing a sort would only cost time and change what callers see
         final var em = new RecordedEm();
 
         ORDERED.create(em.proxy(), Map.of(), List.of(), false, 0, 0, "realm-x");

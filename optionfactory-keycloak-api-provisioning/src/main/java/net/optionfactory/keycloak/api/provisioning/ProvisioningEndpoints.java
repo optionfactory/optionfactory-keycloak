@@ -65,7 +65,6 @@ public class ProvisioningEndpoints {
                 .build());
     }
 
-    /// The attributes a patch may add or remove: everything keycloak reports except the root ones.
     static Map<String, List<String>> patchableAttributes(Map<String, List<String>> actual) {
         final var attributes = new HashMap<>(actual);
         ROOT_ATTRIBUTES.forEach(attributes::remove);

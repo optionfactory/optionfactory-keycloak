@@ -105,7 +105,6 @@ public class ParsersTest {
     }
     @Test
     public void aSortExpressionOfNothingButSeparatorsIsIgnored() {
-        // it splits to no parts at all, where every other unusable expression is simply dropped
         Assertions.assertEquals(List.of(), Parsers.sorters(Map.of("username", "u.username"), List.of(",")));
         Assertions.assertEquals(List.of(), Parsers.sorters(Map.of("username", "u.username"), List.of(",,")));
     }
@@ -123,7 +122,6 @@ public class ParsersTest {
 
     @Test
     public void anInstantBeyondEpochMillisecondsIsRejected() {
-        // Instant.parse takes it happily and only toEpochMilli() overflows
         final var ex = Assertions.assertThrows(BadRequestException.class,
                 () -> Parsers.instant("+1000000000-12-31T23:59:59Z", "createdAt"));
         final var problems = (List<?>) ex.getResponse().getEntity();
