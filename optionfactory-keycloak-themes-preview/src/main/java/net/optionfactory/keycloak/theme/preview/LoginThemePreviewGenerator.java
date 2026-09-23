@@ -99,7 +99,7 @@ import org.junit.jupiter.api.Assertions;
  * The gallery opens from the file system (target/&lt;output&gt;/index.html) as it is: module
  * scripts - the one thing no browser loads from a {@code file://} origin - are rewritten away
  * as pages are generated, and the editor reaches its frames over postMessage, which crosses
- * those origins. {@link #serve()} still puts an url on it, for who prefers one.
+ * those origins.
  */
 public class LoginThemePreviewGenerator {
 
@@ -349,80 +349,6 @@ public class LoginThemePreviewGenerator {
                 .toList();
     }
 
-    /**
-     * Generates the gallery, then serves it on port 8000 until the run is stopped. The gallery
-     * opens from the file system too, so this is a convenience rather than a requirement - an
-     * url for who prefers one, with nothing outside the build needed either way. It blocks,
-     * which is what a {@code @Disabled} test is for:
-     *
-     * <pre>
-     * &#64;Test
-     * &#64;Disabled("enable to browse the gallery")
-     * public void servesEveryLoginPage() throws Exception {
-     *     LoginThemePreviewGenerator.preview().theme("mytheme").serve();
-     * }
-     * </pre>
-     */
-    public void serve() throws Exception {
-        serve(8000);
-    }
-
-    public void serve(int port) throws Exception {
-        generate();
-        var root = Path.of("target", outputDirectory != null ? outputDirectory : "theme-preview").toRealPath();
-        var server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress(port), 0);
-        server.createContext("/", exchange -> {
-            var requested = exchange.getRequestURI().getPath().substring(1);
-            var file = root.resolve(requested.isEmpty() ? "index.html" : requested).normalize();
-            if (!file.startsWith(root) || !Files.isRegularFile(file)) {
-                exchange.sendResponseHeaders(404, -1);
-                exchange.close();
-                return;
-            }
-            var body = Files.readAllBytes(file);
-            exchange.getResponseHeaders().add("Content-Type", contentType(file));
-            exchange.sendResponseHeaders(200, body.length);
-            try (var out = exchange.getResponseBody()) {
-                out.write(body);
-            }
-        });
-        server.start();
-        System.out.printf("Serving %s at http://localhost:%d/ - stop the run to stop it%n", root, port);
-        new java.util.concurrent.CountDownLatch(1).await();
-    }
-
-    private static String contentType(Path file) {
-        var name = file.getFileName().toString();
-        var extension = name.substring(name.lastIndexOf('.') + 1);
-        return switch (extension) {
-            case "html" ->
-                "text/html; charset=utf-8";
-            case "css" ->
-                "text/css; charset=utf-8";
-            case "js", "mjs" ->
-                "text/javascript; charset=utf-8";
-            case "json" ->
-                "application/json; charset=utf-8";
-            case "svg" ->
-                "image/svg+xml";
-            case "png" ->
-                "image/png";
-            case "jpg", "jpeg" ->
-                "image/jpeg";
-            case "gif" ->
-                "image/gif";
-            case "ico" ->
-                "image/x-icon";
-            case "woff2" ->
-                "font/woff2";
-            case "woff" ->
-                "font/woff";
-            case "ttf" ->
-                "font/ttf";
-            default ->
-                "application/octet-stream";
-        };
-    }
 
     public void generate() throws Exception {
         for (PreviewPlugin plugin : plugins) {
