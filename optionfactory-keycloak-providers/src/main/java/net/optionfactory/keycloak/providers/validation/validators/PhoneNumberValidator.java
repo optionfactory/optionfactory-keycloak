@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.provider.ConfiguredProvider;
@@ -72,9 +73,7 @@ public class PhoneNumberValidator extends AbstractStringValidator implements Con
             errors.add(new ValidationError("phonenumber", DEFAULT_REGION, "error-unknown-default-region", region));
         }
         for (String name : config.getStringListOrDefault(ALLOWED_TYPES, List.<String>of())) {
-            try {
-                PhoneNumberType.valueOf(name.trim().toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException ex) {
+            if (type(name).isEmpty()) {
                 errors.add(new ValidationError("phonenumber", ALLOWED_TYPES, "error-unknown-phone-number-type", name));
             }
         }
@@ -91,10 +90,20 @@ public class PhoneNumberValidator extends AbstractStringValidator implements Con
         if (names.isEmpty()) {
             return EnumSet.of(PhoneNumberType.MOBILE, PhoneNumberType.FIXED_LINE_OR_MOBILE);
         }
+        // a name that is not a type matches nothing, just as a valid but unlisted one would:
+        // a typo is reported by validateConfig, and a login form is no place to throw
         final EnumSet<PhoneNumberType> types = EnumSet.noneOf(PhoneNumberType.class);
         for (String name : names) {
-            types.add(PhoneNumberType.valueOf(name.trim().toUpperCase(Locale.ROOT)));
+            type(name).ifPresent(types::add);
         }
         return types;
+    }
+
+    private static Optional<PhoneNumberType> type(String name) {
+        try {
+            return Optional.of(PhoneNumberType.valueOf(name.trim().toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
     }
 }

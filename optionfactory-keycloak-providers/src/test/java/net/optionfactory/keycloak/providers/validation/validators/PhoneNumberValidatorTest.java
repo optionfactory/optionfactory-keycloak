@@ -102,4 +102,25 @@ public class PhoneNumberValidatorTest {
         Assertions.assertFalse(result.isValid());
         Assertions.assertEquals("error-unknown-phone-number-type", result.getErrors().iterator().next().getMessage());
     }
+    @Test
+    public void anUnknownTypeNameIsIgnoredRatherThanThrown() {
+        // config that never passed through validateConfig, a partial import say, must not blow up
+        final var config = ValidatorConfig.configFromMap(Map.of(
+                "default-region", "IT",
+                "allowed-types", List.of("CARRIER_PIGEON", "MOBILE")
+        ));
+        Assertions.assertTrue(validator.validate("335 1234567", "phoneNumber", new ValidationContext(), config).isValid());
+        Assertions.assertFalse(validator.validate("02 12345678", "phoneNumber", new ValidationContext(), config).isValid());
+    }
+
+    @Test
+    public void allowingOnlyUnknownTypeNamesAllowsNothing() {
+        final var config = ValidatorConfig.configFromMap(Map.of(
+                "default-region", "IT",
+                "allowed-types", List.of("CARRIER_PIGEON")
+        ));
+        final var context = validator.validate("335 1234567", "phoneNumber", new ValidationContext(), config);
+        Assertions.assertFalse(context.isValid());
+        Assertions.assertEquals("error-invalid-phone-number-type", context.getErrors().iterator().next().getMessage());
+    }
 }
