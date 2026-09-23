@@ -64,6 +64,12 @@ public class ImpersonationAuthenticator implements Authenticator {
         }
         final var cookie = AuthenticationManager.authenticateIdentityCookie(context.getSession(), context.getRealm(), true);
         if (cookie == null) {
+            // the request is a no-op either way, but it is the one shape an outsider can produce at will:
+            // without the event, probing the impersonation surface from an unauthenticated browser leaves
+            // nothing behind for whoever watches IMPERSONATE_ERROR
+            audit(context).event(EventType.IMPERSONATE_ERROR)
+                    .detail(Details.REASON, impersonate != null ? "no-session-to-impersonate-from" : "no-session-to-restore")
+                    .error(Errors.NOT_LOGGED_IN);
             context.attempted();
             return;
         }
