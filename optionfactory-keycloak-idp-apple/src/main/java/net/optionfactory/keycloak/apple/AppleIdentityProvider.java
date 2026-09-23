@@ -58,12 +58,7 @@ public class AppleIdentityProvider extends OIDCIdentityProvider implements Socia
         if (uj != null) {
             userJsonRef.compareAndSet(uj, null);
             try {
-                AppleUser user = JsonSerialization.readValue(uj, AppleUser.class);
-                context.setEmail(user.email);
-                if (user.name != null) {
-                    context.setFirstName(user.name.firstName);
-                    context.setLastName(user.name.lastName);
-                }
+                JsonSerialization.readValue(uj, AppleUser.class).applyTo(context);
             } catch (IOException e) {
                 logger.errorf("Failed to parse userJson: %s", e.getMessage());
             }
