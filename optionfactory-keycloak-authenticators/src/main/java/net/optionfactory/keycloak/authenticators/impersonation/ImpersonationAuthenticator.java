@@ -6,6 +6,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
+import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
 import org.keycloak.events.Details;
@@ -113,8 +114,8 @@ public class ImpersonationAuthenticator implements Authenticator {
                     .createForm("opfa-impersonation-blocked.ftl"));
             return;
         }
-        // backchannelLogout cannot run here: the authorize endpoint re-creates the root authentication session with the same id as the cookie user session, and the logout's cleanup removes exactly that root session, deleting the flow's own state mid-flight. Removing only the user session still kills its refresh tokens; access tokens live out their expiry and clients get no backchannel notification.
-        context.getSession().sessions().removeUserSession(context.getRealm(), cookie.session());
+        // backchannelLogout cannot run here: the authorize endpoint re-creates the root authentication session with the same id as the cookie user session, and the logout's cleanup removes exactly that root session, deleting the flow's own state mid-flight. Restarting the session still kills its refresh tokens (they are rejected once issued before the new start time); access tokens live out their expiry and clients get no backchannel notification.
+        restart(context, cookie.session(), target);
         final var authSession = context.getAuthenticationSession();
         authSession.setUserSessionNote(ImpersonationSessionNote.IMPERSONATOR_ID.toString(), operator.getId());
         authSession.setUserSessionNote(ImpersonationSessionNote.IMPERSONATOR_USERNAME.toString(), operator.getUsername());
@@ -146,7 +147,7 @@ public class ImpersonationAuthenticator implements Authenticator {
             Authenticators.accessDenied(context, "opfaImpersonationRestoreFailed");
             return;
         }
-        context.getSession().sessions().removeUserSession(context.getRealm(), impersonatedSession);
+        restart(context, impersonatedSession, operator);
         audit(context).event(EventType.IMPERSONATE)
                 .detail(Details.REASON, "deimpersonation")
                 .detail(Details.IMPERSONATOR, operator.getUsername())
@@ -154,6 +155,22 @@ public class ImpersonationAuthenticator implements Authenticator {
                 .success();
         context.setUser(operator);
         context.success();
+    }
+
+    /// Hands the cookie's user session to another user, in place. Removing it and letting the flow create a
+    /// replacement cannot work: the authorize endpoint gives the root authentication session the same id as the
+    /// user session, so `attachSession` re-creates under that id in this very transaction and the create discards
+    /// the pending removal, committing a session whose stored user no longer matches. `restartSession` is what
+    /// `attachSession` itself uses for that case: one update, new start time (so the previous holder's refresh
+    /// tokens are rejected), notes and client sessions cleared.
+    private static void restart(AuthenticationFlowContext context, UserSessionModel session, UserModel user) {
+        final var authSession = context.getAuthenticationSession();
+        final var rememberMe = authSession.getAuthNote(Details.REMEMBER_ME);
+        session.restartSession(context.getRealm(), user, user.getUsername(),
+                context.getConnection().getRemoteHost(), authSession.getProtocol(),
+                "true".equalsIgnoreCase(rememberMe),
+                authSession.getAuthNote(AuthenticationProcessor.BROKER_SESSION_ID),
+                authSession.getAuthNote(AuthenticationProcessor.BROKER_USER_ID));
     }
 
     private static EventBuilder audit(AuthenticationFlowContext context) {
