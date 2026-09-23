@@ -6,7 +6,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## optionfactory-keycloak-providers
 
-Shared utilities: `ResourceAuthenticator` (bearer/scope enforcement for exposed resources), the filtering/pagination stack used by the apis, and `Groups` helpers.
+Shared utilities: `ResourceAuthenticator` (bearer/scope enforcement for exposed resources), the filtering/pagination stack used by the apis, `Groups` helpers, and the `phonenumber` user profile validator.
 
 Usage: include the artifact as a dependency with `provided` scope
 ```xml
@@ -38,6 +38,28 @@ get the authenticator from session and use it to control access to the resource:
     }
 ```
 
+
+### phonenumber
+
+A user profile validator backed by libphonenumber, configured on an attribute's validations:
+
+```json
+{
+    "name": "phone",
+    "validations": {
+        "phonenumber": {
+            "default-region": "IT",
+            "allowed-types": ["MOBILE", "FIXED_LINE_OR_MOBILE"]
+        }
+    }
+}
+```
+
+Numbers in international `+CC` format always parse; national formats need `default-region`, an ISO 3166-1 alpha-2 code. `allowed-types` narrows the accepted `PhoneNumberType`s and defaults to `MOBILE` and `FIXED_LINE_OR_MOBILE`. Blank values are skipped, so whether the attribute is mandatory stays the user profile's business.
+
+An unknown region or type name is reported when the configuration is saved, as a plain `400` naming the offending value - keycloak never localizes validator config errors, its own validators included. At validation time an unknown type name matches nothing rather than throwing, so a configuration that slipped in unvalidated (a partial import, say) cannot turn a login form into a 500. The `error-invalid-phone-number` and `error-invalid-phone-number-type` messages ship as `theme-resources/messages/`, so every login theme resolves them, this project's themes or not.
+
+The libphonenumber jar is a `provided` dependency: keycloak does not ship it, so it has to sit next to the provider jar in `providers/` - the docker image stages it there, reading the version out of this project's pom so the two cannot drift.
 
 ## optionfactory-keycloak-api-provisioning
 
