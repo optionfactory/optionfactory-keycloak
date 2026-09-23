@@ -38,10 +38,15 @@ public class QueryBuilder {
             int limit,
             Object... params) {
 
-        final var filters = requestedFilters.entrySet()
+        // an absent body and a null value for a known filter are both malformed requests, not failures:
+        // every filter reads values[0] straight away, so they would surface as a 500
+        final var filters = (requestedFilters == null ? Map.<String, String[]>of() : requestedFilters).entrySet()
                 .stream()
                 .filter(e -> allowedFilters.containsKey(e.getKey()))
-                .map(e -> allowedFilters.get(e.getKey()).configure(e.getValue()))
+                .map(e -> {
+                    Parsers.ensure(e.getValue() != null, e.getKey(), "must not be null");
+                    return allowedFilters.get(e.getKey()).configure(e.getValue());
+                })
                 .toList();
 
         final var conditions = (filters.isEmpty() ? "" : "and ") + filters.stream()

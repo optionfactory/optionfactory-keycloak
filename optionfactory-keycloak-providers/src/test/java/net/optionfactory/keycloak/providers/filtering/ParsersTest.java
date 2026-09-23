@@ -1,5 +1,7 @@
 package net.optionfactory.keycloak.providers.filtering;
 
+import net.optionfactory.keycloak.providers.validation.Problem;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import jakarta.ws.rs.BadRequestException;
 import java.time.Instant;
@@ -100,5 +102,39 @@ public class ParsersTest {
         Assertions.assertNotNull(ex.getResponse());
         Assertions.assertEquals(400, ex.getResponse().getStatus());
         Assertions.assertTrue(ex.getResponse().getEntity() instanceof List<?> problems && problems.size() == 1);
+    }
+    @Test
+    public void aSortExpressionOfNothingButSeparatorsIsIgnored() {
+        // it splits to no parts at all, where every other unusable expression is simply dropped
+        Assertions.assertEquals(List.of(), Parsers.sorters(Map.of("username", "u.username"), List.of(",")));
+        Assertions.assertEquals(List.of(), Parsers.sorters(Map.of("username", "u.username"), List.of(",,")));
+    }
+
+    @Test
+    public void aNullSortExpressionIsIgnored() {
+        final var requested = new ArrayList<String>();
+        requested.add(null);
+        requested.add("username,DESC");
+
+        final var sorters = Parsers.sorters(Map.of("username", "u.username"), requested);
+
+        Assertions.assertEquals(1, sorters.size());
+    }
+
+    @Test
+    public void anInstantBeyondEpochMillisecondsIsRejected() {
+        // Instant.parse takes it happily and only toEpochMilli() overflows
+        final var ex = Assertions.assertThrows(BadRequestException.class,
+                () -> Parsers.instant("+1000000000-12-31T23:59:59Z", "createdAt"));
+        final var problems = (List<?>) ex.getResponse().getEntity();
+
+        Assertions.assertEquals(1, problems.size());
+        Assertions.assertTrue(((Problem) problems.get(0)).reason().contains("out of range"));
+    }
+
+    @Test
+    public void anInstantBeforeEpochMillisecondsIsRejected() {
+        Assertions.assertThrows(BadRequestException.class,
+                () -> Parsers.instant("-1000000000-01-01T00:00:00Z", "createdAt"));
     }
 }

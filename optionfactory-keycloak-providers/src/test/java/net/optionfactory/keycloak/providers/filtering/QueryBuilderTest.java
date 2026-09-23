@@ -1,6 +1,7 @@
 package net.optionfactory.keycloak.providers.filtering;
 
 import org.junit.jupiter.api.Assertions;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.lang.reflect.InvocationHandler;
@@ -138,5 +139,38 @@ public class QueryBuilderTest {
         USERS.create(em.proxy(), Map.of("username", new String[]{"CONTAINS", "IGNORE_CASE", "50%_off"}), List.of(), false, 0, 0, "realm-x");
         Assertions.assertTrue(em.query.sql.contains("u.username ilike ?"));
         Assertions.assertEquals(List.of("realm-x", "%50\\%\\_off%"), em.query.boundValues());
+    }
+    @Test
+    public void anAbsentFilterMapIsTreatedAsNoFilters() {
+        // an empty request body deserializes to null, and every filter reads values[0] straight away
+        final var em = new RecordedEm();
+
+        USERS.create(em.proxy(), null, List.of(), false, 0, 0, "realm-x");
+
+        Assertions.assertEquals("select id from user_entity u where realm_id = ?   ", em.query.sql);
+        Assertions.assertEquals(Map.of(1, "realm-x"), em.query.parameters);
+    }
+
+    @Test
+    public void aNullValueForAKnownFilterIsARejection() {
+        final var em = new RecordedEm();
+        final var requested = new LinkedHashMap<String, String[]>();
+        requested.put("username", null);
+
+        final var ex = Assertions.assertThrows(BadRequestException.class,
+                () -> USERS.create(em.proxy(), requested, List.of(), false, 0, 0, "realm-x"));
+
+        Assertions.assertEquals(400, ex.getResponse().getStatus());
+    }
+
+    @Test
+    public void aNullValueForAnUnknownFilterIsJustDropped() {
+        final var em = new RecordedEm();
+        final var requested = new LinkedHashMap<String, String[]>();
+        requested.put("hacker", null);
+
+        USERS.create(em.proxy(), requested, List.of(), false, 0, 0, "realm-x");
+
+        Assertions.assertFalse(em.query.sql.contains("hacker"));
     }
 }

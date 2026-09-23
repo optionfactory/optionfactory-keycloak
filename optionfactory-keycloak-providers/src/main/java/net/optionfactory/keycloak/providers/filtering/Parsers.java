@@ -36,6 +36,10 @@ public class Parsers {
         } catch (DateTimeParseException ex) {
             final var message = String.format("expected an iso instant, got: '%s'", value);
             throw new BadRequestException(badRequest(path, message));
+        } catch (ArithmeticException ex) {
+            // Instant parses years far beyond what epoch milliseconds can hold, and only overflows on conversion
+            final var message = String.format("instant is out of range, got: '%s'", value);
+            throw new BadRequestException(badRequest(path, message));
         }
 
     }
@@ -45,7 +49,11 @@ public class Parsers {
             return List.of();
         }
         return requested.stream()
+                .filter(c -> c != null)
                 .map(c -> c.split(","))
+                // a value of nothing but separators splits to no parts at all: ignored, as any other
+                // sort expression naming no known column is
+                .filter(nad -> nad.length > 0)
                 .map(nad -> new String[]{nad[0].trim(), nad.length > 1 ? nad[1].trim() : null})
                 .filter(nad -> allowed.containsKey(nad[0]))
                 .map(nad -> new ConfiguredSorter(allowed.get(nad[0]), "DESC".equalsIgnoreCase(nad[1]) ? Direction.DESC : Direction.ASC))
