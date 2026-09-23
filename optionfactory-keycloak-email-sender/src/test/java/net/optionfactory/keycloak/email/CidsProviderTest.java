@@ -118,4 +118,38 @@ public class CidsProviderTest {
         final var provider = new CidsProvider(themeWithAllowlist(TWO_CIDS));
         Assertions.assertTrue(ids(provider.cids(" <img src='CID:logo'> ")).contains("logo"));
     }
+    @Test
+    public void aReferenceIsMatchedWhateverTheCasing() {
+        // the pattern that finds references is case insensitive, so the lookup must be too
+        final var cids = new CidsProvider(themeWithAllowlist(TWO_CIDS));
+
+        Assertions.assertEquals(List.of("logo"), ids(cids.cids("<img src=\"CID:Logo\">")));
+        Assertions.assertEquals(List.of("logo"), ids(cids.cids("<img src=\"cid:LOGO\">")));
+    }
+
+    @Test
+    public void anAllowlistEntryIsFoundWhateverItsOwnCasing() {
+        final var cids = new CidsProvider(themeWithAllowlist("""
+        [{"id": "Logo", "source": "img/logo.png", "mimeType": "image/png"}]
+        """));
+
+        Assertions.assertEquals(List.of("Logo"), ids(cids.cids("<img src=\"cid:logo\">")));
+    }
+
+    @Test
+    public void anUnreadableAllowlistEmbedsNothingInsteadOfThrowing() {
+        // the sender spi declares EmailException; an unchecked one would escape it and 500 a password reset
+        final var cids = Assertions.assertDoesNotThrow(
+                () -> new CidsProvider(themeWithAllowlist("{ this is not the list it should be }")));
+
+        Assertions.assertEquals(List.of(), cids.cids("<img src=\"cid:logo\">"));
+    }
+
+    @Test
+    public void anAllowlistThatIsNotAListEmbedsNothing() {
+        final var cids = Assertions.assertDoesNotThrow(
+                () -> new CidsProvider(themeWithAllowlist("{\"id\": \"logo\"}")));
+
+        Assertions.assertEquals(List.of(), cids.cids("<img src=\"cid:logo\">"));
+    }
 }
