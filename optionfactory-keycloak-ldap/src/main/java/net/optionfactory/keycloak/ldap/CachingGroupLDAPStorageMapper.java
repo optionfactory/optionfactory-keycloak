@@ -1,5 +1,6 @@
 package net.optionfactory.keycloak.ldap;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jboss.logging.Logger;
@@ -38,6 +39,16 @@ public class CachingGroupLDAPStorageMapper extends GroupLDAPStorageMapper {
             this.inner = user;
         }
 
+        /// The delegate reports the ldap mappings and then, whenever the groups path is not the realm root,
+        /// the database rows as well. This mapper writes those same memberships to the database, so every
+        /// ldap group would be reported twice - visibly so in the admin console. Keeping the first sighting
+        /// of each id preserves the delegate's order and still surfaces groups that exist only in the
+        /// database: local ones, and those assigned by another mapper.
+        @Override
+        public Stream<GroupModel> getGroupsStream() {
+            return distinctById(super.getGroupsStream());
+        }
+
         @Override
         public void joinGroup(GroupModel group) {
             super.joinGroup(group);
@@ -52,6 +63,12 @@ public class CachingGroupLDAPStorageMapper extends GroupLDAPStorageMapper {
 
     }
 
+    /// Keeps the first sighting of each group id, preserving the order it arrives in.
+    static Stream<GroupModel> distinctById(Stream<GroupModel> groups) {
+        final var seen = new HashSet<String>();
+        return groups.filter(group -> seen.add(group.getId()));
+    }
+
     @Override
     public void onImportUserFromLDAP(LDAPObject ldapUser, UserModel user, RealmModel realm, boolean isCreate) {
         //mode is always (LDAP_ONLY);
@@ -59,11 +76,15 @@ public class CachingGroupLDAPStorageMapper extends GroupLDAPStorageMapper {
         List<LDAPObject> ldapGroups = getLDAPGroupMappings(ldapUser);
 
         final GroupModel ldapGroupsRoot = getKcGroupsPathGroup(realm);
+        // everything under the configured path belongs to this mapper and is about to be rebuilt from ldap.
+        // isGroupInGroupPath walks the whole ancestor chain, so a membership nested below the path - the
+        // shape 'preserve group inheritance' produces - is revoked too, and organization groups are spared.
+        // Collected first: leaving a group while streaming the same collection is asking for trouble.
+        final List<GroupModel> owned;
         try (final var ugs = user.getGroupsStream()) {
-            ugs
-                    .filter(gm -> ldapGroupsRoot == null || ldapGroupsRoot.equals(gm.getParent()))
-                    .forEach(gm -> user.leaveGroup(gm));
+            owned = ugs.filter(gm -> isGroupInGroupPath(realm, gm)).toList();
         }
+        owned.forEach(user::leaveGroup);
         // Import role mappings from LDAP into Keycloak DB
         for (LDAPObject ldapGroup : ldapGroups) {
 
@@ -98,6 +119,12 @@ public class CachingGroupLDAPStorageMapper extends GroupLDAPStorageMapper {
             final var mode = config.getConfig().getFirst(GroupMapperConfig.MODE);
             if (!"LDAP_ONLY".equals(mode)) {
                 throw new ComponentValidationException(String.format("Mode MUST be LDAP_ONLY when using '%s'", getId()));
+            }
+            // at the realm root every group a user has counts as this mapper's, so a sync would drop the
+            // purely local ones it is about to not find in ldap
+            final var groupsPath = config.getConfig().getFirst(GroupMapperConfig.LDAP_GROUPS_PATH);
+            if (groupsPath == null || groupsPath.isBlank() || GroupMapperConfig.DEFAULT_LDAP_GROUPS_PATH.equals(groupsPath.trim())) {
+                throw new ComponentValidationException(String.format("Groups Path MUST NOT be the realm root when using '%s', or a sync would drop every group membership the user holds outside ldap", getId()));
             }
         }
 
