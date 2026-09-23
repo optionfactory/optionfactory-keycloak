@@ -185,6 +185,12 @@ public class OnlineAccessEndpoints {
 
         @Override
         public RealmResourceProvider create(KeycloakSession session) {
+            if (!enabled) {
+                // how keycloak's realm extension dispatcher is told to answer 404: RealmsResource
+                // .resolveRealmExtension throws NotFoundException when the provider is null. The
+                // action token handler answers the same flag, so minting and redeeming go together
+                return null;
+            }
             return new RealmResourceProvider() {
 
                 @Override
