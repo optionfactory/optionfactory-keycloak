@@ -1,9 +1,14 @@
 package net.optionfactory.keycloak.authenticators.otp;
 
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.models.RequiredActionConfigModel;
+import org.keycloak.models.UserModel;
 
 public class VerifyEmailOtpTest {
 
@@ -64,5 +69,81 @@ public class VerifyEmailOtpTest {
     @Test
     public void aMissingAddressDoesNotBlowUp() {
         Assertions.assertDoesNotThrow(() -> VerifyEmailOtp.codeKey("u1", null));
+    }
+    /// A user model backed by a mutable action list, enough for evaluateTriggers: it reads the address and
+    /// the verified flag, and writes through addRequiredAction/removeRequiredAction.
+    private static UserModel user(String email, boolean emailVerified, List<String> actions) {
+        return (UserModel) Proxy.newProxyInstance(VerifyEmailOtpTest.class.getClassLoader(),
+                new Class<?>[]{UserModel.class}, (proxy, method, args) -> switch (method.getName()) {
+            case "getEmail" ->
+                email;
+            case "isEmailVerified" ->
+                emailVerified;
+            case "getRequiredActionsStream" ->
+                List.copyOf(actions).stream();
+            case "addRequiredAction" -> {
+                actions.add((String) args[0]);
+                yield null;
+            }
+            case "removeRequiredAction" -> {
+                actions.remove((String) args[0]);
+                yield null;
+            }
+            default ->
+                boolean.class.equals(method.getReturnType()) ? false : null;
+        });
+    }
+
+    private static RequiredActionContext contextFor(UserModel user) {
+        return (RequiredActionContext) Proxy.newProxyInstance(VerifyEmailOtpTest.class.getClassLoader(),
+                new Class<?>[]{RequiredActionContext.class},
+                (proxy, method, args) -> "getUser".equals(method.getName()) ? user : null);
+    }
+
+    @Test
+    public void anUnverifiedAddressIsChallenged() {
+        final var actions = new ArrayList<String>();
+
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user("john@corp.example", false, actions)));
+
+        Assertions.assertEquals(List.of(VerifyEmailOtp.PROVIDER_ID), actions);
+    }
+
+    @Test
+    public void aUserWithNoAddressIsNeverChallenged() {
+        // the action would attach and never clear: only SUCCESS removes one, and such users are ignored
+        final var actions = new ArrayList<String>();
+
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user(null, false, actions)));
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user("   ", false, actions)));
+
+        Assertions.assertEquals(List.of(), actions);
+    }
+
+    @Test
+    public void aUserPinnedByTheOldBehaviourIsHealed() {
+        final var actions = new ArrayList<>(List.of(VerifyEmailOtp.PROVIDER_ID));
+
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user(null, false, actions)));
+
+        Assertions.assertEquals(List.of(), actions);
+    }
+
+    @Test
+    public void aPendingUpdateEmailTakesPrecedence() {
+        final var actions = new ArrayList<>(List.of(UserModel.RequiredAction.UPDATE_EMAIL.name()));
+
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user("john@corp.example", false, actions)));
+
+        Assertions.assertEquals(List.of(UserModel.RequiredAction.UPDATE_EMAIL.name()), actions);
+    }
+
+    @Test
+    public void aVerifiedAddressIsLeftAlone() {
+        final var actions = new ArrayList<String>();
+
+        new VerifyEmailOtp().evaluateTriggers(contextFor(user("john@corp.example", true, actions)));
+
+        Assertions.assertEquals(List.of(), actions);
     }
 }

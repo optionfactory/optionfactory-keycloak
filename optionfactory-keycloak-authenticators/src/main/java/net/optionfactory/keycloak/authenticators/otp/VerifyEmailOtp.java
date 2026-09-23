@@ -54,6 +54,14 @@ public class VerifyEmailOtp implements RequiredActionProvider {
         if (user.isEmailVerified()) {
             return;
         }
+        // a user with no address can never answer the challenge - requiredActionChallenge ignores them -
+        // and only SUCCESS clears a required action, so attaching it here would pin them as permanently
+        // pending: invisible to them, but enough to make them unimpersonable and to show up in the admin
+        // console forever. Removing it also heals the users that were pinned before this guard existed.
+        if (Validation.isBlank(user.getEmail())) {
+            user.removeRequiredAction(PROVIDER_ID);
+            return;
+        }
         // UPDATE_EMAIL re-adds verification by itself once the new address is confirmed
         if (user.getRequiredActionsStream().noneMatch(action -> UserModel.RequiredAction.UPDATE_EMAIL.name().equals(action))) {
             user.addRequiredAction(PROVIDER_ID);
