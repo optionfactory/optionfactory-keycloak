@@ -2,6 +2,7 @@ package net.optionfactory.keycloak.authenticators.otp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -80,7 +81,7 @@ public class VerifyEmailOtp implements RequiredActionProvider {
             authSession.addRequiredAction(PROVIDER_ID);
         }
         authSession.setClientNote(AuthorizationEndpointBase.APP_INITIATED_FLOW, null);
-        if (!OtpCodes.exists(context.getSession().singleUseObjects(), codeKey(context.getUser().getId()), Time.currentTimeSeconds())) {
+        if (!OtpCodes.exists(context.getSession().singleUseObjects(), codeKey(context.getUser().getId(), context.getUser().getEmail()), Time.currentTimeSeconds())) {
             final var challenge = sendCode(context);
             if (challenge != null) {
                 context.challenge(challenge);
@@ -124,7 +125,7 @@ public class VerifyEmailOtp implements RequiredActionProvider {
                     .createForm(FORM_TEMPLATE);
         }
         final var code = OtpGenerator.of(OtpGenerator.Mode.RANDOM, null, settings.codeLength()).generate();
-        OtpCodes.put(store, codeKey(context.getUser().getId()), code, settings.codeLifespanSeconds(), now);
+        OtpCodes.put(store, codeKey(context.getUser().getId(), context.getUser().getEmail()), code, settings.codeLifespanSeconds(), now);
         final var event = context.getEvent().clone().event(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, context.getUser().getEmail());
         try {
             context.getSession().getProvider(EmailTemplateProvider.class)
@@ -151,7 +152,7 @@ public class VerifyEmailOtp implements RequiredActionProvider {
             return;
         }
         final var event = context.getEvent().clone().event(EventType.VERIFY_EMAIL).detail(Details.EMAIL, context.getUser().getEmail());
-        final var attempt = OtpCodes.tryValidate(context.getSession().singleUseObjects(), codeKey(context.getUser().getId()), submitted, settings.maxAttempts(), Time.currentTimeSeconds());
+        final var attempt = OtpCodes.tryValidate(context.getSession().singleUseObjects(), codeKey(context.getUser().getId(), context.getUser().getEmail()), submitted, settings.maxAttempts(), Time.currentTimeSeconds());
         switch (attempt) {
             case VALIDATED: {
                 context.getUser().setEmailVerified(true);
@@ -177,10 +178,16 @@ public class VerifyEmailOtp implements RequiredActionProvider {
         }
     }
 
-    private static String codeKey(String userId) {
-        return "opfa-verify-email-otp:" + userId;
+    /// The code proves control of one address, so it is stored under one: an address that changes while a
+    /// code is outstanding gets a code of its own, and the one sent to the previous address can no longer
+    /// verify it. The next challenge sees no code for the new address and sends one, which is also what a
+    /// person would expect after changing their email mid-verification.
+    static String codeKey(String userId, String email) {
+        return "opfa-verify-email-otp:" + userId + ":" + OtpCodes.sha256Hex(email == null ? "" : email.trim().toLowerCase(Locale.ROOT));
     }
 
+    /// The cooldown stays keyed by user: it is there to stop a mailbox being flooded, and scoping it to the
+    /// address would hand back a fresh send on every change.
     private static String cooldownKey(String userId) {
         return "opfa-verify-email-otp-cooldown:" + userId;
     }
