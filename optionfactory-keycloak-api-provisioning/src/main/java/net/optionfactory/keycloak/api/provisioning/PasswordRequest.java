@@ -6,8 +6,10 @@ import java.util.Base64;
 import java.util.List;
 import net.optionfactory.keycloak.providers.validation.Problem;
 
-/// A password to set on a user, in one of two forms: `value` alone carries clear text, while
-/// `algorithm`, `hashIterations`, `salt` and `hash` carry one already hashed somewhere else.
+/// A password to set on a user, in one of two forms: `value` alone carries clear text, while `algorithm`,
+/// `hashIterations` and `hash` carry one already hashed somewhere else, with `salt` where the algorithm
+/// keeps it apart from the hash. Bcrypt and the like embed cost and salt in the hash itself and are sent
+/// without a salt, exactly as keycloak's own export writes them.
 ///
 /// Clear text is hashed with the realm's own algorithm and cost, but is deliberately not checked
 /// against the realm's password policy: provisioning has to be able to carry over a password the
@@ -29,11 +31,16 @@ public record PasswordRequest(
         return value != null && !value.isBlank();
     }
 
-    /// The salt as stored, or null when it is absent or not base64.
+    /// The salt as stored, or null when there is none. A hash that carries its own - bcrypt and the like
+    /// embed cost and salt in the value itself - is stored with a null salt, which is how keycloak writes
+    /// it in an export and what `PasswordSecretData` expects.
     @Nullable
     public byte[] decodedSalt() {
+        if (salt == null || salt.isBlank()) {
+            return null;
+        }
         try {
-            return Base64.getDecoder().decode(salt == null ? "" : salt);
+            return Base64.getDecoder().decode(salt);
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -59,9 +66,8 @@ public record PasswordRequest(
         if (hash == null || hash.isBlank()) {
             problems.add(new Problem("FIELD_ERROR", field + ".hash", "must not be blank"));
         }
-        if (salt == null || salt.isBlank()) {
-            problems.add(new Problem("FIELD_ERROR", field + ".salt", "must not be blank"));
-        } else if (decodedSalt() == null) {
+        // optional: a self contained hash has no separate salt to carry
+        if (salt != null && !salt.isBlank() && decodedSalt() == null) {
             problems.add(new Problem("FIELD_ERROR", field + ".salt", "must be base64"));
         }
         return problems;

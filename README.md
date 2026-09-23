@@ -84,6 +84,8 @@ A search and provisioning api: `/admin/realms/{realm}/inspection/...` (filterabl
 }
 ```
 
+`salt` is optional: an algorithm that keeps its salt inside the hash - bcrypt and the like, including a legacy provider brought along for a migration - sends the whole `$2a$…` string as `hash` and no salt at all, which is how keycloak stores and exports such credentials.
+
 Exactly one form must be present, or the request is a `400` naming the offending field. Clear text is hashed with the realm's own algorithm and cost but is **not** checked against the realm's password policy: provisioning has to be able to carry over a password the policy would refuse to set today. A hash is stored as it arrives, so its algorithm and cost stay those of the source system until the user's first login, when keycloak re-hashes it under the realm policy. Setting a password replaces the existing one. To force a change at next login, add `UPDATE_PASSWORD` to `requiredActions`.
 
 ## optionfactory-keycloak-email-sender

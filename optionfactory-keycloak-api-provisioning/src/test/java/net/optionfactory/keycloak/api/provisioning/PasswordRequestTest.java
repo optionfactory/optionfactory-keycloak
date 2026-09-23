@@ -43,10 +43,28 @@ public class PasswordRequestTest {
     public void anIncompleteHashReportsEveryMissingPart() {
         final var problems = new PasswordRequest(null, null, null, null, "aGFzaA==").problems("password");
 
-        Assertions.assertEquals(3, problems.size());
+        Assertions.assertEquals(2, problems.size());
         Assertions.assertEquals(
-                List.of("password.algorithm", "password.hashIterations", "password.salt"),
+                List.of("password.algorithm", "password.hashIterations"),
                 problems.stream().map(Problem::context).toList());
+    }
+
+    @Test
+    public void aSelfContainedHashNeedsNoSalt() {
+        // bcrypt and the like embed cost and salt in the value: keycloak's own export writes "salt": null
+        final var bcrypt = new PasswordRequest(null, "legacy-bcrypt", 10, null,
+                "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
+
+        Assertions.assertEquals(List.of(), bcrypt.problems("password"));
+        Assertions.assertNull(bcrypt.decodedSalt());
+    }
+
+    @Test
+    public void aBlankSaltIsTheSameAsNoneAtAll() {
+        final var password = new PasswordRequest(null, "legacy-md5", 1, "  ", "aGFzaA==");
+
+        Assertions.assertEquals(List.of(), password.problems("password"));
+        Assertions.assertNull(password.decodedSalt());
     }
 
     @Test
