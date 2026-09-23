@@ -23,6 +23,12 @@ public interface ResourceAuthenticator {
         authorized(client != null, "Session context has no associated client");
         final var sa = session.users().getServiceAccount(client);
         authorized(sa != null, "Client does not have an associated service account");
+        // the caller must be that service account, not merely a holder of a token issued to its client:
+        // a direct access grant or any browser flow on the same client yields a token whose azp names it
+        // while the principal is an ordinary user, and the role check below would still read the service
+        // account's roles (ClientCredentialsGrantType puts the service account on the session as the user)
+        final var caller = auth.user();
+        authorized(caller != null && sa.getId().equals(caller.getId()), "Token does not belong to the service account of client '%s'", client.getClientId());
         final var roleClient = session.clients().getClientByClientId(session.getContext().getRealm(), clientName);
         authorized(roleClient != null, "Required client '%s' does not exist", clientName);
         final var role = session.roles().getClientRole(roleClient, roleName);
