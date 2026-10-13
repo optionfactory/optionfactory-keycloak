@@ -1,4 +1,4 @@
-<#-- opfa:imported from 26.7.2 -->
+<#-- opfa:imported from 26.8.1 -->
 <#import "footer.ftl" as loginFooter>
 <#import "theme-resources.ftl" as themeResourceTags>
 <#-- opfa:modification start -->
@@ -162,7 +162,6 @@
                     </div>
 <#-- opfa:modification start: removed col-md-10 from the base theme -->
                         <#nested "show-username">
-<#-- opfa:modification end -->
                         <div id="kc-username" class="${properties.kcFormGroupClass!}">
                             <label id="kc-attempted-username">${auth.attemptedUsername}</label>
                             <a id="reset-login" href="${url.loginRestartFlowUrl}" aria-label="${msg("restartLoginTooltip")}">
@@ -172,6 +171,7 @@
                                 </div>
                             </a>
                         </div>
+<#-- opfa:modification end -->
                 </div>
             <#else>
                 <#nested "show-username">
