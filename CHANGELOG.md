@@ -1,5 +1,10 @@
 # Changelog
 
+## 9.22
+
+- [ENH] all: keycloak 26.8.2. The `keycloak-themes` jar is byte-identical to 26.8.1, so the bootstrap fork carries over untouched. Upstream's server changes are security hardening: `kcSanitize` blanks `href`s whose scheme is not http, https or mailto, `kc_locale` is ignored unless it is a supported locale of the realm, `attachSession` refuses an authentication session with no user or bound to a different user, and the logout root authentication session gets a random id instead of the user session's
+- [ENH] all: libphonenumber 9.0.43, surefire 3.6.1, central-publishing 0.12.0. resteasy stays at 6.2.19.Final, the version keycloak 26.8.2 declares
+
 ## 9.20
 
 - [ENH] all: keycloak 26.8.0. Upstream's `base/login/template.ftl` is byte-identical to 26.7.2, so the bootstrap fork carries over untouched, and the only rendered differences across the whole gallery are upstream's own: `inputmode` on the recovery-code input (the codes are alphanumeric), two reworded english strings on `login-idp-link-email`, and refreshed `authChecker`/webauthn scripts. The redesigned identity provider buttons the upgrade guide warns about live in `keycloak.v2`, which this theme does not inherit from
